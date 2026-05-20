@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from app.routes.auth import router as auth_router
 from app.routes.fermes import router as fermes_router
 from app.routes.employes import router as employes_router
@@ -13,6 +14,14 @@ app = FastAPI(
     title="Kewere Aissa Smart API",
     description="API de gestion de fermes avicoles",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.middleware("http")
