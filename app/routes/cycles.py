@@ -16,6 +16,10 @@ class CycleSchema(BaseModel):
     date_debut: str
     date_fin: Optional[str] = None
     statut: Optional[str] = "actif"
+    nom: Optional[str] = None
+    nombre_sujets: Optional[int] = None
+    batiment: Optional[str] = None
+    souche: Optional[str] = None
 
 # ========== LISTE ==========
 @router.get("/")
