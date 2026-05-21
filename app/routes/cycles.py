@@ -43,12 +43,14 @@ def create_cycle(
 ):
     cycle_id = uuid.uuid4()
     db.execute(text("""
-        INSERT INTO cycles (id, ferme_id, type_cycle, date_debut, date_fin, statut)
-        VALUES (:id, :fid, :type, :debut, :fin, :statut)
+        INSERT INTO cycles (id, ferme_id, type_cycle, date_debut, date_fin, statut, nom, nombre_sujets, batiment, souche)
+        VALUES (:id, :fid, :type, :debut, :fin, :statut, :nom, :sujets, :bat, :souche)
     """), {
         "id": cycle_id, "fid": data.ferme_id,
         "type": data.type_cycle, "debut": data.date_debut,
-        "fin": data.date_fin, "statut": data.statut
+        "fin": data.date_fin, "statut": data.statut,
+        "nom": data.nom, "sujets": data.nombre_sujets,
+        "bat": data.batiment, "souche": data.souche
     })
     db.commit()
     return {"message": "Cycle créé avec succès", "id": str(cycle_id)}
@@ -63,15 +65,26 @@ def update_cycle(
 ):
     db.execute(text("""
         UPDATE cycles SET type_cycle=:type, date_debut=:debut,
-        date_fin=:fin, statut=:statut WHERE id=:id
+        date_fin=:fin, statut=:statut, nom=:nom,
+        nombre_sujets=:sujets, batiment=:bat, souche=:souche
+        WHERE id=:id
     """), {
         "type": data.type_cycle, "debut": data.date_debut,
-        "fin": data.date_fin, "statut": data.statut, "id": cycle_id
+        "fin": data.date_fin, "statut": data.statut,
+        "nom": data.nom, "sujets": data.nombre_sujets,
+        "bat": data.batiment, "souche": data.souche,
+        "id": cycle_id
     })
     db.commit()
     return {"message": "Cycle mis à jour"}
+
+# ========== SUPPRIMER ==========
 @router.delete("/{cycle_id}")
-def delete_cycle(cycle_id: str, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+def delete_cycle(
+    cycle_id: str,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)
+):
     db.execute(text("DELETE FROM cycles WHERE id = :id"), {"id": cycle_id})
     db.commit()
     return {"message": "Cycle supprimé avec succès"}
