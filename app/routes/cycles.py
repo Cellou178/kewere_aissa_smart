@@ -71,10 +71,7 @@ def update_cycle(
     db.commit()
     return {"message": "Cycle mis à jour"}
 @router.delete("/{cycle_id}")
-async def delete_cycle(cycle_id: str, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    cycle = db.query(Cycle).filter(Cycle.id == cycle_id).first()
-    if not cycle:
-        raise HTTPException(status_code=404, detail="Cycle non trouvé")
-    db.delete(cycle)
+def delete_cycle(cycle_id: str, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
+    db.execute(text("DELETE FROM cycles WHERE id = :id"), {"id": cycle_id})
     db.commit()
     return {"message": "Cycle supprimé avec succès"}
