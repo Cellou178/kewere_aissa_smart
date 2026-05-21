@@ -89,7 +89,6 @@ def delete_cycle(
     db.commit()
     return {"message": "Cycle supprimé avec succès"}
 
-notepad ~/kewere_aissa_smart/app/sms_service.py
 from twilio.rest import Client
 import os
 import random
