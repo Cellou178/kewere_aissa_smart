@@ -23,7 +23,12 @@ class _DashboardPageState extends State<DashboardPage> {
     final cycles = await ApiService.getCycles();
     final donnees = await ApiService.getDonnees();
     final meteo = await ApiService.getMeteo('Mbour');
-    setState(() { _cycles = cycles; _donnees = donnees; _meteo = meteo; _loading = false; });
+    setState(() {
+      _cycles = cycles is List ? cycles : [];
+      _donnees = donnees is List ? donnees : [];
+      _meteo = meteo is Map ? meteo : {};
+      _loading = false;
+    });
   }
 
   @override
@@ -32,12 +37,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final cyclesActifs = _cycles.where((c) =>
     c['statut'] == 'actif' || c['statut'] == 'en_cours').length;
-    final totalPoulets = _cycles.fold(0, (sum, c) =>
-    sum + (c['nombre_sujets'] as int? ?? 0));
-    final totalMorts = _donnees.fold(0, (sum, d) =>
-    sum + (d['mortalite'] as int? ?? 0));
+    final totalPoulets = _cycles.fold<int>(0, (sum, c) =>
+    sum + ((c['nombre_sujets'] ?? 0) as num).toInt());
+    final totalMorts = _donnees.fold<int>(0, (sum, d) =>
+    sum + ((d['mortalite'] ?? 0) as num).toInt());
     final dernierProd = _donnees.isNotEmpty ?
-    (_donnees.last['production'] ?? 0) : 0;
+    ((_donnees.last['production'] ?? 0) as num).toInt() : 0;
 
     return RefreshIndicator(onRefresh: _load, color: kBlue,
         child: SingleChildScrollView(
@@ -128,7 +133,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _donneeItem(Map d) {
-    final mortalite = d['mortalite'] as int? ?? 0;
+    final mortalite = ((d['mortalite'] ?? 0) as num).toInt();
     final color = mortalite > 10 ? kRed : mortalite > 5 ? kOrange : kGreen;
     return Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(10),
