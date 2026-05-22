@@ -52,20 +52,23 @@ class _CyclesScreenState extends State<CyclesScreen> {
 
   Widget _card(Map c) {
     final statut = c['statut'] ?? '';
-    final color = statut == 'en_cours' ? kGreen : statut == 'terminé' ? Colors.blueGrey : kOrange;
+    final isActif = statut == 'actif' || statut == 'en_cours';
+    final color = isActif ? kGreen : statut == 'terminé' ? Colors.blueGrey : kOrange;
     return Container(margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 3))]),
         child: Column(children: [
           Container(padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: color.withOpacity(0.06), borderRadius: const BorderRadius.vertical(top: Radius.circular(16))),
+              decoration: BoxDecoration(color: color.withOpacity(0.06),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16))),
               child: Row(children: [
                 Container(width: 44, height: 44,
                     decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                    child: Center(child: Text(statut == 'en_cours' ? '🐔' : '✅', style: const TextStyle(fontSize: 20)))),
+                    child: Center(child: Text(isActif ? '🐔' : '✅', style: const TextStyle(fontSize: 20)))),
                 const SizedBox(width: 12),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(c['nom'] ?? 'Cycle sans nom', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                  Text(c['nom'] ?? 'Cycle sans nom',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
                   Text('${c['souche'] ?? '-'} • Bâtiment ${c['batiment'] ?? '-'}',
                       style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                 ])),
@@ -113,13 +116,18 @@ class _CyclesScreenState extends State<CyclesScreen> {
               SizedBox(width: double.infinity, height: 50,
                   child: ElevatedButton(
                       onPressed: () async {
-                        final fermeId = SessionManager.fermeId.isNotEmpty ? SessionManager.fermeId : '11111111-1111-1111-1111-111111111111';
+                        final fermeId = SessionManager.fermeId.isNotEmpty
+                            ? SessionManager.fermeId
+                            : '11111111-1111-1111-1111-111111111111';
                         final ok = await ApiService.createCycle({
-                          'ferme_id': fermeId, 'nom': nomCtrl.text,
+                          'ferme_id': fermeId,
+                          'nom': nomCtrl.text,
                           'date_debut': DateTime.now().toIso8601String().split('T')[0],
                           'nombre_sujets': int.tryParse(sujetsCtrl.text) ?? 0,
-                          'type_cycle': 'chair', 'batiment': batCtrl.text,
-                          'souche': soucheCtrl.text, 'statut': 'en_cours'
+                          'type_cycle': 'chair',
+                          'batiment': batCtrl.text,
+                          'souche': soucheCtrl.text,
+                          'statut': 'actif',
                         });
                         Navigator.pop(context);
                         if (ok) { _load(); _snack(context, '✅ Cycle créé !', kGreen); }
@@ -136,7 +144,8 @@ class _CyclesScreenState extends State<CyclesScreen> {
       TextField(controller: ctrl, keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon, color: kBlueLight, size: 18),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              filled: true, fillColor: const Color(0xFFF8FAFC), contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)));
+              filled: true, fillColor: const Color(0xFFF8FAFC),
+              contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)));
 }
 
 Widget _empty(String title, String subtitle, String emoji) =>

@@ -29,19 +29,29 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Center(child: CircularProgressIndicator(color: kBlue));
-    final cyclesActifs = _cycles.where((c) => c['statut'] == 'en_cours').length;
-    final totalPoulets = _cycles.fold(0, (sum, c) => sum + (c['nombre_sujets'] as int? ?? 0));
-    final dernierPoids = _donnees.isNotEmpty ? (_donnees.last['poids_moyen'] ?? 0) : 0;
-    final totalMorts = _donnees.fold(0, (sum, d) => sum + (d['mortalite'] as int? ?? 0));
+
+    final cyclesActifs = _cycles.where((c) =>
+    c['statut'] == 'actif' || c['statut'] == 'en_cours').length;
+    final totalPoulets = _cycles.fold(0, (sum, c) =>
+    sum + (c['nombre_sujets'] as int? ?? 0));
+    final totalMorts = _donnees.fold(0, (sum, d) =>
+    sum + (d['mortalite'] as int? ?? 0));
+    final dernierProd = _donnees.isNotEmpty ?
+    (_donnees.last['production'] ?? 0) : 0;
 
     return RefreshIndicator(onRefresh: _load, color: kBlue,
-        child: SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Container(width: double.infinity, padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(gradient: const LinearGradient(colors: [kBlue, Color(0xFF2563EB)]), borderRadius: BorderRadius.circular(20),
+                  decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [kBlue, Color(0xFF2563EB)]),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [BoxShadow(color: kBlue.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))]),
                   child: Row(children: [
-                    Container(width: 50, height: 50, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(14)),
+                    Container(width: 50, height: 50,
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(14)),
                         child: const Center(child: Text('🏡', style: TextStyle(fontSize: 26)))),
                     const SizedBox(width: 14),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -59,12 +69,13 @@ class _DashboardPageState extends State<DashboardPage> {
                     IconButton(icon: const Icon(Icons.refresh_rounded, color: Colors.white), onPressed: _load),
                   ])),
               const SizedBox(height: 16),
-              GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+              GridView.count(crossAxisCount: 2, shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.5,
                   children: [
                     _kpi('🐔', '$totalPoulets', 'Poulets total', kBlue, const Color(0xFFEFF6FF)),
                     _kpi('🔄', '$cyclesActifs', 'Cycles actifs', kGreen, const Color(0xFFF0FDF4)),
-                    _kpi('⚖️', '${dernierPoids}g', 'Dernier poids', kPurple, const Color(0xFFF5F3FF)),
+                    _kpi('📦', '$dernierProd', 'Production', kPurple, const Color(0xFFF5F3FF)),
                     _kpi('💀', '$totalMorts', 'Total morts', kRed, const Color(0xFFFEF2F2)),
                   ]),
               const SizedBox(height: 16),
@@ -82,7 +93,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _kpi(String icon, String value, String label, Color color, Color bg) =>
       Container(padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withOpacity(0.2))),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withOpacity(0.2))),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(icon, style: const TextStyle(fontSize: 22)), const Spacer(),
             Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
@@ -90,20 +102,24 @@ class _DashboardPageState extends State<DashboardPage> {
           ]));
 
   Widget _sectionTitle(String t) => Padding(padding: const EdgeInsets.only(bottom: 8),
-      child: Text(t, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1a7a9a), letterSpacing: 0.5)));
+      child: Text(t, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+          color: Color(0xFF1a7a9a), letterSpacing: 0.5)));
 
   Widget _cycleItem(Map c) {
     final statut = c['statut'] ?? '';
-    final color = statut == 'en_cours' ? kGreen : Colors.grey;
+    final isActif = statut == 'actif' || statut == 'en_cours';
+    final color = isActif ? kGreen : Colors.grey;
     return Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)]),
         child: Row(children: [
-          Text(statut == 'en_cours' ? '🐔' : '✅', style: const TextStyle(fontSize: 20)),
+          Text(isActif ? '🐔' : '✅', style: const TextStyle(fontSize: 20)),
           const SizedBox(width: 10),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(c['nom'] ?? 'Cycle sans nom', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-            Text('${c['nombre_sujets'] ?? 0} sujets', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+            Text(c['nom'] ?? 'Cycle sans nom',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            Text('${c['nombre_sujets'] ?? 0} sujets',
+                style: const TextStyle(color: Colors.grey, fontSize: 11)),
           ])),
           Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
@@ -118,9 +134,11 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(10),
             border: Border(left: BorderSide(color: color, width: 3))),
         child: Row(children: [
-          Text('J${d['age_jours'] ?? '-'}', style: TextStyle(fontWeight: FontWeight.w800, color: color)),
+          Text('${d['date_releve'] ?? '-'}',
+              style: TextStyle(fontWeight: FontWeight.w800, color: color, fontSize: 11)),
           const SizedBox(width: 10),
-          Text('${d['poids_moyen'] ?? 0}g', style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text('Prod: ${d['production'] ?? 0}',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
           const Spacer(),
           Text('💀 $mortalite', style: TextStyle(color: color, fontSize: 12)),
         ]));
