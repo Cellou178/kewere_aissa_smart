@@ -59,3 +59,13 @@ def delete_cycle(cycle_id: str, db: Session = Depends(get_db), current_user: Uti
     db.execute(text("DELETE FROM cycles WHERE id = :id"), {"id": cycle_id})
     db.commit()
     return {"message": "Cycle supprime avec succes"}
+@router.get("/cycles/")
+def get_cycles(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    cycles = db.query(Cycle).filter(
+        Cycle.ferme_id == current_user.ferme_id
+    ).all()
+
+    return cycles
