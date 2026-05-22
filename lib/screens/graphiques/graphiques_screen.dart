@@ -19,7 +19,6 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
   String? _selectedCycleId;
   bool _loading = true;
 
-  // Interprétations IA
   Map<String, String> _interpretations = {};
   Map<String, bool> _loadingIA = {};
 
@@ -45,7 +44,6 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
       }
       _loading = false;
     });
-    // Interprétation automatique au chargement
     _analyserTout();
   }
 
@@ -97,7 +95,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
       final avgHum = data.isEmpty ? 0 : data.fold<double>(0, (s, d) => s + ((d['humidite'] ?? 0) as num).toDouble()) / data.length;
       final totalProd = data.fold<int>(0, (s, d) => s + ((d['production'] ?? 0) as num).toInt());
 
-      final prompt = '''Tu es un expert en aviculture au Sénégal. 
+      final prompt = '''Tu es un expert en aviculture au Sénégal.
 Analyse globalement ce cycle avicole et donne des recommandations précises.
 
 Cycle: $cycleName
@@ -192,7 +190,6 @@ Sois direct et pratique. Réponds uniquement en français.''';
     if (_loading) return const Center(child: CircularProgressIndicator(color: kBlue));
     final filtered = _donneesFiltered();
     return Column(children: [
-      // Sélecteur de cycle
       Container(
         color: const Color(0xFF0F172A),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -214,7 +211,6 @@ Sois direct et pratique. Réponds uniquement en français.''';
               _analyserTout();
             }),
       ),
-      // Tabs
       Container(
         color: const Color(0xFF0F172A),
         child: TabBar(
@@ -244,13 +240,11 @@ Sois direct et pratique. Réponds uniquement en français.''';
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Graphique
         Container(height: 220, padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10)]),
             child: _buildChart(type, data)),
         const SizedBox(height: 16),
-        // Interprétation IA
         _buildIACard(type),
       ]),
     );
@@ -299,7 +293,7 @@ Sois direct et pratique. Réponds uniquement en français.''';
           ))
         else
           Text(interpretation ?? 'Appuyez sur actualiser pour analyser.',
-              style: const TextStyle(color: Colors.white87, fontSize: 13, height: 1.5)),
+              style: TextStyle(color: Colors.white.withOpacity(0.87), fontSize: 13, height: 1.5)),
       ]),
     );
   }
@@ -310,7 +304,6 @@ Sois direct et pratique. Réponds uniquement en français.''';
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Header
         Container(
           width: double.infinity, padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -340,7 +333,7 @@ Sois direct et pratique. Réponds uniquement en français.''';
               ))
             else
               Text(interpretation ?? 'Chargement de l\'analyse...',
-                  style: const TextStyle(color: Colors.white87, fontSize: 14, height: 1.6)),
+                  style: TextStyle(color: Colors.white.withOpacity(0.87), fontSize: 14, height: 1.6)),
             const SizedBox(height: 12),
             SizedBox(width: double.infinity,
                 child: OutlinedButton.icon(
@@ -353,7 +346,6 @@ Sois direct et pratique. Réponds uniquement en français.''';
           ]),
         ),
         const SizedBox(height: 16),
-        // Résumé par indicateur
         const Text('Résumé par indicateur',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
