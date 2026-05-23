@@ -11,6 +11,7 @@ import '../finances/finances_screen.dart';
 import '../alertes/alertes_screen.dart';
 import '../profil/profil_screen.dart';
 import '../meteo/meteo_screen.dart';
+import '../predictions/predictions_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
       rolesAutorises: const ['admin', 'proprietaire'],
       child: const FinanceScreen(),
     ),
+    const PredictionsScreen(),
     const MeteoScreen(),
     const AlertesScreen(),
     const ProfilScreen(),
@@ -80,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
               type: BottomNavigationBarType.fixed,
               selectedItemColor: kBlue,
               unselectedItemColor: Colors.grey.shade400,
-              selectedFontSize: 10, unselectedFontSize: 9,
+              selectedFontSize: 9, unselectedFontSize: 8,
               backgroundColor: Colors.transparent, elevation: 0,
               items: const [
                 BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Accueil'),
@@ -88,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 BottomNavigationBarItem(icon: Icon(Icons.loop_rounded), label: 'Cycles'),
                 BottomNavigationBarItem(icon: Icon(Icons.bar_chart_rounded), label: 'Graphiques'),
                 BottomNavigationBarItem(icon: Icon(Icons.attach_money_rounded), label: 'Finance'),
+                BottomNavigationBarItem(icon: Icon(Icons.psychology_rounded), label: 'IA'),
                 BottomNavigationBarItem(icon: Icon(Icons.cloud_rounded), label: 'Météo'),
                 BottomNavigationBarItem(icon: Icon(Icons.notifications_rounded), label: 'Alertes'),
                 BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profil'),
