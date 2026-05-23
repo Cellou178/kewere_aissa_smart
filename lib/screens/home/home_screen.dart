@@ -24,77 +24,119 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  List<Widget> get _pages => [
-    const DashboardPage(),
-    const FermesScreen(),
-    const CyclesScreen(),
-    const StocksScreen(),
-    const GraphiquesScreen(),
-    AuthGuard(
-      rolesAutorises: const ['admin', 'proprietaire'],
-      child: const FinanceScreen(),
-    ),
-    const PredictionsScreen(),
-    const MeteoScreen(),
-    const AlertesScreen(),
-    const SettingsScreen(),
-    const ProfilScreen(),
-    _emptyPage('🌍', 'Marché'),
-    _emptyPage('💬', 'Chat'),
-    _emptyPage('📊', 'Rapports'),
-    _emptyPage('📅', 'Agenda'),
-    _emptyPage('🏪', 'Vitrine'),
-    _emptyPage('💳', 'Paiement'),
-    _emptyPage('📈', 'Invest.'),
-    _emptyPage('🔧', 'Maint.'),
-    _emptyPage('⚙️', 'Gestion'),
-    _emptyPage('🔒', 'Sécurité'),
-    _emptyPage('👥', 'Accès'),
+  static const List<Map<String, dynamic>> _tabs = [
+    // Rangée 1
+    {'label': 'Accueil',  'icon': Icons.dashboard_rounded,       'color': 0xFF1B3A6B},
+    {'label': 'Terrain',  'icon': Icons.terrain_rounded,         'color': 0xFF16A34A},
+    {'label': 'Cycles',   'icon': Icons.loop_rounded,            'color': 0xFFEA580C},
+    {'label': 'Opérat.',  'icon': Icons.assignment_rounded,      'color': 0xFF7C3AED},
+    {'label': 'Finance',  'icon': Icons.attach_money_rounded,    'color': 0xFFDC2626},
+    {'label': 'IA',       'icon': Icons.psychology_rounded,      'color': 0xFF0891B2},
+    {'label': 'Marché',   'icon': Icons.store_rounded,           'color': 0xFFD97706},
+    {'label': 'Météo',    'icon': Icons.cloud_rounded,           'color': 0xFF38BDF8},
+    // Rangée 2
+    {'label': 'Chat',     'icon': Icons.chat_rounded,            'color': 0xFF059669},
+    {'label': 'Rapports', 'icon': Icons.assessment_rounded,      'color': 0xFF6366F1},
+    {'label': 'Ferme',    'icon': Icons.agriculture_rounded,     'color': 0xFF16A34A},
+    {'label': 'Stats',    'icon': Icons.bar_chart_rounded,       'color': 0xFF2563EB},
+    {'label': 'Réglages', 'icon': Icons.settings_rounded,        'color': 0xFF6B7280},
+    {'label': 'Sécurité', 'icon': Icons.lock_rounded,            'color': 0xFFDC2626},
+    {'label': 'Accès',    'icon': Icons.group_rounded,           'color': 0xFF7C3AED},
+    {'label': 'Alertes',  'icon': Icons.notifications_rounded,   'color': 0xFFF59E0B},
+    // Rangée 3
+    {'label': 'Stock',    'icon': Icons.inventory_rounded,       'color': 0xFFEA580C},
+    {'label': 'Agenda',   'icon': Icons.calendar_month_rounded,  'color': 0xFF0891B2},
+    {'label': 'Vitrine',  'icon': Icons.storefront_rounded,      'color': 0xFFD97706},
+    {'label': 'Paiement', 'icon': Icons.payment_rounded,         'color': 0xFF059669},
+    {'label': 'Invest.',  'icon': Icons.trending_up_rounded,     'color': 0xFF16A34A},
+    {'label': 'Maint.',   'icon': Icons.build_rounded,           'color': 0xFF6B7280},
+    {'label': 'Profil',   'icon': Icons.person_rounded,          'color': 0xFF1B3A6B},
+    {'label': 'Gestion',  'icon': Icons.manage_accounts_rounded, 'color': 0xFF7C3AED},
   ];
 
-  Widget _emptyPage(String emoji, String title) => Scaffold(
+  List<Widget> get _pages => [
+    const DashboardPage(),                                                          // 0 Accueil
+    _emptyPage('Terrain',   Icons.terrain_rounded,          const Color(0xFF16A34A)), // 1
+    const CyclesScreen(),                                                           // 2 Cycles
+    _emptyPage('Opérations',Icons.assignment_rounded,       const Color(0xFF7C3AED)), // 3
+    AuthGuard(rolesAutorises: const ['admin','proprietaire'], child: const FinanceScreen()), // 4
+    const PredictionsScreen(),                                                      // 5 IA
+    _emptyPage('Marché',    Icons.store_rounded,            const Color(0xFFD97706)), // 6
+    const MeteoScreen(),                                                            // 7 Météo
+    _emptyPage('Chat',      Icons.chat_rounded,             const Color(0xFF059669)), // 8
+    _emptyPage('Rapports',  Icons.assessment_rounded,       const Color(0xFF6366F1)), // 9
+    const FermesScreen(),                                                           // 10 Ferme
+    const GraphiquesScreen(),                                                       // 11 Stats
+    const SettingsScreen(),                                                         // 12 Réglages
+    _emptyPage('Sécurité',  Icons.lock_rounded,             const Color(0xFFDC2626)), // 13
+    _emptyPage('Accès',     Icons.group_rounded,            const Color(0xFF7C3AED)), // 14
+    const AlertesScreen(),                                                          // 15 Alertes
+    const StocksScreen(),                                                           // 16 Stock
+    _emptyPage('Agenda',    Icons.calendar_month_rounded,   const Color(0xFF0891B2)), // 17
+    _emptyPage('Vitrine',   Icons.storefront_rounded,       const Color(0xFFD97706)), // 18
+    _emptyPage('Paiement',  Icons.payment_rounded,          const Color(0xFF059669)), // 19
+    _emptyPage('Invest.',   Icons.trending_up_rounded,      const Color(0xFF16A34A)), // 20
+    _emptyPage('Maint.',    Icons.build_rounded,            const Color(0xFF6B7280)), // 21
+    const ProfilScreen(),                                                           // 22 Profil
+    _emptyPage('Gestion',   Icons.manage_accounts_rounded,  const Color(0xFF7C3AED)), // 23
+  ];
+
+  Widget _emptyPage(String title, IconData icon, Color color) => Scaffold(
     backgroundColor: const Color(0xFFF1F5F9),
     body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Container(padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(color: kBlue.withOpacity(0.1), shape: BoxShape.circle),
-          child: Text(emoji, style: const TextStyle(fontSize: 48))),
+          decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+          child: Icon(icon, size: 48, color: color)),
       const SizedBox(height: 16),
       Text(title, style: const TextStyle(
           fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
       const SizedBox(height: 8),
-      const Text('Bientôt disponible', style: TextStyle(color: Colors.grey, fontSize: 14)),
+      const Text('Bientôt disponible', style: TextStyle(color: Colors.grey)),
       const SizedBox(height: 24),
       Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-              color: kBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-          child: const Text('En cours de développement',
-              style: TextStyle(color: kBlue, fontWeight: FontWeight.w600, fontSize: 12))),
+              color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+          child: Text('En cours de développement',
+              style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12))),
     ])),
   );
 
-  Widget _navItem(int index, IconData icon, String label) {
-    final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
-      child: Container(
-        width: 70,
-        color: Colors.transparent,
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon,
-              color: isSelected ? kBlue : Colors.grey.shade400,
-              size: 22),
-          const SizedBox(height: 3),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: isSelected ? kBlue : Colors.grey.shade400)),
-          if (isSelected)
-            Container(margin: const EdgeInsets.only(top: 3),
-                width: 20, height: 3,
-                decoration: BoxDecoration(
-                    color: kBlue, borderRadius: BorderRadius.circular(2))),
-        ]),
+  Widget _navRow(List<Map<String, dynamic>> tabs, int startIndex) {
+    return SizedBox(
+      height: 56,
+      child: Row(
+        children: tabs.asMap().entries.map((e) {
+          final index = startIndex + e.key;
+          final tab = e.value;
+          final isSelected = _currentIndex == index;
+          final color = Color(tab['color'] as int);
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _currentIndex = index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                color: isSelected ? color.withOpacity(0.08) : Colors.transparent,
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Icon(tab['icon'] as IconData,
+                      size: 20,
+                      color: isSelected ? color : Colors.grey.shade400),
+                  const SizedBox(height: 2),
+                  Text(tab['label'] as String,
+                      style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                          color: isSelected ? color : Colors.grey.shade400),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  if (isSelected)
+                    Container(margin: const EdgeInsets.only(top: 2),
+                        width: 16, height: 2,
+                        decoration: BoxDecoration(
+                            color: color, borderRadius: BorderRadius.circular(1))),
+                ]),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -132,40 +174,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           body: _pages[_currentIndex],
           bottomNavigationBar: Container(
-            height: 65,
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [BoxShadow(
                   color: Colors.black.withOpacity(0.08),
                   blurRadius: 20, offset: const Offset(0, -4))],
             ),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _navItem(0, Icons.dashboard_rounded, 'Accueil'),
-                _navItem(1, Icons.agriculture_rounded, 'Fermes'),
-                _navItem(2, Icons.loop_rounded, 'Cycles'),
-                _navItem(3, Icons.inventory_rounded, 'Stock'),
-                _navItem(4, Icons.bar_chart_rounded, 'Stats'),
-                _navItem(5, Icons.attach_money_rounded, 'Finance'),
-                _navItem(6, Icons.psychology_rounded, 'IA'),
-                _navItem(7, Icons.cloud_rounded, 'Météo'),
-                _navItem(8, Icons.notifications_rounded, 'Alertes'),
-                _navItem(9, Icons.settings_rounded, 'Réglages'),
-                _navItem(10, Icons.person_rounded, 'Profil'),
-                _navItem(11, Icons.store_rounded, 'Marché'),
-                _navItem(12, Icons.chat_rounded, 'Chat'),
-                _navItem(13, Icons.assessment_rounded, 'Rapports'),
-                _navItem(14, Icons.calendar_month_rounded, 'Agenda'),
-                _navItem(15, Icons.storefront_rounded, 'Vitrine'),
-                _navItem(16, Icons.payment_rounded, 'Paiement'),
-                _navItem(17, Icons.trending_up_rounded, 'Invest.'),
-                _navItem(18, Icons.build_rounded, 'Maint.'),
-                _navItem(19, Icons.manage_accounts_rounded, 'Gestion'),
-                _navItem(20, Icons.lock_rounded, 'Sécurité'),
-                _navItem(21, Icons.group_rounded, 'Accès'),
-              ],
-            ),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              _navRow(_tabs.sublist(0, 8), 0),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              _navRow(_tabs.sublist(8, 16), 8),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              _navRow(_tabs.sublist(16, 24), 16),
+            ]),
           ),
         ),
       ),
