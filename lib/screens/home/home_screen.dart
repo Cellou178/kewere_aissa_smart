@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1: return const RapportsScreen();
       case 2: return const GraphiquesScreen();
       case 3: return const PredictionsScreen();
-      case 4: return const AgendaScreen(); 
+      case 4: return const AgendaScreen();
       case 5: return const EmployesScreen();
       case 6: return const SettingsScreen();
       default: return _emptyPage('Bientôt disponible', Icons.construction_rounded, kBlue);

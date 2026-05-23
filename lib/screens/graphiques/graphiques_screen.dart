@@ -18,6 +18,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
   List _donnees = [];
   String? _selectedCycleId;
   bool _loading = true;
+  String _periode = '7j';
 
   Map<String, String> _interpretations = {};
   Map<String, bool> _loadingIA = {};
@@ -25,7 +26,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 5, vsync: this);
+    _tabCtrl = TabController(length: 6, vsync: this);
     _load();
   }
 
@@ -48,9 +49,20 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
   }
 
   List _donneesFiltered() {
-    final filtered = _selectedCycleId == null ? _donnees :
+    var filtered = _selectedCycleId == null ? _donnees :
     _donnees.where((d) => d['cycle_id']?.toString() == _selectedCycleId).toList();
     filtered.sort((a, b) => (a['date_releve'] ?? '').compareTo(b['date_releve'] ?? ''));
+    // Filtre période
+    final now = DateTime.now();
+    final jours = _periode == '7j' ? 7 : _periode == '14j' ? 14 : _periode == '30j' ? 30 : 999;
+    if (jours < 999) {
+      filtered = filtered.where((d) {
+        try {
+          final date = DateTime.parse(d['date_releve'] ?? '');
+          return now.difference(date).inDays <= jours;
+        } catch (_) { return true; }
+      }).toList();
+    }
     return filtered;
   }
 
@@ -90,27 +102,31 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
       final cycleName = _cycles.firstWhere(
               (c) => c['id']?.toString() == _selectedCycleId,
           orElse: () => {'nom': 'Cycle inconnu'})['nom'];
-      final totalMorts = data.fold<int>(0, (s, d) => s + ((d['mortalite'] ?? 0) as num).toInt());
-      final avgTemp = data.isEmpty ? 0 : data.fold<double>(0, (s, d) => s + ((d['temperature'] ?? 0) as num).toDouble()) / data.length;
-      final avgHum = data.isEmpty ? 0 : data.fold<double>(0, (s, d) => s + ((d['humidite'] ?? 0) as num).toDouble()) / data.length;
-      final totalProd = data.fold<int>(0, (s, d) => s + ((d['production'] ?? 0) as num).toInt());
+      final totalMorts = data.fold<int>(0, (s, d) =>
+      s + ((d['mortalite'] ?? 0) as num).toInt());
+      final avgTemp = data.isEmpty ? 0.0 : data.fold<double>(0, (s, d) =>
+      s + ((d['temperature'] ?? 0) as num).toDouble()) / data.length;
+      final avgHum = data.isEmpty ? 0.0 : data.fold<double>(0, (s, d) =>
+      s + ((d['humidite'] ?? 0) as num).toDouble()) / data.length;
+      final totalProd = data.fold<int>(0, (s, d) =>
+      s + ((d['production'] ?? 0) as num).toInt());
 
       final prompt = '''Tu es un expert en aviculture au Sénégal.
-Analyse globalement ce cycle avicole et donne des recommandations précises.
+Analyse globalement ce cycle avicole et donne des recommandations.
 
 Cycle: $cycleName
-Nombre de relevés: ${data.length}
+Relevés: ${data.length} (période: $_periode)
 Mortalité totale: $totalMorts
 Température moyenne: ${avgTemp.toStringAsFixed(1)}°C
 Humidité moyenne: ${avgHum.toStringAsFixed(1)}%
 Production totale: $totalProd
 
-Donne une analyse globale en 4-5 phrases avec:
-1. État général du cycle
+Analyse en 4-5 phrases:
+1. État général
 2. Points positifs
 3. Points d'amélioration
-4. Recommandations concrètes pour la prochaine semaine
-Sois précis et pratique. Réponds uniquement en français.''';
+4. Recommandations concrètes
+Sois précis et pratique. En français.''';
 
       final interpretation = await _appellerClaude(prompt);
       setState(() {
@@ -119,7 +135,7 @@ Sois précis et pratique. Réponds uniquement en français.''';
       });
     } catch (e) {
       setState(() {
-        _interpretations['global'] = 'Analyse globale indisponible.';
+        _interpretations['global'] = 'Analyse indisponible.';
         _loadingIA['global'] = false;
       });
     }
@@ -132,39 +148,38 @@ Sois précis et pratique. Réponds uniquement en français.''';
     final max = values.reduce((a, b) => a > b ? a : b);
     final min = values.reduce((a, b) => a < b ? a : b);
     final last = values.last;
-    final trend = values.length > 1 ? values.last - values.first : 0;
-    return {'avg': avg, 'max': max, 'min': min, 'last': last, 'trend': trend, 'count': values.length};
+    final trend = values.length > 1 ? values.last - values.first : 0.0;
+    final total = values.reduce((a, b) => a + b);
+    return {
+      'avg': avg, 'max': max, 'min': min,
+      'last': last, 'trend': trend,
+      'count': values.length, 'total': total,
+    };
   }
 
   String _buildPrompt(String type, Map stats, List data) {
     final labels = {
-      'mortalite': 'mortalité (nombre d\'animaux morts)',
+      'mortalite': 'mortalité',
       'temperature': 'température (°C)',
       'humidite': 'humidité (%)',
       'production': 'production',
     };
     final normes = {
-      'mortalite': 'La norme acceptable est <5 morts/jour. Au-delà de 10, c\'est critique.',
-      'temperature': 'La température idéale en élevage avicole au Sénégal est 25-32°C.',
-      'humidite': 'L\'humidité idéale est entre 50-70%.',
-      'production': 'Une bonne production indique une croissance saine du troupeau.',
+      'mortalite': 'Norme: <5/jour acceptable, >10 critique.',
+      'temperature': 'Norme: 25-32°C idéal au Sénégal.',
+      'humidite': 'Norme: 50-70% idéal.',
+      'production': 'Bonne production = troupeau sain.',
     };
-    return '''Tu es un expert en aviculture au Sénégal.
-Analyse ces données de ${labels[type]} pour un élevage de poulets de chair.
+    return '''Expert aviculture Sénégal. Analyse ${labels[type]}.
 
-Statistiques sur ${stats['count']} relevés:
+Stats (${stats['count']} relevés):
 - Moyenne: ${stats['avg']?.toStringAsFixed(1)}
-- Maximum: ${stats['max']?.toStringAsFixed(1)}
-- Minimum: ${stats['min']?.toStringAsFixed(1)}
-- Dernière valeur: ${stats['last']?.toStringAsFixed(1)}
-- Tendance: ${(stats['trend'] as num) > 0 ? '📈 En hausse' : '📉 En baisse'}
+- Max: ${stats['max']?.toStringAsFixed(1)}
+- Min: ${stats['min']?.toStringAsFixed(1)}
+- Tendance: ${(stats['trend'] as num) > 0 ? '📈 Hausse' : '📉 Baisse'}
+${normes[type]}
 
-Norme: ${normes[type]}
-
-Donne une interprétation courte (2-3 phrases max) incluant:
-- Évaluation de la situation (bon/attention/critique)
-- Une recommandation concrète si nécessaire
-Sois direct et pratique. Réponds uniquement en français.''';
+2-3 phrases: évaluation + recommandation. En français.''';
   }
 
   Future<String> _appellerClaude(String prompt) async {
@@ -180,7 +195,7 @@ Sois direct et pratique. Réponds uniquement en français.''';
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['content'][0]['text'] ?? 'Analyse indisponible.';
+      return data['content'][0]['text'] ?? 'Indisponible.';
     }
     return 'Analyse indisponible.';
   }
@@ -189,113 +204,270 @@ Sois direct et pratique. Réponds uniquement en français.''';
   Widget build(BuildContext context) {
     if (_loading) return const Center(child: CircularProgressIndicator(color: kBlue));
     final filtered = _donneesFiltered();
-    return Column(children: [
-      Container(
-        color: const Color(0xFF0F172A),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: DropdownButtonFormField<String>(
-            value: _selectedCycleId, dropdownColor: const Color(0xFF1E293B),
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-                labelText: 'Sélectionner un cycle',
-                labelStyle: const TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white30)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white30)),
-                filled: true, fillColor: Colors.white.withOpacity(0.05),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-            items: _cycles.map((c) => DropdownMenuItem<String>(
-                value: c['id']?.toString(),
-                child: Text(c['nom']?.toString() ?? '', style: const TextStyle(color: Colors.white)))).toList(),
-            onChanged: (v) {
-              setState(() { _selectedCycleId = v; _interpretations.clear(); });
-              _analyserTout();
-            }),
-      ),
-      Container(
-        color: const Color(0xFF0F172A),
-        child: TabBar(
-            controller: _tabCtrl, isScrollable: true,
-            labelColor: Colors.white, unselectedLabelColor: Colors.white38,
-            indicatorColor: kBlueLight, indicatorWeight: 3,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-            tabs: const [
-              Tab(text: '💀 Mortalité'),
-              Tab(text: '🌡️ Température'),
-              Tab(text: '💧 Humidité'),
-              Tab(text: '📦 Production'),
-              Tab(text: '🤖 Analyse IA'),
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF1F5F9),
+      body: Column(children: [
+        // Header
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF1E3A5F)],
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Column(children: [
+            Row(children: [
+              const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 22),
+              const SizedBox(width: 8),
+              const Expanded(child: Text('Graphiques Avancés', style: TextStyle(
+                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900))),
+              IconButton(icon: const Icon(Icons.refresh_rounded,
+                  color: Colors.white54, size: 20), onPressed: _load),
             ]),
-      ),
-      Expanded(child: TabBarView(controller: _tabCtrl, children: [
-        _buildChartWithIA('mortalite', filtered),
-        _buildChartWithIA('temperature', filtered),
-        _buildChartWithIA('humidite', filtered),
-        _buildChartWithIA('production', filtered),
-        _buildAnalyseGlobale(),
-      ])),
-    ]);
+            const SizedBox(height: 8),
+            // Sélecteur cycle
+            DropdownButtonFormField<String>(
+                value: _selectedCycleId,
+                dropdownColor: const Color(0xFF1E293B),
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                decoration: InputDecoration(
+                    labelText: 'Cycle',
+                    labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white30)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white30)),
+                    filled: true, fillColor: Colors.white.withOpacity(0.05),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                items: _cycles.map((c) => DropdownMenuItem<String>(
+                    value: c['id']?.toString(),
+                    child: Text(c['nom']?.toString() ?? '',
+                        style: const TextStyle(color: Colors.white)))).toList(),
+                onChanged: (v) {
+                  setState(() { _selectedCycleId = v; _interpretations.clear(); });
+                  _analyserTout();
+                }),
+            const SizedBox(height: 8),
+            // Filtre période
+            Row(children: [
+              const Text('Période:', style: TextStyle(color: Colors.white54, fontSize: 11)),
+              const SizedBox(width: 8),
+              ...['7j', '14j', '30j', 'Tout'].map((p) => GestureDetector(
+                onTap: () {
+                  setState(() { _periode = p; _interpretations.clear(); });
+                  _analyserTout();
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: _periode == p ? kBlueLight : Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Text(p, style: TextStyle(
+                      color: _periode == p ? Colors.white : Colors.white54,
+                      fontSize: 11, fontWeight: _periode == p
+                      ? FontWeight.w700 : FontWeight.w400)),
+                ),
+              )),
+              const Spacer(),
+              Text('${filtered.length} relevés',
+                  style: const TextStyle(color: Colors.white38, fontSize: 11)),
+            ]),
+            const SizedBox(height: 8),
+            TabBar(
+              controller: _tabCtrl,
+              isScrollable: true,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white38,
+              indicatorColor: kBlueLight,
+              indicatorWeight: 2,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+              tabs: const [
+                Tab(text: '💀 Mortalité'),
+                Tab(text: '🌡️ Température'),
+                Tab(text: '💧 Humidité'),
+                Tab(text: '📦 Production'),
+                Tab(text: '📊 Comparaison'),
+                Tab(text: '🤖 Analyse IA'),
+              ],
+            ),
+          ]),
+        ),
+
+        Expanded(child: TabBarView(controller: _tabCtrl, children: [
+          _buildChartTab('mortalite', filtered),
+          _buildChartTab('temperature', filtered),
+          _buildChartTab('humidite', filtered),
+          _buildChartTab('production', filtered),
+          _buildComparaison(filtered),
+          _buildAnalyseGlobale(),
+        ])),
+      ]),
+    );
   }
 
-  Widget _buildChartWithIA(String type, List data) {
+  Widget _buildChartTab(String type, List data) {
+    final stats = _calculerStats(type, data);
+    final colors = {
+      'mortalite': kRed, 'temperature': kOrange,
+      'humidite': Colors.blue, 'production': kGreen
+    };
+    final color = colors[type] ?? kBlue;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: Column(children: [
+        // Stats rapides
+        if (stats.isNotEmpty) Row(children: [
+          _statMini('Moy.', stats['avg']?.toStringAsFixed(1) ?? '-', color),
+          const SizedBox(width: 8),
+          _statMini('Max', stats['max']?.toStringAsFixed(1) ?? '-', kRed),
+          const SizedBox(width: 8),
+          _statMini('Min', stats['min']?.toStringAsFixed(1) ?? '-', kGreen),
+          const SizedBox(width: 8),
+          _statMini('Total', stats['total']?.toStringAsFixed(0) ?? '-', kPurple),
+        ]),
+        const SizedBox(height: 12),
+
+        // Graphique principal
         Container(height: 220, padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10)]),
+            decoration: BoxDecoration(color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
             child: _buildChart(type, data)),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+
+        // Tendance
+        if (stats.isNotEmpty) _tendanceCard(stats, color, type),
+        const SizedBox(height: 12),
+
+        // Carte IA
         _buildIACard(type),
       ]),
     );
   }
 
-  Widget _buildIACard(String type) {
-    final isLoading = _loadingIA[type] ?? false;
-    final interpretation = _interpretations[type];
-    final icons = {'mortalite': '💀', 'temperature': '🌡️', 'humidite': '💧', 'production': '📦'};
-    final titles = {'mortalite': 'Analyse Mortalité', 'temperature': 'Analyse Température', 'humidite': 'Analyse Humidité', 'production': 'Analyse Production'};
+  Widget _tendanceCard(Map stats, Color color, String type) {
+    final trend = (stats['trend'] as num).toDouble();
+    final isHausse = trend > 0;
+    final isMauvais = (type == 'mortalite' || type == 'temperature' || type == 'humidite')
+        ? isHausse : !isHausse;
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          gradient: const LinearGradient(
-              colors: [Color(0xFF1E3A5F), Color(0xFF1B3A6B)],
-              begin: Alignment.topLeft, end: Alignment.bottomRight),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: kBlue.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4))]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Container(padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-              child: Text(icons[type] ?? '🤖', style: const TextStyle(fontSize: 18))),
-          const SizedBox(width: 10),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(titles[type] ?? 'Analyse', style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
-            const Text('Powered by Claude AI', style: TextStyle(color: Colors.white38, fontSize: 10)),
-          ]),
-          const Spacer(),
-          if (!isLoading) IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: Colors.white60, size: 18),
-              onPressed: () => _analyserGraphique(type, _donneesFiltered())),
-        ]),
-        const SizedBox(height: 12),
-        if (isLoading)
-          const Center(child: Padding(
-            padding: EdgeInsets.all(8),
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 2)),
-              SizedBox(width: 10),
-              Text('Analyse en cours...', style: TextStyle(color: Colors.white54, fontSize: 13)),
-            ]),
-          ))
-        else
-          Text(interpretation ?? 'Appuyez sur actualiser pour analyser.',
-              style: TextStyle(color: Colors.white.withOpacity(0.87), fontSize: 13, height: 1.5)),
+          color: Colors.white, borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+      child: Row(children: [
+        Icon(isHausse ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+            color: isMauvais ? kRed : kGreen, size: 24),
+        const SizedBox(width: 10),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Tendance sur la période',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+          Text('${isHausse ? '+' : ''}${trend.toStringAsFixed(1)} depuis le début',
+              style: TextStyle(color: isMauvais ? kRed : kGreen, fontSize: 11)),
+        ])),
+        Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+                color: (isMauvais ? kRed : kGreen).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20)),
+            child: Text(isMauvais ? '⚠️ Attention' : '✅ Bon',
+                style: TextStyle(
+                    color: isMauvais ? kRed : kGreen,
+                    fontSize: 11, fontWeight: FontWeight.w700))),
       ]),
     );
+  }
+
+  // ── COMPARAISON ──
+  Widget _buildComparaison(List data) {
+    if (data.isEmpty) return const Center(child: Text('Aucune donnée'));
+
+    final mortaliteStats = _calculerStats('mortalite', data);
+    final tempStats = _calculerStats('temperature', data);
+    final humStats = _calculerStats('humidite', data);
+    final prodStats = _calculerStats('production', data);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(children: [
+        // Radar résumé
+        _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('📊 Score par Indicateur', style: TextStyle(
+              fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B))),
+          const SizedBox(height: 16),
+          _indicateurBar('💀 Mortalité',
+              mortaliteStats['avg'] ?? 0, 0, 20, kRed, inverse: true),
+          const SizedBox(height: 10),
+          _indicateurBar('🌡️ Température',
+              tempStats['avg'] ?? 0, 20, 40, kOrange),
+          const SizedBox(height: 10),
+          _indicateurBar('💧 Humidité',
+              humStats['avg'] ?? 0, 0, 100, Colors.blue),
+          const SizedBox(height: 10),
+          _indicateurBar('📦 Production',
+              prodStats['avg'] ?? 0, 0, 100, kGreen),
+        ])),
+        const SizedBox(height: 12),
+
+        // Comparaison cycles
+        if (_cycles.length > 1) _card(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('🔄 Comparaison Cycles', style: TextStyle(
+              fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B))),
+          const SizedBox(height: 12),
+          ..._cycles.take(4).map((c) {
+            final donnesCycle = _donnees.where((d) =>
+            d['cycle_id']?.toString() == c['id']?.toString()).toList();
+            final mort = donnesCycle.fold<int>(0, (s, d) =>
+            s + ((d['mortalite'] ?? 0) as num).toInt());
+            final sujets = ((c['nombre_sujets'] ?? 0) as num).toInt();
+            final taux = sujets > 0 ? (mort / sujets * 100) : 0.0;
+            final color = taux > 5 ? kRed : taux > 2 ? kOrange : kGreen;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(children: [
+                Expanded(child: Text(c['nom'] ?? '', style: const TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 12))),
+                Text('${taux.toStringAsFixed(1)}% mort.',
+                    style: TextStyle(color: color,
+                        fontWeight: FontWeight.w700, fontSize: 12)),
+              ]),
+            );
+          }),
+        ])),
+      ]),
+    );
+  }
+
+  Widget _indicateurBar(String label, dynamic value, double min, double max,
+      Color color, {bool inverse = false}) {
+    final v = (value as num).toDouble();
+    final pct = ((v - min) / (max - min)).clamp(0.0, 1.0);
+    final isOk = inverse ? pct < 0.3 : (pct > 0.3 && pct < 0.8);
+    final statusColor = isOk ? kGreen : kRed;
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        Row(children: [
+          Text(v.toStringAsFixed(1),
+              style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 12)),
+          const SizedBox(width: 6),
+          Container(width: 8, height: 8,
+              decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+        ]),
+      ]),
+      const SizedBox(height: 4),
+      ClipRRect(borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+              value: pct, backgroundColor: Colors.grey.shade200,
+              valueColor: AlwaysStoppedAnimation(color), minHeight: 6)),
+    ]);
   }
 
   Widget _buildAnalyseGlobale() {
@@ -303,7 +475,7 @@ Sois direct et pratique. Réponds uniquement en français.''';
     final interpretation = _interpretations['global'];
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: Column(children: [
         Container(
           width: double.infinity, padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -313,57 +485,113 @@ Sois direct et pratique. Réponds uniquement en français.''';
               borderRadius: BorderRadius.circular(20)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Row(children: [
-              Text('🤖', style: TextStyle(fontSize: 32)),
-              SizedBox(width: 12),
+              Text('🤖', style: TextStyle(fontSize: 28)),
+              SizedBox(width: 10),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('Analyse IA Complète', style: TextStyle(
-                    color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                Text('Powered by Claude AI', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                    color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                Text('Powered by Claude AI',
+                    style: TextStyle(color: Colors.white38, fontSize: 10)),
               ]),
             ]),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             if (isLoading)
-              const Center(child: Padding(
-                padding: EdgeInsets.all(12),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 2)),
-                  SizedBox(width: 12),
-                  Text('Analyse en cours...', style: TextStyle(color: Colors.white54, fontSize: 14)),
-                ]),
-              ))
+              const Center(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                SizedBox(width: 18, height: 18,
+                    child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 2)),
+                SizedBox(width: 10),
+                Text('Analyse en cours...', style: TextStyle(color: Colors.white54, fontSize: 13)),
+              ]))
             else
-              Text(interpretation ?? 'Chargement de l\'analyse...',
-                  style: TextStyle(color: Colors.white.withOpacity(0.87), fontSize: 14, height: 1.6)),
+              Text(interpretation ?? 'Appuyez sur relancer pour analyser.',
+                  style: TextStyle(color: Colors.white.withOpacity(0.87),
+                      fontSize: 13, height: 1.5)),
             const SizedBox(height: 12),
             SizedBox(width: double.infinity,
                 child: OutlinedButton.icon(
                     onPressed: () => _analyserGlobal(_donneesFiltered()),
                     icon: const Icon(Icons.refresh_rounded, color: Colors.white60, size: 16),
-                    label: const Text('Relancer l\'analyse', style: TextStyle(color: Colors.white60)),
+                    label: const Text('Relancer', style: TextStyle(color: Colors.white60)),
                     style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.white24),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))))),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10))))),
           ]),
         ),
         const SizedBox(height: 16),
-        const Text('Résumé par indicateur',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
+        const Text('Par Indicateur', style: TextStyle(
+            fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
         _buildIACard('mortalite'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         _buildIACard('temperature'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         _buildIACard('humidite'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         _buildIACard('production'),
+      ]),
+    );
+  }
+
+  Widget _buildIACard(String type) {
+    final isLoading = _loadingIA[type] ?? false;
+    final interpretation = _interpretations[type];
+    final icons = {
+      'mortalite': '💀', 'temperature': '🌡️',
+      'humidite': '💧', 'production': '📦'
+    };
+    final titles = {
+      'mortalite': 'Mortalité', 'temperature': 'Température',
+      'humidite': 'Humidité', 'production': 'Production'
+    };
+    final colors = {
+      'mortalite': kRed, 'temperature': kOrange,
+      'humidite': Colors.blue, 'production': kGreen
+    };
+    final color = colors[type] ?? kBlue;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+          color: color.withOpacity(0.05), borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withOpacity(0.2))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text(icons[type] ?? '🤖', style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 8),
+          Text(titles[type] ?? '', style: TextStyle(
+              fontWeight: FontWeight.w800, fontSize: 13, color: color)),
+          const Spacer(),
+          if (!isLoading) GestureDetector(
+              onTap: () => _analyserGraphique(type, _donneesFiltered()),
+              child: Icon(Icons.refresh_rounded, color: color, size: 16)),
+        ]),
+        const SizedBox(height: 8),
+        if (isLoading)
+          Row(children: [
+            SizedBox(width: 14, height: 14,
+                child: CircularProgressIndicator(color: color, strokeWidth: 2)),
+            const SizedBox(width: 8),
+            const Text('Analyse...', style: TextStyle(color: Colors.grey, fontSize: 12)),
+          ])
+        else
+          Text(interpretation ?? 'Appuyez sur actualiser.',
+              style: TextStyle(color: color.withOpacity(0.8),
+                  fontSize: 12, height: 1.5)),
       ]),
     );
   }
 
   Widget _buildChart(String type, List data) {
     if (data.isEmpty) return _emptyChart('Aucune donnée');
-    final colors = {'mortalite': kRed, 'temperature': kOrange, 'humidite': Colors.blue, 'production': kGreen};
-    final units = {'mortalite': '', 'temperature': '°', 'humidite': '%', 'production': ''};
+    final colors = {
+      'mortalite': kRed, 'temperature': kOrange,
+      'humidite': Colors.blue, 'production': kGreen
+    };
+    final units = {
+      'mortalite': '', 'temperature': '°',
+      'humidite': '%', 'production': ''
+    };
     final color = colors[type] ?? kBlue;
     final unit = units[type] ?? '';
 
@@ -373,42 +601,76 @@ Sois direct et pratique. Réponds uniquement en français.''';
           .map((e) => BarChartGroupData(x: e.key,
           barRods: [BarChartRodData(
               toY: ((e.value[type] ?? 0) as num).toDouble(),
-              color: color, width: 14,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)))]))
+              color: color, width: 12,
+              borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(4)))]))
           .toList();
-      if (bars.isEmpty) return _emptyChart('Aucune production enregistrée');
+      if (bars.isEmpty) return _emptyChart('Aucune production');
       return BarChart(BarChartData(
-          gridData: FlGridData(show: true, getDrawingHorizontalLine: (_) => FlLine(color: Colors.grey.withOpacity(0.15), strokeWidth: 1)),
+          gridData: FlGridData(show: true,
+              getDrawingHorizontalLine: (_) => FlLine(
+                  color: Colors.grey.withOpacity(0.15), strokeWidth: 1)),
           titlesData: _titlesData(unit),
           borderData: FlBorderData(show: false),
           barGroups: bars));
     }
 
     final spots = data.asMap().entries
-        .map((e) => FlSpot(e.key.toDouble(), ((e.value[type] ?? 0) as num).toDouble()))
+        .map((e) => FlSpot(e.key.toDouble(),
+        ((e.value[type] ?? 0) as num).toDouble()))
         .toList();
 
     return LineChart(LineChartData(
-        gridData: FlGridData(show: true, getDrawingHorizontalLine: (_) => FlLine(color: Colors.grey.withOpacity(0.15), strokeWidth: 1)),
+        gridData: FlGridData(show: true,
+            getDrawingHorizontalLine: (_) => FlLine(
+                color: Colors.grey.withOpacity(0.15), strokeWidth: 1)),
         titlesData: _titlesData(unit),
         borderData: FlBorderData(show: false),
         lineBarsData: [LineChartBarData(
-            spots: spots, isCurved: true, color: color, barWidth: 3,
+            spots: spots, isCurved: true, color: color, barWidth: 2.5,
             belowBarData: BarAreaData(show: true, color: color.withOpacity(0.08)),
-            dotData: FlDotData(show: true, getDotPainter: (_, __, ___, ____) =>
-                FlDotCirclePainter(radius: 4, color: color, strokeWidth: 2, strokeColor: Colors.white)))]));
+            dotData: FlDotData(show: spots.length <= 10,
+                getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
+                    radius: 3, color: color, strokeWidth: 1.5,
+                    strokeColor: Colors.white)))]));
   }
 
   FlTitlesData _titlesData(String unit) => FlTitlesData(
       bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true,
-          getTitlesWidget: (v, _) => Text('J${v.toInt()+1}', style: const TextStyle(fontSize: 9, color: Colors.grey)), reservedSize: 20)),
+          getTitlesWidget: (v, _) => Text('J${v.toInt()+1}',
+              style: const TextStyle(fontSize: 8, color: Colors.grey)),
+          reservedSize: 18)),
       leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true,
-          getTitlesWidget: (v, _) => Text('${v.toInt()}$unit', style: const TextStyle(fontSize: 9, color: Colors.grey)), reservedSize: 35)),
+          getTitlesWidget: (v, _) => Text('${v.toInt()}$unit',
+              style: const TextStyle(fontSize: 8, color: Colors.grey)),
+          reservedSize: 32)),
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)));
 
-  Widget _emptyChart(String msg) => Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-    const Text('📊', style: TextStyle(fontSize: 40)),
+  Widget _statMini(String label, String value, Color color) =>
+      Expanded(child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+            color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+        child: Column(children: [
+          Text(value, style: TextStyle(
+              fontWeight: FontWeight.w900, fontSize: 14, color: color)),
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 9)),
+        ]),
+      ));
+
+  Widget _emptyChart(String msg) => Center(child: Column(
+      mainAxisAlignment: MainAxisAlignment.center, children: [
+    const Icon(Icons.bar_chart_rounded, size: 36, color: Colors.grey),
     const SizedBox(height: 8),
-    Text(msg, style: const TextStyle(color: Colors.grey, fontSize: 13))]));
+    Text(msg, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+  ]));
+
+  Widget _card({required Widget child}) => Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(14),
+          boxShadow: [BoxShadow(
+              color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+      child: child);
 }
