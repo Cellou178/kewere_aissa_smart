@@ -18,6 +18,8 @@ import '../employes/employes_screen.dart';
 import '../rapports/rapports_screen.dart';
 import '../terrain/terrain_screen.dart';
 import '../agenda/agenda_screen.dart';
+import '../marche/marche_screen.dart';
+
 
 
 
@@ -54,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 4: return const AgendaScreen();
       case 5: return const EmployesScreen();
       case 6: return const SettingsScreen();
+      case 7: return const MarcheScreen();
       default: return _emptyPage('Bientôt disponible', Icons.construction_rounded, kBlue);
     }
   }
