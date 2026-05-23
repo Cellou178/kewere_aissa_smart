@@ -21,6 +21,8 @@ import '../rapports/rapports_screen.dart';
 import '../terrain/terrain_screen.dart';
 import '../agenda/agenda_screen.dart';
 import '../marche/marche_screen.dart';
+import '../vitrine/vitrine_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -56,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 8: return const GraphiquesScreen();
       case 9: return const PredictionsScreen();
       case 10: return const MeteoScreen();
+      case 11: return const VitrineScreen();
       default: return _emptyPage('Bientôt disponible',
           Icons.construction_rounded, kBlue);
     }
@@ -153,6 +156,9 @@ class _HomeScreenState extends State<HomeScreen> {
           drawer: Drawer(
             backgroundColor: const Color(0xFF0F172A),
             child: SafeArea(child: Column(children: [
+              _drawerSection('VITRINE'),
+              _drawerItem(11, Icons.storefront_rounded, 'Ma Vitrine',
+                  const Color(0xFF16A34A)),
               // Header
               Container(
                 padding: const EdgeInsets.all(20),
