@@ -33,12 +33,12 @@ class _FinanceScreenState extends State<FinanceScreen>
     setState(() {
       _cycles = c is List ? c : [];
       _donnees = d is List ? d : [];
-      if (_cycles.isNotEmpty && _selectedCycleId == null) {
-        _selectedCycleId = _cycles.first['id']?.toString();
-      }
       _loading = false;
     });
   }
+
+  List get _cyclesFiltres => _selectedCycleId == null ? _cycles :
+  _cycles.where((c) => c['id']?.toString() == _selectedCycleId).toList();
 
   List _donneesForCycle(String? cycleId) => cycleId == null ? _donnees :
   _donnees.where((d) => d['cycle_id']?.toString() == cycleId).toList();
@@ -57,8 +57,6 @@ class _FinanceScreenState extends State<FinanceScreen>
         FinanceParams.salairesMois * 1.5 +
         FinanceParams.loyerMois * 1.5;
   }
-
-  double _calculerMarge(Map cycle) => _calculerRevenu(cycle) - _calculerDepenses(cycle);
 
   String _formatFcfa(double v) {
     final abs = v.abs();
@@ -83,62 +81,61 @@ class _FinanceScreenState extends State<FinanceScreen>
       body: Center(child: CircularProgressIndicator(color: kBlue)),
     );
 
-    double totalRevenu = _cycles.fold(0.0, (s, c) => s + _calculerRevenu(c));
-    double totalDepenses = _cycles.fold(0.0, (s, c) => s + _calculerDepenses(c));
-    double totalMarge = totalRevenu - totalDepenses;
-    double tauxMarge = totalRevenu > 0 ? (totalMarge / totalRevenu * 100) : 0;
+    final totalRevenu = _cyclesFiltres.fold(0.0, (s, c) => s + _calculerRevenu(c));
+    final totalDepenses = _cyclesFiltres.fold(0.0, (s, c) => s + _calculerDepenses(c));
+    final totalMarge = totalRevenu - totalDepenses;
+    final tauxMarge = totalRevenu > 0 ? (totalMarge / totalRevenu * 100) : 0.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       body: Column(children: [
-        // ── HEADER SOMBRE ──
+        // ── HEADER ──
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft, end: Alignment.bottomRight,
               colors: [Color(0xFF0F172A), Color(0xFF1E3A5F)],
             ),
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
           ),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Row(children: [
-              Text('💰', style: TextStyle(fontSize: 24)),
-              SizedBox(width: 10),
+              Text('💰', style: TextStyle(fontSize: 20)),
+              SizedBox(width: 8),
               Text('Tableau Financier', style: TextStyle(
-                  color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
             ]),
-            const SizedBox(height: 16),
-            // KPI Row
+            const SizedBox(height: 12),
             Row(children: [
               _headerKpi('💵', 'Revenus', _formatFcfa(totalRevenu), const Color(0xFF10B981)),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               _headerKpi('💸', 'Dépenses', _formatFcfa(totalDepenses), const Color(0xFFEF4444)),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               _headerKpi('📊', 'Marge', _formatFcfa(totalMarge),
                   totalMarge >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
             ]),
-            const SizedBox(height: 12),
-            // Barre de progression
+            const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(14)),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  const Text('Taux de rentabilité', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text('${tauxMarge.toStringAsFixed(1)}%',
-                      style: TextStyle(
-                          color: tauxMarge >= 0 ? Colors.greenAccent : Colors.redAccent,
-                          fontWeight: FontWeight.w800, fontSize: 14)),
-                ]),
-                const SizedBox(height: 8),
-                ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(
-                    value: (tauxMarge.clamp(0, 100) / 100),
-                    backgroundColor: Colors.white12,
-                    valueColor: AlwaysStoppedAnimation(tauxMarge >= 0 ? Colors.greenAccent : Colors.redAccent),
-                    minHeight: 8)),
+                  borderRadius: BorderRadius.circular(12)),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                const Text('Taux de rentabilité', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(width: 12),
+                Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                        value: (tauxMarge.clamp(0, 100) / 100),
+                        backgroundColor: Colors.white12,
+                        valueColor: AlwaysStoppedAnimation(
+                            tauxMarge >= 0 ? Colors.greenAccent : Colors.redAccent),
+                        minHeight: 6))),
+                const SizedBox(width: 10),
+                Text('${tauxMarge.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                        color: tauxMarge >= 0 ? Colors.greenAccent : Colors.redAccent,
+                        fontWeight: FontWeight.w800, fontSize: 13)),
               ]),
             ),
           ]),
@@ -161,7 +158,7 @@ class _FinanceScreenState extends State<FinanceScreen>
         ),
 
         Expanded(child: TabBarView(controller: _tabCtrl, children: [
-          _buildBilan(totalRevenu, totalDepenses, totalMarge, tauxMarge),
+          _buildBilan(totalRevenu, totalDepenses, totalMarge),
           _buildRevenus(),
           _buildDepenses(),
           _buildParametres(),
@@ -172,59 +169,54 @@ class _FinanceScreenState extends State<FinanceScreen>
 
   Widget _headerKpi(String emoji, String label, String value, Color color) =>
       Expanded(child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
             color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: color.withOpacity(0.3))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(emoji, style: const TextStyle(fontSize: 18)),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 13)),
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+          Text(emoji, style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 3),
+          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 12)),
+          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 9)),
         ]),
       ));
 
   // ── BILAN ──
-  Widget _buildBilan(double totalRevenu, double totalDepenses, double totalMarge, double tauxMarge) {
+  Widget _buildBilan(double totalRevenu, double totalDepenses, double totalMarge) {
     return RefreshIndicator(onRefresh: _load, color: kBlue,
-      child: ListView(padding: const EdgeInsets.all(16), children: [
-        // Sélecteur cycle
+      child: ListView(padding: const EdgeInsets.all(12), children: [
         _cycleSelector(),
-        const SizedBox(height: 16),
-
-        // Résumé global
+        const SizedBox(height: 12),
         _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _cardTitle('📋 Résumé Global', '${_cycles.length} cycles'),
-          const SizedBox(height: 16),
-          _bilanRow('Total Revenus', totalRevenu, kGreen),
-          const Divider(height: 20),
-          _bilanRow('Total Dépenses', totalDepenses, kRed),
-          const Divider(height: 20),
-          _bilanRow('Bénéfice Net', totalMarge, totalMarge >= 0 ? kGreen : kRed, isBold: true),
+          _cardTitle('📋 Résumé', '${_cyclesFiltres.length} cycle(s)'),
           const SizedBox(height: 12),
-          Container(padding: const EdgeInsets.all(12),
+          _bilanRow('Revenus', totalRevenu, kGreen),
+          const Divider(height: 16),
+          _bilanRow('Dépenses', totalDepenses, kRed),
+          const Divider(height: 16),
+          _bilanRow('Bénéfice Net', totalMarge, totalMarge >= 0 ? kGreen : kRed, isBold: true),
+          const SizedBox(height: 10),
+          Container(padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                   color: (totalMarge >= 0 ? kGreen : kRed).withOpacity(0.08),
                   borderRadius: BorderRadius.circular(10)),
               child: Row(children: [
-                Text(totalMarge >= 0 ? '✅' : '❌', style: const TextStyle(fontSize: 20)),
-                const SizedBox(width: 10),
+                Text(totalMarge >= 0 ? '✅' : '❌', style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 8),
                 Expanded(child: Text(
                     totalMarge >= 0
-                        ? 'Rentable ! Bénéfice de ${_formatFcfaFull(totalMarge)}'
-                        : 'Déficitaire de ${_formatFcfaFull(totalMarge.abs())}',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13,
+                        ? 'Rentable ! +${_formatFcfaFull(totalMarge)}'
+                        : 'Déficit de ${_formatFcfaFull(totalMarge.abs())}',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12,
                         color: totalMarge >= 0 ? kGreen : kRed))),
               ])),
         ])),
-        const SizedBox(height: 16),
-
-        // Par cycle
-        const Text('📈 Comparaison par Cycle',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
-        ..._cycles.map((c) => _cycleBilanCard(c)),
+        const Text('📈 Par Cycle',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
+        const SizedBox(height: 8),
+        ..._cyclesFiltres.map((c) => _cycleBilanCard(c)),
       ]),
     );
   }
@@ -238,54 +230,54 @@ class _FinanceScreenState extends State<FinanceScreen>
     return _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Expanded(child: Text(c['nom'] ?? 'Cycle',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B)))),
-        Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF1E293B)))),
+        Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
                 color: (isPositif ? kGreen : kRed).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20)),
             child: Text('${taux.toStringAsFixed(1)}%',
-                style: TextStyle(color: isPositif ? kGreen : kRed, fontWeight: FontWeight.w800, fontSize: 12))),
+                style: TextStyle(color: isPositif ? kGreen : kRed, fontWeight: FontWeight.w800, fontSize: 11))),
       ]),
-      Text('${c['nombre_sujets'] ?? 0} sujets',
-          style: const TextStyle(color: Colors.grey, fontSize: 12)),
-      const SizedBox(height: 12),
+      Text('${c['nombre_sujets'] ?? 0} sujets', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+      const SizedBox(height: 10),
       Row(children: [
         _miniKpi('💵', _formatFcfa(revenu), 'Revenus', kGreen),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         _miniKpi('💸', _formatFcfa(depenses), 'Dépenses', kRed),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         _miniKpi('📊', _formatFcfa(marge), 'Marge', isPositif ? kGreen : kRed),
       ]),
-      const SizedBox(height: 10),
+      const SizedBox(height: 8),
       ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(
           value: (taux.clamp(0, 100) / 100),
           backgroundColor: Colors.grey.shade200,
           valueColor: AlwaysStoppedAnimation(isPositif ? kGreen : kRed),
-          minHeight: 6)),
+          minHeight: 5)),
     ]));
   }
 
   // ── REVENUS ──
   Widget _buildRevenus() {
-    return ListView(padding: const EdgeInsets.all(16), children: [
+    return ListView(padding: const EdgeInsets.all(12), children: [
       _cycleSelector(),
-      const SizedBox(height: 16),
-      ..._cycles.map((c) {
+      const SizedBox(height: 12),
+      ..._cyclesFiltres.map((c) {
         final revenu = _calculerRevenu(c);
         final sujets = ((c['nombre_sujets'] ?? 0) as num).toDouble();
         final mortalite = _donneesForCycle(c['id']?.toString())
             .fold<int>(0, (s, d) => s + ((d['mortalite'] ?? 0) as num).toInt());
         final vendus = sujets - mortalite;
         return _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _cardTitle('💵 ${c['nom'] ?? 'Cycle'}', _formatFcfaFull(revenu)),
-          const SizedBox(height: 14),
+          _cardTitle('💵 ${c['nom'] ?? 'Cycle'}', _formatFcfa(revenu)),
+          const SizedBox(height: 10),
           _detailRow('🐔 Poulets vendus', '${vendus.toInt()} sujets'),
           _detailRow('💰 Prix unitaire', _formatFcfaFull(FinanceParams.prixVentePoulet)),
-          _detailRow('💀 Mortalité déduite', '$mortalite sujets'),
-          const Divider(height: 20),
+          _detailRow('💀 Mortalité', '$mortalite sujets'),
+          const Divider(height: 16),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('TOTAL REVENUS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kGreen)),
-            Text(_formatFcfaFull(revenu), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kGreen)),
+            const Text('TOTAL', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kGreen)),
+            Text(_formatFcfaFull(revenu),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kGreen)),
           ]),
         ]));
       }),
@@ -294,10 +286,10 @@ class _FinanceScreenState extends State<FinanceScreen>
 
   // ── DÉPENSES ──
   Widget _buildDepenses() {
-    return ListView(padding: const EdgeInsets.all(16), children: [
+    return ListView(padding: const EdgeInsets.all(12), children: [
       _cycleSelector(),
-      const SizedBox(height: 16),
-      ..._cycles.map((c) {
+      const SizedBox(height: 12),
+      ..._cyclesFiltres.map((c) {
         final sujets = ((c['nombre_sujets'] ?? 0) as num).toDouble();
         final poussins = sujets * FinanceParams.prixPoussin;
         final medical = sujets * FinanceParams.coutMedicalParPoussin;
@@ -305,40 +297,42 @@ class _FinanceScreenState extends State<FinanceScreen>
         final loyer = FinanceParams.loyerMois * 1.5;
         final total = poussins + medical + salaires + loyer;
         final items = [
-          {'label': '🐥 Achat poussins', 'montant': poussins, 'pct': poussins / total * 100},
-          {'label': '💊 Soins médicaux', 'montant': medical, 'pct': medical / total * 100},
+          {'label': '🐥 Poussins', 'montant': poussins, 'pct': poussins / total * 100},
+          {'label': '💊 Médical', 'montant': medical, 'pct': medical / total * 100},
           {'label': '👥 Salaires', 'montant': salaires, 'pct': salaires / total * 100},
-          {'label': '🏠 Loyer/charges', 'montant': loyer, 'pct': loyer / total * 100},
+          {'label': '🏠 Loyer', 'montant': loyer, 'pct': loyer / total * 100},
         ];
         return _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _cardTitle('💸 ${c['nom'] ?? 'Cycle'}', _formatFcfaFull(total)),
-          const SizedBox(height: 14),
+          _cardTitle('💸 ${c['nom'] ?? 'Cycle'}', _formatFcfa(total)),
+          const SizedBox(height: 10),
           ...items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: 10),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text(item['label'] as String, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                Text(_formatFcfaFull(item['montant'] as double),
-                    style: const TextStyle(fontWeight: FontWeight.w700, color: kRed, fontSize: 13)),
+                Text(item['label'] as String,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                Text(_formatFcfa(item['montant'] as double),
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: kRed, fontSize: 12)),
               ]),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Row(children: [
                 Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                         value: ((item['pct'] as double) / 100).clamp(0.0, 1.0),
                         backgroundColor: Colors.grey.shade200,
                         valueColor: const AlwaysStoppedAnimation(kRed),
-                        minHeight: 5))),
-                const SizedBox(width: 8),
+                        minHeight: 4))),
+                const SizedBox(width: 6),
                 Text('${(item['pct'] as double).toStringAsFixed(0)}%',
-                    style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                    style: const TextStyle(color: Colors.grey, fontSize: 10)),
               ]),
             ]),
           )),
           const Divider(height: 8),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('TOTAL DÉPENSES', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kRed)),
-            Text(_formatFcfaFull(total), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kRed)),
+            const Text('TOTAL', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: kRed)),
+            Text(_formatFcfaFull(total),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kRed)),
           ]),
         ]));
       }),
@@ -347,57 +341,57 @@ class _FinanceScreenState extends State<FinanceScreen>
 
   // ── PARAMÈTRES ──
   Widget _buildParametres() {
-    return ListView(padding: const EdgeInsets.all(16), children: [
+    return ListView(padding: const EdgeInsets.all(12), children: [
       _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Row(children: [
-          Text('⚙️', style: TextStyle(fontSize: 20)),
+          Text('⚙️', style: TextStyle(fontSize: 18)),
           SizedBox(width: 8),
-          Text('Paramètres Financiers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
+          Text('Paramètres Financiers',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
         ]),
         const SizedBox(height: 4),
-        const Text('Ajustez selon votre situation réelle',
-            style: TextStyle(color: Colors.grey, fontSize: 12)),
-        const SizedBox(height: 20),
-        _paramField('🌾 Prix sac aliment (FCFA)', FinanceParams.prixSacAliment,
+        const Text('Ajustez selon votre situation',
+            style: TextStyle(color: Colors.grey, fontSize: 11)),
+        const SizedBox(height: 16),
+        _paramField('🌾 Prix sac aliment', FinanceParams.prixSacAliment,
                 (v) => setState(() => FinanceParams.prixSacAliment = v)),
-        _paramField('🐔 Prix vente poulet (FCFA)', FinanceParams.prixVentePoulet,
+        _paramField('🐔 Prix vente poulet', FinanceParams.prixVentePoulet,
                 (v) => setState(() => FinanceParams.prixVentePoulet = v)),
-        _paramField('🐥 Prix poussin (FCFA)', FinanceParams.prixPoussin,
+        _paramField('🐥 Prix poussin', FinanceParams.prixPoussin,
                 (v) => setState(() => FinanceParams.prixPoussin = v)),
-        _paramField('👥 Salaires/mois (FCFA)', FinanceParams.salairesMois,
+        _paramField('👥 Salaires/mois', FinanceParams.salairesMois,
                 (v) => setState(() => FinanceParams.salairesMois = v)),
-        _paramField('🏠 Loyer/mois (FCFA)', FinanceParams.loyerMois,
+        _paramField('🏠 Loyer/mois', FinanceParams.loyerMois,
                 (v) => setState(() => FinanceParams.loyerMois = v)),
-        _paramField('💊 Coût médical/poussin (FCFA)', FinanceParams.coutMedicalParPoussin,
+        _paramField('💊 Coût médical/poussin', FinanceParams.coutMedicalParPoussin,
                 (v) => setState(() => FinanceParams.coutMedicalParPoussin = v)),
       ])),
-      const SizedBox(height: 16),
-      // Conseil IA
-      Container(padding: const EdgeInsets.all(16),
+      const SizedBox(height: 12),
+      Container(padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
               gradient: const LinearGradient(
                   colors: [Color(0xFF1E3A5F), Color(0xFF1B3A6B)],
                   begin: Alignment.topLeft, end: Alignment.bottomRight),
-              borderRadius: BorderRadius.circular(16)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Row(children: [
-              Text('💡', style: TextStyle(fontSize: 20)),
+              borderRadius: BorderRadius.circular(14)),
+          child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text('💡', style: TextStyle(fontSize: 18)),
               SizedBox(width: 8),
-              Text('Conseil', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
+              Text('Conseil', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
             ]),
-            const SizedBox(height: 8),
-            const Text('Pour améliorer la rentabilité, réduisez la mortalité en optimisant la ventilation et la densité du bâtiment. Un taux de mortalité < 3% peut augmenter votre marge de 15-20%.',
-                style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5)),
+            SizedBox(height: 8),
+            Text('Réduire la mortalité en optimisant la ventilation peut augmenter votre marge de 15-20%.',
+                style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.5)),
           ])),
     ]);
   }
 
-  // ── WIDGETS HELPER ──
+  // ── HELPERS ──
   Widget _cycleSelector() => DropdownButtonFormField<String>(
       value: _selectedCycleId,
       decoration: InputDecoration(
           labelText: 'Filtrer par cycle',
-          prefixIcon: const Icon(Icons.filter_list_rounded, color: kBlue),
+          prefixIcon: const Icon(Icons.filter_list_rounded, color: kBlue, size: 18),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true, fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
@@ -405,66 +399,70 @@ class _FinanceScreenState extends State<FinanceScreen>
         const DropdownMenuItem(value: null, child: Text('Tous les cycles')),
         ..._cycles.map((c) => DropdownMenuItem(
             value: c['id']?.toString(),
-            child: Text(c['nom']?.toString() ?? ''))),
+            child: Text(c['nom']?.toString() ?? '', style: const TextStyle(fontSize: 13)))),
       ],
       onChanged: (v) => setState(() => _selectedCycleId = v));
 
   Widget _card({required Widget child}) => Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3))]),
+          color: Colors.white, borderRadius: BorderRadius.circular(14),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))]),
       child: child);
 
   Widget _cardTitle(String title, String subtitle) => Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B)))),
-        Text(subtitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: kBlue)),
+        Expanded(child: Text(title,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF1E293B)))),
+        Text(subtitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: kBlue)),
       ]);
 
   Widget _bilanRow(String label, double value, Color color, {bool isBold = false}) =>
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label, style: TextStyle(fontWeight: isBold ? FontWeight.w800 : FontWeight.w500,
-            fontSize: isBold ? 14 : 13, color: const Color(0xFF1E293B))),
-        Text(_formatFcfaFull(value), style: TextStyle(fontWeight: FontWeight.w800,
-            fontSize: isBold ? 15 : 13, color: color)),
+        Text(label, style: TextStyle(
+            fontWeight: isBold ? FontWeight.w800 : FontWeight.w500,
+            fontSize: isBold ? 13 : 12, color: const Color(0xFF1E293B))),
+        Text(_formatFcfaFull(value), style: TextStyle(
+            fontWeight: FontWeight.w800, fontSize: isBold ? 14 : 12, color: color)),
       ]);
 
   Widget _miniKpi(String emoji, String value, String label, Color color) =>
       Expanded(child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+            color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
         child: Column(children: [
-          Text(emoji, style: const TextStyle(fontSize: 14)),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: color)),
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 9)),
+          Text(emoji, style: const TextStyle(fontSize: 12)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 10, color: color)),
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 8)),
         ]),
       ));
 
   Widget _detailRow(String label, String value) => Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF1E293B))),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        Text(value, style: const TextStyle(
+            fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF1E293B))),
       ]));
 
   Widget _paramField(String label, double value, Function(double) onChanged) {
     final ctrl = TextEditingController(text: value.toStringAsFixed(0));
     return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.only(bottom: 10),
         child: Row(children: [
-          Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF1E293B)))),
-          const SizedBox(width: 12),
-          SizedBox(width: 130, child: TextField(
+          Expanded(child: Text(label, style: const TextStyle(
+              fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF1E293B)))),
+          const SizedBox(width: 10),
+          SizedBox(width: 110, child: TextField(
               controller: ctrl, keyboardType: TextInputType.number,
               textAlign: TextAlign.right,
-              style: const TextStyle(fontWeight: FontWeight.w800, color: kBlue, fontSize: 13),
+              style: const TextStyle(fontWeight: FontWeight.w800, color: kBlue, fontSize: 12),
               decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   filled: true, fillColor: const Color(0xFFF8FAFC)),
               onSubmitted: (v) => onChanged(double.tryParse(v) ?? value))),
         ]));
