@@ -66,7 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
     appBar: AppBar(
       backgroundColor: const Color(0xFF0F172A),
       foregroundColor: Colors.white,
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+      title: Text(title,
+          style: const TextStyle(fontWeight: FontWeight.w800)),
     ),
     body: Center(child: Column(
         mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -86,8 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _navigateDrawer(int index) {
     Navigator.pop(context);
-    Navigator.push(context, MaterialPageRoute(
-        builder: (_) => _getDrawerPage(index)));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (_) => _getDrawerPage(index)));
   }
 
   @override
@@ -110,7 +111,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white, fontSize: 16,
                 fontWeight: FontWeight.w800)),
             actions: [
-              // Badge notifications
               Stack(children: [
                 IconButton(
                   icon: const Icon(Icons.notifications_outlined,
@@ -123,12 +123,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   Positioned(top: 8, right: 8, child: Container(
                       padding: const EdgeInsets.all(3),
                       decoration: const BoxDecoration(
-                          color: Colors.redAccent, shape: BoxShape.circle),
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle),
                       child: Text('${NotificationService.nonLues}',
                           style: const TextStyle(color: Colors.white,
-                              fontSize: 8, fontWeight: FontWeight.w800)))),
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800)))),
               ]),
-              // Badge rôle
               Container(
                 margin: const EdgeInsets.only(right: 12),
                 padding: const EdgeInsets.symmetric(
@@ -161,25 +162,27 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: kBlue.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(14)),
                       child: const Center(
-                          child: Text('🐔', style: TextStyle(fontSize: 24)))),
+                          child: Text('🐔',
+                              style: TextStyle(fontSize: 24)))),
                   const SizedBox(width: 12),
                   Expanded(child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(SessionManager.nom.isNotEmpty
-                        ? SessionManager.nom : 'Utilisateur',
-                        style: const TextStyle(color: Colors.white,
-                            fontWeight: FontWeight.w800, fontSize: 14)),
-                    Text(SessionManager.role, style: const TextStyle(
-                        color: Colors.white54, fontSize: 11)),
-                  ])),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(SessionManager.nom.isNotEmpty
+                            ? SessionManager.nom : 'Utilisateur',
+                            style: const TextStyle(color: Colors.white,
+                                fontWeight: FontWeight.w800, fontSize: 14)),
+                        Text(SessionManager.role, style: const TextStyle(
+                            color: Colors.white54, fontSize: 11)),
+                      ])),
                 ]),
               ),
               const Divider(color: Colors.white12),
 
+              // ── Items scrollables ──
               Expanded(child: ListView(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   children: [
-                    // GESTION
                     _drawerSection('GESTION'),
                     _drawerItem(2, Icons.agriculture_rounded, 'Fermes',
                         const Color(0xFF16A34A)),
@@ -191,17 +194,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Color(0xFF16A34A)),
                     const SizedBox(height: 8),
 
-                    // ANALYTICS
                     _drawerSection('ANALYTICS'),
                     _drawerItem(8, Icons.bar_chart_rounded, 'Graphiques',
                         const Color(0xFF2563EB)),
-                    _drawerItem(9, Icons.psychology_rounded, 'Prédictions IA',
-                        const Color(0xFF0891B2)),
+                    _drawerItem(9, Icons.psychology_rounded,
+                        'Prédictions IA', const Color(0xFF0891B2)),
                     _drawerItem(10, Icons.cloud_rounded, 'Météo',
                         const Color(0xFF38BDF8)),
                     const SizedBox(height: 8),
 
-                    // RAPPORTS
                     _drawerSection('RAPPORTS & PLANNING'),
                     _drawerItem(1, Icons.assessment_rounded, 'Rapports',
                         const Color(0xFF6366F1)),
@@ -209,34 +210,34 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Color(0xFF0891B2)),
                     const SizedBox(height: 8),
 
-                    // MARCHÉ
                     _drawerSection('MARCHÉ'),
-                    _drawerItem(7, Icons.store_rounded, 'Marché Afrique de l\'Ouest',
+                    _drawerItem(7, Icons.store_rounded,
+                        'Marché Afrique de l\'Ouest',
                         const Color(0xFFD97706)),
-                    const SizedBox(height: 8),
-
-                    // AUTRES
-                    _drawerSection('AUTRES'),
-                    _drawerItem(6, Icons.settings_rounded, 'Paramètres',
-                        const Color(0xFF6B7280)),
-                    ListTile(
-                      dense: true,
-                      leading: Container(padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.logout_rounded,
-                              color: Colors.redAccent, size: 18)),
-                      title: const Text('Déconnexion', style: TextStyle(
-                          color: Colors.redAccent, fontWeight: FontWeight.w600,
-                          fontSize: 13)),
-                      onTap: () async {
-                        await SessionManager.clear();
-                        Navigator.pushNamedAndRemoveUntil(
-                            context, '/', (route) => false);
-                      },
-                    ),
                   ])),
+
+              // ── Fixés en bas ──
+              const Divider(color: Colors.white12),
+              _drawerItem(6, Icons.settings_rounded, 'Paramètres',
+                  const Color(0xFF6B7280)),
+              ListTile(
+                dense: true,
+                leading: Container(padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.logout_rounded,
+                        color: Colors.redAccent, size: 18)),
+                title: const Text('Déconnexion', style: TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.w600, fontSize: 13)),
+                onTap: () async {
+                  await SessionManager.clear();
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, '/', (route) => false);
+                },
+              ),
+              const SizedBox(height: 8),
             ])),
           ),
 
@@ -255,13 +256,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: SizedBox(
                 height: 56,
                 child: Row(children: [
-                  _bottomItem(0, Icons.dashboard_rounded, 'Accueil', kBlue),
+                  _bottomItem(0, Icons.dashboard_rounded,
+                      'Accueil', kBlue),
                   _bottomItem(1, Icons.loop_rounded, 'Cycles',
                       const Color(0xFFEA580C)),
-                  _bottomItem(2, Icons.attach_money_rounded, 'Finance',
-                      const Color(0xFFDC2626)),
-                  _bottomItem(3, Icons.notifications_rounded, 'Alertes',
-                      const Color(0xFFF59E0B)),
+                  _bottomItem(2, Icons.attach_money_rounded,
+                      'Finance', const Color(0xFFDC2626)),
+                  _bottomItem(3, Icons.notifications_rounded,
+                      'Alertes', const Color(0xFFF59E0B)),
                   _bottomItem(4, Icons.person_rounded, 'Profil',
                       const Color(0xFF7C3AED)),
                 ]),
@@ -282,17 +284,21 @@ class _HomeScreenState extends State<HomeScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.08) : Colors.transparent,
+            color: isSelected
+                ? color.withOpacity(0.08) : Colors.transparent,
             border: Border(top: BorderSide(
-                color: isSelected ? color : Colors.transparent, width: 2)),
+                color: isSelected ? color : Colors.transparent,
+                width: 2)),
           ),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(icon, size: 22,
                 color: isSelected ? color : Colors.grey.shade400),
             const SizedBox(height: 3),
             Text(label, style: TextStyle(
                 fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                fontWeight: isSelected
+                    ? FontWeight.w700 : FontWeight.w400,
                 color: isSelected ? color : Colors.grey.shade400)),
           ]),
         ),
@@ -306,7 +312,8 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white38, fontSize: 10,
           fontWeight: FontWeight.w700, letterSpacing: 1)));
 
-  Widget _drawerItem(int index, IconData icon, String label, Color color) =>
+  Widget _drawerItem(int index, IconData icon, String label,
+      Color color) =>
       ListTile(
         dense: true,
         leading: Container(padding: const EdgeInsets.all(6),
