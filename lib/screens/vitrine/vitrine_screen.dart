@@ -52,7 +52,7 @@ class _VitrineScreenState extends State<VitrineScreen>
       'disponible': false,
       'quantite': 0,
       'icon': '🥚',
-      'color': kYellow,
+      'color': const Color(0xFFF59E0B),
       'description': 'Œufs de poules pondeuses, calibre A',
     },
     {
@@ -74,7 +74,7 @@ class _VitrineScreenState extends State<VitrineScreen>
       'disponible': false,
       'quantite': 0,
       'icon': '🐥',
-      'color': kYellow,
+      'color': const Color(0xFFF59E0B),
       'description': 'Poussins Ross 308, vaccinés et sexés',
     },
   ];

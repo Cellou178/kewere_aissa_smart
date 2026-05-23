@@ -23,7 +23,6 @@ import '../agenda/agenda_screen.dart';
 import '../marche/marche_screen.dart';
 import '../vitrine/vitrine_screen.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -103,7 +102,6 @@ class _HomeScreenState extends State<HomeScreen> {
           key: _scaffoldKey,
           backgroundColor: const Color(0xFFF1F5F9),
 
-          // ── APP BAR ──
           appBar: AppBar(
             backgroundColor: const Color(0xFF0F172A), elevation: 0,
             leading: IconButton(
@@ -156,10 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
           drawer: Drawer(
             backgroundColor: const Color(0xFF0F172A),
             child: SafeArea(child: Column(children: [
-              _drawerSection('VITRINE'),
-              _drawerItem(11, Icons.storefront_rounded, 'Ma Vitrine',
-                  const Color(0xFF16A34A)),
-              // Header
+              // ── Header ──
               Container(
                 padding: const EdgeInsets.all(20),
                 child: Row(children: [
@@ -216,10 +211,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Color(0xFF0891B2)),
                     const SizedBox(height: 8),
 
-                    _drawerSection('MARCHÉ'),
+                    _drawerSection('MARCHÉ & VITRINE'),
                     _drawerItem(7, Icons.store_rounded,
                         'Marché Afrique de l\'Ouest',
                         const Color(0xFFD97706)),
+                    _drawerItem(11, Icons.storefront_rounded, 'Ma Vitrine',
+                        const Color(0xFF16A34A)),
                   ])),
 
               // ── Fixés en bas ──
@@ -247,10 +244,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ])),
           ),
 
-          // ── BODY ──
           body: _pages[_currentIndex],
 
-          // ── BOTTOM NAV ──
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -262,14 +257,13 @@ class _HomeScreenState extends State<HomeScreen> {
               child: SizedBox(
                 height: 56,
                 child: Row(children: [
-                  _bottomItem(0, Icons.dashboard_rounded,
-                      'Accueil', kBlue),
+                  _bottomItem(0, Icons.dashboard_rounded, 'Accueil', kBlue),
                   _bottomItem(1, Icons.loop_rounded, 'Cycles',
                       const Color(0xFFEA580C)),
-                  _bottomItem(2, Icons.attach_money_rounded,
-                      'Finance', const Color(0xFFDC2626)),
-                  _bottomItem(3, Icons.notifications_rounded,
-                      'Alertes', const Color(0xFFF59E0B)),
+                  _bottomItem(2, Icons.attach_money_rounded, 'Finance',
+                      const Color(0xFFDC2626)),
+                  _bottomItem(3, Icons.notifications_rounded, 'Alertes',
+                      const Color(0xFFF59E0B)),
                   _bottomItem(4, Icons.person_rounded, 'Profil',
                       const Color(0xFF7C3AED)),
                 ]),
@@ -290,23 +284,20 @@ class _HomeScreenState extends State<HomeScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: isSelected
-                ? color.withOpacity(0.08) : Colors.transparent,
+            color: isSelected ? color.withOpacity(0.08) : Colors.transparent,
             border: Border(top: BorderSide(
-                color: isSelected ? color : Colors.transparent,
-                width: 2)),
+                color: isSelected ? color : Colors.transparent, width: 2)),
           ),
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon, size: 22,
-                color: isSelected ? color : Colors.grey.shade400),
-            const SizedBox(height: 3),
-            Text(label, style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected
-                    ? FontWeight.w700 : FontWeight.w400,
-                color: isSelected ? color : Colors.grey.shade400)),
-          ]),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 22,
+                    color: isSelected ? color : Colors.grey.shade400),
+                const SizedBox(height: 3),
+                Text(label, style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                    color: isSelected ? color : Colors.grey.shade400)),
+              ]),
         ),
       ),
     );
@@ -318,8 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white38, fontSize: 10,
           fontWeight: FontWeight.w700, letterSpacing: 1)));
 
-  Widget _drawerItem(int index, IconData icon, String label,
-      Color color) =>
+  Widget _drawerItem(int index, IconData icon, String label, Color color) =>
       ListTile(
         dense: true,
         leading: Container(padding: const EdgeInsets.all(6),
