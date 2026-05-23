@@ -25,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
   static const List<Map<String, dynamic>> _tabs = [
-    // Rangée 1
     {'label': 'Accueil',  'icon': Icons.dashboard_rounded,       'color': 0xFF1B3A6B},
     {'label': 'Terrain',  'icon': Icons.terrain_rounded,         'color': 0xFF16A34A},
     {'label': 'Cycles',   'icon': Icons.loop_rounded,            'color': 0xFFEA580C},
@@ -34,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
     {'label': 'IA',       'icon': Icons.psychology_rounded,      'color': 0xFF0891B2},
     {'label': 'Marché',   'icon': Icons.store_rounded,           'color': 0xFFD97706},
     {'label': 'Météo',    'icon': Icons.cloud_rounded,           'color': 0xFF38BDF8},
-    // Rangée 2
     {'label': 'Chat',     'icon': Icons.chat_rounded,            'color': 0xFF059669},
     {'label': 'Rapports', 'icon': Icons.assessment_rounded,      'color': 0xFF6366F1},
     {'label': 'Ferme',    'icon': Icons.agriculture_rounded,     'color': 0xFF16A34A},
@@ -43,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
     {'label': 'Sécurité', 'icon': Icons.lock_rounded,            'color': 0xFFDC2626},
     {'label': 'Accès',    'icon': Icons.group_rounded,           'color': 0xFF7C3AED},
     {'label': 'Alertes',  'icon': Icons.notifications_rounded,   'color': 0xFFF59E0B},
-    // Rangée 3
     {'label': 'Stock',    'icon': Icons.inventory_rounded,       'color': 0xFFEA580C},
     {'label': 'Agenda',   'icon': Icons.calendar_month_rounded,  'color': 0xFF0891B2},
     {'label': 'Vitrine',  'icon': Icons.storefront_rounded,      'color': 0xFFD97706},
@@ -55,30 +52,30 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   List<Widget> get _pages => [
-    const DashboardPage(),                                                          // 0 Accueil
-    _emptyPage('Terrain',   Icons.terrain_rounded,          const Color(0xFF16A34A)), // 1
-    const CyclesScreen(),                                                           // 2 Cycles
-    _emptyPage('Opérations',Icons.assignment_rounded,       const Color(0xFF7C3AED)), // 3
-    AuthGuard(rolesAutorises: const ['admin','proprietaire'], child: const FinanceScreen()), // 4
-    const PredictionsScreen(),                                                      // 5 IA
-    _emptyPage('Marché',    Icons.store_rounded,            const Color(0xFFD97706)), // 6
-    const MeteoScreen(),                                                            // 7 Météo
-    _emptyPage('Chat',      Icons.chat_rounded,             const Color(0xFF059669)), // 8
-    _emptyPage('Rapports',  Icons.assessment_rounded,       const Color(0xFF6366F1)), // 9
-    const FermesScreen(),                                                           // 10 Ferme
-    const GraphiquesScreen(),                                                       // 11 Stats
-    const SettingsScreen(),                                                         // 12 Réglages
-    _emptyPage('Sécurité',  Icons.lock_rounded,             const Color(0xFFDC2626)), // 13
-    _emptyPage('Accès',     Icons.group_rounded,            const Color(0xFF7C3AED)), // 14
-    const AlertesScreen(),                                                          // 15 Alertes
-    const StocksScreen(),                                                           // 16 Stock
-    _emptyPage('Agenda',    Icons.calendar_month_rounded,   const Color(0xFF0891B2)), // 17
-    _emptyPage('Vitrine',   Icons.storefront_rounded,       const Color(0xFFD97706)), // 18
-    _emptyPage('Paiement',  Icons.payment_rounded,          const Color(0xFF059669)), // 19
-    _emptyPage('Invest.',   Icons.trending_up_rounded,      const Color(0xFF16A34A)), // 20
-    _emptyPage('Maint.',    Icons.build_rounded,            const Color(0xFF6B7280)), // 21
-    const ProfilScreen(),                                                           // 22 Profil
-    _emptyPage('Gestion',   Icons.manage_accounts_rounded,  const Color(0xFF7C3AED)), // 23
+    const DashboardPage(),
+    _emptyPage('Terrain',    Icons.terrain_rounded,          const Color(0xFF16A34A)),
+    const CyclesScreen(),
+    _emptyPage('Opérations', Icons.assignment_rounded,       const Color(0xFF7C3AED)),
+    AuthGuard(rolesAutorises: const ['admin','proprietaire'], child: const FinanceScreen()),
+    const PredictionsScreen(),
+    _emptyPage('Marché',     Icons.store_rounded,            const Color(0xFFD97706)),
+    const MeteoScreen(),
+    _emptyPage('Chat',       Icons.chat_rounded,             const Color(0xFF059669)),
+    _emptyPage('Rapports',   Icons.assessment_rounded,       const Color(0xFF6366F1)),
+    const FermesScreen(),
+    const GraphiquesScreen(),
+    const SettingsScreen(),
+    _emptyPage('Sécurité',   Icons.lock_rounded,             const Color(0xFFDC2626)),
+    _emptyPage('Accès',      Icons.group_rounded,            const Color(0xFF7C3AED)),
+    const AlertesScreen(),
+    const StocksScreen(),
+    _emptyPage('Agenda',     Icons.calendar_month_rounded,   const Color(0xFF0891B2)),
+    _emptyPage('Vitrine',    Icons.storefront_rounded,       const Color(0xFFD97706)),
+    _emptyPage('Paiement',   Icons.payment_rounded,          const Color(0xFF059669)),
+    _emptyPage('Invest.',    Icons.trending_up_rounded,      const Color(0xFF16A34A)),
+    _emptyPage('Maint.',     Icons.build_rounded,            const Color(0xFF6B7280)),
+    const ProfilScreen(),
+    _emptyPage('Gestion',    Icons.manage_accounts_rounded,  const Color(0xFF7C3AED)),
   ];
 
   Widget _emptyPage(String title, IconData icon, Color color) => Scaffold(
@@ -103,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _navRow(List<Map<String, dynamic>> tabs, int startIndex) {
     return SizedBox(
-      height: 56,
+      height: 48,
       child: Row(
         children: tabs.asMap().entries.map((e) {
           final index = startIndex + e.key;
@@ -115,23 +112,29 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => setState(() => _currentIndex = index),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                color: isSelected ? color.withOpacity(0.08) : Colors.transparent,
+                decoration: BoxDecoration(
+                  color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
+                  border: isSelected
+                      ? Border(bottom: BorderSide(color: color, width: 2))
+                      : null,
+                ),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(tab['icon'] as IconData,
-                      size: 20,
-                      color: isSelected ? color : Colors.grey.shade400),
+                  Icon(
+                    tab['icon'] as IconData,
+                    size: 18,
+                    color: isSelected ? color : const Color(0xFFB0B7C3),
+                  ),
                   const SizedBox(height: 2),
-                  Text(tab['label'] as String,
-                      style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                          color: isSelected ? color : Colors.grey.shade400),
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                  if (isSelected)
-                    Container(margin: const EdgeInsets.only(top: 2),
-                        width: 16, height: 2,
-                        decoration: BoxDecoration(
-                            color: color, borderRadius: BorderRadius.circular(1))),
+                  Text(
+                    tab['label'] as String,
+                    style: TextStyle(
+                      fontSize: 7,
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w400,
+                      color: isSelected ? color : const Color(0xFFB0B7C3),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ]),
               ),
             ),
@@ -182,9 +185,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               _navRow(_tabs.sublist(0, 8), 0),
-              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              const Divider(height: 0.5, color: Color(0xFFE5E7EB)),
               _navRow(_tabs.sublist(8, 16), 8),
-              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              const Divider(height: 0.5, color: Color(0xFFE5E7EB)),
               _navRow(_tabs.sublist(16, 24), 16),
             ]),
           ),
