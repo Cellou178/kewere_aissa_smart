@@ -15,6 +15,7 @@ import '../predictions/predictions_screen.dart';
 import '../stocks/stocks_screen.dart';
 import '../settings/settings_screen.dart';
 import '../employes/employes_screen.dart';
+import '../rapports/rapports_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _getDrawerPage(int index) {
     switch (index) {
       case 0: return const FermesScreen();
-      case 1: return const StocksScreen();
+      case 1: return const RapportsScreen();
       case 2: return const GraphiquesScreen();
       case 3: return const PredictionsScreen();
       case 4: return const MeteoScreen();
