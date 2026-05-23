@@ -24,15 +24,11 @@ class _FermesScreenState extends State<FermesScreen> {
     setState(() { _fermes = f is List ? f : []; _loading = false; });
   }
 
-  void _snack(String msg, Color color) => ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color, behavior: SnackBarBehavior.floating));
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       body: Column(children: [
-        // Header
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -54,7 +50,7 @@ class _FermesScreenState extends State<FermesScreen> {
                 ElevatedButton.icon(
                   onPressed: () async {
                     final result = await Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const AddFermeScreen()));
+                        MaterialPageRoute(builder: (_) => AddFermeScreen()));
                     if (result == true) _load();
                   },
                   icon: const Icon(Icons.add_rounded, size: 16),
@@ -67,15 +63,12 @@ class _FermesScreenState extends State<FermesScreen> {
             ]),
           ]),
         ),
-
-        // Liste
         Expanded(child: _loading
             ? const Center(child: CircularProgressIndicator(color: kBlue))
             : RefreshIndicator(
           onRefresh: _load, color: kBlue,
-          child: _fermes.isEmpty
-              ? _empty()
-              : ListView.builder(
+          child: _fermes.isEmpty ? _empty() :
+          ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: _fermes.length,
             itemBuilder: (_, i) => _fermeCard(_fermes[i]),
@@ -86,7 +79,7 @@ class _FermesScreenState extends State<FermesScreen> {
           ? FloatingActionButton(
           onPressed: () async {
             final result = await Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const AddFermeScreen()));
+                MaterialPageRoute(builder: (_) => AddFermeScreen()));
             if (result == true) _load();
           },
           backgroundColor: kBlue,
@@ -109,7 +102,6 @@ class _FermesScreenState extends State<FermesScreen> {
             color: Colors.white, borderRadius: BorderRadius.circular(16),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3))]),
         child: Column(children: [
-          // Top
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -136,7 +128,6 @@ class _FermesScreenState extends State<FermesScreen> {
               const Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey, size: 14),
             ]),
           ),
-          // Bottom
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(children: [

@@ -83,10 +83,12 @@ class _OperationsScreenState extends State<OperationsScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white, elevation: 0,
-        title: const Text('Saisie Journalière',
-            style: TextStyle(fontWeight: FontWeight.w800)),
-        subtitle: Text(widget.ferme['nom'] ?? '',
-            style: const TextStyle(color: Colors.white60, fontSize: 12)),
+        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Saisie Journalière',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          Text(widget.ferme['nom'] ?? '',
+              style: const TextStyle(color: Colors.white60, fontSize: 12)),
+        ]),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
