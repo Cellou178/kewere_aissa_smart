@@ -33,7 +33,7 @@ class _AddCycleScreenState extends State<AddCycleScreen> {
       'icon': Icons.set_meal_rounded, 'color': kOrange,
       'desc': 'Production de viande'},
     {'value': 'ponte', 'label': 'Poule pondeuse',
-      'icon': Icons.egg_rounded, 'color': kYellow,
+      'icon': Icons.egg_rounded, 'color': Colors.yellow ,
       'desc': 'Production d\'œufs'},
     {'value': 'reproducteur', 'label': 'Reproducteur',
       'icon': Icons.pets_rounded, 'color': kPurple,
@@ -110,8 +110,8 @@ class _AddCycleScreenState extends State<AddCycleScreen> {
 
   Future<void> _submit() async {
     setState(() { _loading = true; _error = ''; });
-    final fermeId = _fermeId ?? SessionManager.fermeId.isNotEmpty
-        ? _fermeId ?? SessionManager.fermeId
+    final fermeId = _fermeId ?? (SessionManager.fermeId.isNotEmpty
+        ? _fermeId ?? SessionManager.fermeId : '');
         : '11111111-1111-1111-1111-111111111111';
 
     final data = {

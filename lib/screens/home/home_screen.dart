@@ -99,8 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // Dans AppBar actions remplace le badge par :
         Stack(children: [
-        IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+        IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white),
         onPressed: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const NotificationsScreen())),
       ),
@@ -114,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white, fontSize: 8,
                 fontWeight: FontWeight.w800)))),
     ]),
-              // Badge alertes
+          // Badge alertes
               Stack(children: [
                 IconButton(
                   icon: const Icon(Icons.notifications_outlined, color: Colors.white),
@@ -223,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    );
+    ),
   }
 
   Widget _bottomItem(int index, IconData icon, String label, Color color) {
