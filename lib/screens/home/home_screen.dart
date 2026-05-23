@@ -19,8 +19,8 @@ import '../rapports/rapports_screen.dart';
 import '../terrain/terrain_screen.dart';
 import '../agenda/agenda_screen.dart';
 import '../marche/marche_screen.dart';
-
-
+import '../notifications/notifications_screen.dart';
+import '../../services/notification_service.dart';
 
 
 
@@ -95,19 +95,25 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: const Color(0xFFF1F5F9),
 
           // ── APP BAR ──
-          appBar: AppBar(
-            backgroundColor: const Color(0xFF0F172A), elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.menu_rounded, color: Colors.white),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
-            title: const Row(children: [
-              Text('🐔', style: TextStyle(fontSize: 20)),
-              SizedBox(width: 8),
-              Text('Kewere Smart', style: TextStyle(
-                  color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
-            ]),
-            actions: [
+
+
+// Dans AppBar actions remplace le badge par :
+        Stack(children: [
+        IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+      ),
+        if (NotificationService.nonLues > 0)
+    Positioned(top: 8, right: 8, child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: const BoxDecoration(
+            color: Colors.redAccent, shape: BoxShape.circle),
+        child: Text('${NotificationService.nonLues}',
+            style: const TextStyle(
+                color: Colors.white, fontSize: 8,
+                fontWeight: FontWeight.w800)))),
+    ]),
               // Badge alertes
               Stack(children: [
                 IconButton(
