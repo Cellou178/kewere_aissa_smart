@@ -245,7 +245,7 @@ Sois précis et professionnel. En français.''';
             ? const Center(child: CircularProgressIndicator(color: kBlue))
             : TabBarView(controller: _tabCtrl, children: [
           _buildRapportTab('hebdomadaire', '📅 Rapport Hebdomadaire',
-              'Analyse des 7 derniers jours', Icons.calendar_week_outlined),
+              'Analyse des 7 derniers jours', Icons.date_range_rounded),
           _buildRapportTab('mensuel', '📆 Rapport Mensuel',
               'Bilan complet du mois', Icons.calendar_month_rounded),
           _buildRapportTab('sanitaire', '🏥 Rapport Sanitaire',

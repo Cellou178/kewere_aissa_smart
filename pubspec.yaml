@@ -33,7 +33,11 @@ dependencies:
   http: ^1.2.0
   fl_chart: ^0.68.0
   shared_preferences: ^2.2.2
-
+  pdf: ^3.10.8
+  printing: ^5.12.0
+  excel: ^4.0.2
+  path_provider: ^2.1.2
+  share_plus: ^9.0.0
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
