@@ -17,6 +17,8 @@ import '../settings/settings_screen.dart';
 import '../employes/employes_screen.dart';
 import '../rapports/rapports_screen.dart';
 import '../terrain/terrain_screen.dart';
+import '../agenda/agenda_screen.dart';
+
 
 
 
@@ -45,11 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // Pages du drawer
   Widget _getDrawerPage(int index) {
     switch (index) {
-      case 0: return const TerrainScreen(); 
+      case 0: return const TerrainScreen();
       case 1: return const RapportsScreen();
       case 2: return const GraphiquesScreen();
       case 3: return const PredictionsScreen();
-      case 4: return const MeteoScreen();
+      case 4: return const AgendaScreen(); 
       case 5: return const EmployesScreen();
       case 6: return const SettingsScreen();
       default: return _emptyPage('Bientôt disponible', Icons.construction_rounded, kBlue);
