@@ -22,6 +22,8 @@ import '../terrain/terrain_screen.dart';
 import '../agenda/agenda_screen.dart';
 import '../marche/marche_screen.dart';
 import '../vitrine/vitrine_screen.dart';
+import '../investissement/investissement_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -58,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 9: return const PredictionsScreen();
       case 10: return const MeteoScreen();
       case 11: return const VitrineScreen();
+      case 12: return const InvestissementScreen();
       default: return _emptyPage('Bientôt disponible',
           Icons.construction_rounded, kBlue);
     }
@@ -216,7 +219,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         'Marché Afrique de l\'Ouest',
                         const Color(0xFFD97706)),
                     _drawerItem(11, Icons.storefront_rounded, 'Ma Vitrine',
+                        const Color(0xFF16A34A)),_drawerSection('FINANCE & INVEST.'),
+                    _drawerItem(12, Icons.trending_up_rounded, 'Investissement',
                         const Color(0xFF16A34A)),
+
                   ])),
 
               // ── Fixés en bas ──
