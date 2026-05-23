@@ -4,6 +4,7 @@ import '../../managers/session_manager.dart';
 import '../../core/utils/auth_guard.dart';
 import '../../core/utils/session_timeout.dart';
 import '../dashboard/dashboard_page.dart';
+import '../fermes/fermes_screen.dart';
 import '../cycles/cycles_screen.dart';
 import '../graphiques/graphiques_screen.dart';
 import '../finances/finances_screen.dart';
@@ -22,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> get _pages => [
     const DashboardPage(),
+    const FermesScreen(),
     const CyclesScreen(),
     const GraphiquesScreen(),
     AuthGuard(
@@ -68,7 +70,9 @@ class _HomeScreenState extends State<HomeScreen> {
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, -4))],
+              boxShadow: [BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 20, offset: const Offset(0, -4))],
             ),
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
@@ -80,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: Colors.transparent, elevation: 0,
               items: const [
                 BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Accueil'),
+                BottomNavigationBarItem(icon: Icon(Icons.agriculture_rounded), label: 'Fermes'),
                 BottomNavigationBarItem(icon: Icon(Icons.loop_rounded), label: 'Cycles'),
                 BottomNavigationBarItem(icon: Icon(Icons.bar_chart_rounded), label: 'Graphiques'),
                 BottomNavigationBarItem(icon: Icon(Icons.attach_money_rounded), label: 'Finance'),
