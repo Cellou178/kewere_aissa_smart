@@ -167,9 +167,9 @@ class _FermeDetailScreenState extends State<FermeDetailScreen> {
             ..._employes.take(3).map((e) => _employeItem(e)),
           ],
         ]),
-      )),
-    ),
-    ]),
+      ),
+      ),
+      ]),
     );
   }
 
