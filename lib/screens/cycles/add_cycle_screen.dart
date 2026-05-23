@@ -110,9 +110,10 @@ class _AddCycleScreenState extends State<AddCycleScreen> {
 
   Future<void> _submit() async {
     setState(() { _loading = true; _error = ''; });
-    final fermeId = _fermeId ?? (SessionManager.fermeId.isNotEmpty
-        ? _fermeId ?? SessionManager.fermeId : '');
-        : '11111111-1111-1111-1111-111111111111';
+    final fermeId = _fermeId ??
+        (SessionManager.fermeId.isNotEmpty
+            ? SessionManager.fermeId
+            : '');
 
     final data = {
       'ferme_id': fermeId,
