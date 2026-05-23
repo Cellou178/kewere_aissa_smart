@@ -14,6 +14,7 @@ import '../meteo/meteo_screen.dart';
 import '../predictions/predictions_screen.dart';
 import '../stocks/stocks_screen.dart';
 import '../settings/settings_screen.dart';
+import '../employes/employes_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,63 +24,41 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  static const List<Map<String, dynamic>> _tabs = [
-    {'label': 'Accueil',  'icon': Icons.dashboard_rounded,       'color': 0xFF1B3A6B},
-    {'label': 'Terrain',  'icon': Icons.terrain_rounded,         'color': 0xFF16A34A},
-    {'label': 'Cycles',   'icon': Icons.loop_rounded,            'color': 0xFFEA580C},
-    {'label': 'Opérat.',  'icon': Icons.assignment_rounded,      'color': 0xFF7C3AED},
-    {'label': 'Finance',  'icon': Icons.attach_money_rounded,    'color': 0xFFDC2626},
-    {'label': 'IA',       'icon': Icons.psychology_rounded,      'color': 0xFF0891B2},
-    {'label': 'Marché',   'icon': Icons.store_rounded,           'color': 0xFFD97706},
-    {'label': 'Météo',    'icon': Icons.cloud_rounded,           'color': 0xFF38BDF8},
-    {'label': 'Chat',     'icon': Icons.chat_rounded,            'color': 0xFF059669},
-    {'label': 'Rapports', 'icon': Icons.assessment_rounded,      'color': 0xFF6366F1},
-    {'label': 'Ferme',    'icon': Icons.agriculture_rounded,     'color': 0xFF16A34A},
-    {'label': 'Stats',    'icon': Icons.bar_chart_rounded,       'color': 0xFF2563EB},
-    {'label': 'Réglages', 'icon': Icons.settings_rounded,        'color': 0xFF6B7280},
-    {'label': 'Sécurité', 'icon': Icons.lock_rounded,            'color': 0xFFDC2626},
-    {'label': 'Accès',    'icon': Icons.group_rounded,           'color': 0xFF7C3AED},
-    {'label': 'Alertes',  'icon': Icons.notifications_rounded,   'color': 0xFFF59E0B},
-    {'label': 'Stock',    'icon': Icons.inventory_rounded,       'color': 0xFFEA580C},
-    {'label': 'Agenda',   'icon': Icons.calendar_month_rounded,  'color': 0xFF0891B2},
-    {'label': 'Vitrine',  'icon': Icons.storefront_rounded,      'color': 0xFFD97706},
-    {'label': 'Paiement', 'icon': Icons.payment_rounded,         'color': 0xFF059669},
-    {'label': 'Invest.',  'icon': Icons.trending_up_rounded,     'color': 0xFF16A34A},
-    {'label': 'Maint.',   'icon': Icons.build_rounded,           'color': 0xFF6B7280},
-    {'label': 'Profil',   'icon': Icons.person_rounded,          'color': 0xFF1B3A6B},
-    {'label': 'Gestion',  'icon': Icons.manage_accounts_rounded, 'color': 0xFF7C3AED},
-  ];
-
+  // 5 pages principales
   List<Widget> get _pages => [
     const DashboardPage(),
-    _emptyPage('Terrain',    Icons.terrain_rounded,          const Color(0xFF16A34A)),
     const CyclesScreen(),
-    _emptyPage('Opérations', Icons.assignment_rounded,       const Color(0xFF7C3AED)),
-    AuthGuard(rolesAutorises: const ['admin','proprietaire'], child: const FinanceScreen()),
-    const PredictionsScreen(),
-    _emptyPage('Marché',     Icons.store_rounded,            const Color(0xFFD97706)),
-    const MeteoScreen(),
-    _emptyPage('Chat',       Icons.chat_rounded,             const Color(0xFF059669)),
-    _emptyPage('Rapports',   Icons.assessment_rounded,       const Color(0xFF6366F1)),
-    const FermesScreen(),
-    const GraphiquesScreen(),
-    const SettingsScreen(),
-    _emptyPage('Sécurité',   Icons.lock_rounded,             const Color(0xFFDC2626)),
-    _emptyPage('Accès',      Icons.group_rounded,            const Color(0xFF7C3AED)),
+    AuthGuard(
+      rolesAutorises: const ['admin', 'proprietaire'],
+      child: const FinanceScreen(),
+    ),
     const AlertesScreen(),
-    const StocksScreen(),
-    _emptyPage('Agenda',     Icons.calendar_month_rounded,   const Color(0xFF0891B2)),
-    _emptyPage('Vitrine',    Icons.storefront_rounded,       const Color(0xFFD97706)),
-    _emptyPage('Paiement',   Icons.payment_rounded,          const Color(0xFF059669)),
-    _emptyPage('Invest.',    Icons.trending_up_rounded,      const Color(0xFF16A34A)),
-    _emptyPage('Maint.',     Icons.build_rounded,            const Color(0xFF6B7280)),
     const ProfilScreen(),
-    _emptyPage('Gestion',    Icons.manage_accounts_rounded,  const Color(0xFF7C3AED)),
   ];
+
+  // Pages du drawer
+  Widget _getDrawerPage(int index) {
+    switch (index) {
+      case 0: return const FermesScreen();
+      case 1: return const StocksScreen();
+      case 2: return const GraphiquesScreen();
+      case 3: return const PredictionsScreen();
+      case 4: return const MeteoScreen();
+      case 5: return const EmployesScreen();
+      case 6: return const SettingsScreen();
+      default: return _emptyPage('Bientôt disponible', Icons.construction_rounded, kBlue);
+    }
+  }
 
   Widget _emptyPage(String title, IconData icon, Color color) => Scaffold(
     backgroundColor: const Color(0xFFF1F5F9),
+    appBar: AppBar(
+      backgroundColor: const Color(0xFF0F172A),
+      foregroundColor: Colors.white,
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+    ),
     body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Container(padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
@@ -88,60 +67,13 @@ class _HomeScreenState extends State<HomeScreen> {
       Text(title, style: const TextStyle(
           fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
       const SizedBox(height: 8),
-      const Text('Bientôt disponible', style: TextStyle(color: Colors.grey)),
-      const SizedBox(height: 24),
-      Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-              color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-          child: Text('En cours de développement',
-              style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12))),
+      const Text('En cours de développement', style: TextStyle(color: Colors.grey)),
     ])),
   );
 
-  Widget _navRow(List<Map<String, dynamic>> tabs, int startIndex) {
-    return SizedBox(
-      height: 48,
-      child: Row(
-        children: tabs.asMap().entries.map((e) {
-          final index = startIndex + e.key;
-          final tab = e.value;
-          final isSelected = _currentIndex == index;
-          final color = Color(tab['color'] as int);
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _currentIndex = index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                decoration: BoxDecoration(
-                  color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
-                  border: isSelected
-                      ? Border(bottom: BorderSide(color: color, width: 2))
-                      : null,
-                ),
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(
-                    tab['icon'] as IconData,
-                    size: 18,
-                    color: isSelected ? color : const Color(0xFFB0B7C3),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    tab['label'] as String,
-                    style: TextStyle(
-                      fontSize: 7,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w400,
-                      color: isSelected ? color : const Color(0xFFB0B7C3),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ]),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
+  void _navigateDrawer(int index) {
+    Navigator.pop(context);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => _getDrawerPage(index)));
   }
 
   @override
@@ -150,49 +82,176 @@ class _HomeScreenState extends State<HomeScreen> {
       child: SessionTimeout(
         timeout: const Duration(minutes: 30),
         child: Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: const Color(0xFFF1F5F9),
+
+          // ── APP BAR ──
           appBar: AppBar(
             backgroundColor: const Color(0xFF0F172A), elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.menu_rounded, color: Colors.white),
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
             title: const Row(children: [
-              Text('🐔', style: TextStyle(fontSize: 22)),
-              SizedBox(width: 10),
-              Text('Kewere Aissa Smart', style: TextStyle(
+              Text('🐔', style: TextStyle(fontSize: 20)),
+              SizedBox(width: 8),
+              Text('Kewere Smart', style: TextStyle(
                   color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
             ]),
             actions: [
+              // Badge alertes
+              Stack(children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                  onPressed: () => setState(() => _currentIndex = 3),
+                ),
+                Positioned(top: 8, right: 8, child: Container(
+                    width: 8, height: 8,
+                    decoration: const BoxDecoration(
+                        color: Colors.redAccent, shape: BoxShape.circle))),
+              ]),
               Container(
-                margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                margin: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.3),
+                    color: Colors.green.withOpacity(0.25),
                     borderRadius: BorderRadius.circular(20)),
                 child: Row(children: [
-                  const CircleAvatar(radius: 4, backgroundColor: Colors.greenAccent),
-                  const SizedBox(width: 5),
+                  const CircleAvatar(radius: 3, backgroundColor: Colors.greenAccent),
+                  const SizedBox(width: 4),
                   Text(SessionManager.role.toUpperCase(),
                       style: const TextStyle(
-                          color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+                          color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
                 ]),
               ),
             ],
           ),
+
+          // ── DRAWER ──
+          drawer: Drawer(
+            backgroundColor: const Color(0xFF0F172A),
+            child: SafeArea(child: Column(children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Row(children: [
+                  Container(width: 48, height: 48,
+                      decoration: BoxDecoration(
+                          color: kBlue.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(14)),
+                      child: const Center(child: Text('🐔', style: TextStyle(fontSize: 24)))),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(SessionManager.nom.isNotEmpty ? SessionManager.nom : 'Utilisateur',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
+                    Text(SessionManager.role, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                  ])),
+                ]),
+              ),
+              const Divider(color: Colors.white12),
+              // Menu items
+              Expanded(child: ListView(padding: const EdgeInsets.symmetric(vertical: 8), children: [
+                _drawerSection('GESTION'),
+                _drawerItem(0, Icons.agriculture_rounded, 'Fermes', const Color(0xFF16A34A)),
+                _drawerItem(1, Icons.inventory_rounded, 'Stocks', const Color(0xFFEA580C)),
+                _drawerItem(5, Icons.people_rounded, 'Employés', const Color(0xFF7C3AED)),
+                const SizedBox(height: 8),
+                _drawerSection('ANALYTICS'),
+                _drawerItem(2, Icons.bar_chart_rounded, 'Graphiques', const Color(0xFF2563EB)),
+                _drawerItem(3, Icons.psychology_rounded, 'Prédictions IA', const Color(0xFF0891B2)),
+                _drawerItem(4, Icons.cloud_rounded, 'Météo', const Color(0xFF38BDF8)),
+                const SizedBox(height: 8),
+                _drawerSection('AUTRES'),
+                _drawerItem(6, Icons.settings_rounded, 'Paramètres', const Color(0xFF6B7280)),
+                _drawerItem(7, Icons.store_rounded, 'Marché', const Color(0xFFD97706)),
+                _drawerItem(8, Icons.assessment_rounded, 'Rapports', const Color(0xFF6366F1)),
+                _drawerItem(9, Icons.payment_rounded, 'Paiement', const Color(0xFF059669)),
+                _drawerItem(10, Icons.trending_up_rounded, 'Investissement', const Color(0xFF16A34A)),
+              ])),
+              // Logout
+              const Divider(color: Colors.white12),
+              ListTile(
+                leading: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
+                title: const Text('Déconnexion', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600, fontSize: 13)),
+                onTap: () async {
+                  await SessionManager.clear();
+                  Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                },
+              ),
+              const SizedBox(height: 8),
+            ])),
+          ),
+
+          // ── BODY ──
           body: _pages[_currentIndex],
+
+          // ── BOTTOM NAV — 5 onglets ──
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [BoxShadow(
                   color: Colors.black.withOpacity(0.08),
-                  blurRadius: 20, offset: const Offset(0, -4))],
+                  blurRadius: 16, offset: const Offset(0, -2))],
             ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              _navRow(_tabs.sublist(0, 8), 0),
-              const Divider(height: 0.5, color: Color(0xFFE5E7EB)),
-              _navRow(_tabs.sublist(8, 16), 8),
-              const Divider(height: 0.5, color: Color(0xFFE5E7EB)),
-              _navRow(_tabs.sublist(16, 24), 16),
-            ]),
+            child: SafeArea(
+              child: SizedBox(
+                height: 56,
+                child: Row(children: [
+                  _bottomItem(0, Icons.dashboard_rounded, 'Accueil', kBlue),
+                  _bottomItem(1, Icons.loop_rounded, 'Cycles', const Color(0xFFEA580C)),
+                  _bottomItem(2, Icons.attach_money_rounded, 'Finance', const Color(0xFFDC2626)),
+                  _bottomItem(3, Icons.notifications_rounded, 'Alertes', const Color(0xFFF59E0B)),
+                  _bottomItem(4, Icons.person_rounded, 'Profil', const Color(0xFF7C3AED)),
+                ]),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
+
+  Widget _bottomItem(int index, IconData icon, String label, Color color) {
+    final isSelected = _currentIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _currentIndex = index),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withOpacity(0.08) : Colors.transparent,
+            border: Border(top: BorderSide(
+                color: isSelected ? color : Colors.transparent, width: 2)),
+          ),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(icon, size: 22,
+                color: isSelected ? color : Colors.grey.shade400),
+            const SizedBox(height: 3),
+            Text(label, style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                color: isSelected ? color : Colors.grey.shade400)),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerSection(String title) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Text(title, style: const TextStyle(
+          color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1)));
+
+  Widget _drawerItem(int index, IconData icon, String label, Color color) =>
+      ListTile(
+        dense: true,
+        leading: Container(padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, color: color, size: 18)),
+        title: Text(label, style: const TextStyle(
+            color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 12),
+        onTap: () => _navigateDrawer(index),
+      );
 }
