@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/api_service.dart';
+import 'employe_detail_screen.dart';
+import 'add_employe_screen.dart';
 
 class EmployesScreen extends StatefulWidget {
   const EmployesScreen({super.key});
@@ -8,132 +10,220 @@ class EmployesScreen extends StatefulWidget {
   State<EmployesScreen> createState() => _EmployesScreenState();
 }
 
-class _EmployesScreenState extends State<EmployesScreen> {
+class _EmployesScreenState extends State<EmployesScreen>
+    with SingleTickerProviderStateMixin {
   List _employes = [];
   bool _loading = true;
+  late TabController _tabCtrl;
+  String _recherche = '';
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    _tabCtrl = TabController(length: 4, vsync: this);
+    _load();
+  }
+
+  @override
+  void dispose() { _tabCtrl.dispose(); super.dispose(); }
 
   Future<void> _load() async {
     setState(() => _loading = true);
     final e = await ApiService.getEmployes();
-    setState(() { _employes = e; _loading = false; });
+    setState(() { _employes = e is List ? e : []; _loading = false; });
   }
 
-  void _snack(String msg, Color color) => ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600)),
-          backgroundColor: color, behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
+  List get _filtres => _employes.where((e) =>
+  (e['nom'] ?? '').toLowerCase().contains(_recherche.toLowerCase()) ||
+      (e['poste'] ?? '').toLowerCase().contains(_recherche.toLowerCase())).toList();
+
+  List _parPoste(String poste) => _filtres.where((e) =>
+  (e['poste'] ?? '') == poste).toList();
+
+  double get _masseSalariale => _employes.fold(0.0, (s, e) =>
+  s + ((e['salaire'] ?? 0) as num).toDouble());
+
+  Color _posteColor(String poste) {
+    switch (poste) {
+      case 'manager': return kPurple;
+      case 'veterinaire': return kGreen;
+      case 'chauffeur': return kOrange;
+      case 'gardien': return Colors.brown;
+      case 'comptable': return Colors.teal;
+      default: return kBlue;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _loading ? const Center(child: CircularProgressIndicator(color: kBlue)) :
-      RefreshIndicator(onRefresh: _load, color: kBlue,
-          child: ListView(padding: const EdgeInsets.all(16), children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Employés', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kBlue)),
-                Text('${_employes.length} employé(s)', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              ]),
-              ElevatedButton.icon(onPressed: () => _showAdd(context),
-                  icon: const Icon(Icons.add_rounded, size: 18), label: const Text('Ajouter'),
-                  style: ElevatedButton.styleFrom(backgroundColor: kBlue, foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0)),
+      backgroundColor: const Color(0xFFF1F5F9),
+      floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final result = await Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const AddEmployeScreen()));
+            if (result == true) _load();
+          },
+          backgroundColor: kBlue,
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          label: const Text('Ajouter',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+      body: Column(children: [
+        // Header
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF1E3A5F)],
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Column(children: [
+            // Stats
+            Row(children: [
+              _headerStat('${_employes.length}', 'Total', kBlue),
+              _headerStat('${_parPoste('manager').length}', 'Managers', kPurple),
+              _headerStat('${_parPoste('veterinaire').length}', 'Vétérinaires', kGreen),
+              _headerStat(
+                  '${(_masseSalariale / 1000).toStringAsFixed(0)}K',
+                  'Masse sal.', kOrange),
             ]),
-            const SizedBox(height: 16),
-            if (_employes.isEmpty) const Center(child: Padding(padding: EdgeInsets.all(40),
-                child: Column(children: [
-                  Text('👥', style: TextStyle(fontSize: 48)),
-                  SizedBox(height: 12),
-                  Text('Aucun employé', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: kBlue)),
-                  Text('Ajoutez votre premier employé !', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                ]))),
-            ..._employes.map((e) => _employeCard(e)),
-          ])),
-      floatingActionButton: FloatingActionButton(onPressed: () => _showAdd(context),
-          backgroundColor: kBlue, child: const Icon(Icons.add_rounded, color: Colors.white)),
+            const SizedBox(height: 12),
+            // Recherche
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12)),
+              child: TextField(
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                    hintText: 'Rechercher un employé...',
+                    hintStyle: TextStyle(color: Colors.white38),
+                    prefixIcon: Icon(Icons.search_rounded, color: Colors.white54, size: 20),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 12)),
+                onChanged: (v) => setState(() => _recherche = v),
+              ),
+            ),
+            // Tabs
+            TabBar(
+              controller: _tabCtrl,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white38,
+              indicatorColor: Colors.white,
+              indicatorWeight: 2,
+              isScrollable: true,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+              tabs: [
+                Tab(text: 'Tous (${_filtres.length})'),
+                Tab(text: 'Managers (${_parPoste('manager').length})'),
+                Tab(text: 'Vétérinaires (${_parPoste('veterinaire').length})'),
+                Tab(text: 'Autres'),
+              ],
+            ),
+          ]),
+        ),
+
+        Expanded(child: _loading
+            ? const Center(child: CircularProgressIndicator(color: kBlue))
+            : TabBarView(controller: _tabCtrl, children: [
+          _buildList(_filtres),
+          _buildList(_parPoste('manager')),
+          _buildList(_parPoste('veterinaire')),
+          _buildList(_employes.where((e) =>
+          !['manager', 'veterinaire'].contains(e['poste'] ?? '')).toList()),
+        ])),
+      ]),
     );
   }
 
+  Widget _buildList(List employes) => RefreshIndicator(
+    onRefresh: _load, color: kBlue,
+    child: employes.isEmpty
+        ? ListView(children: [
+      SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+      const Center(child: Column(children: [
+        Icon(Icons.people_rounded, size: 56, color: Colors.grey),
+        SizedBox(height: 12),
+        Text('Aucun employé', style: TextStyle(
+            fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1E293B))),
+      ])),
+    ])
+        : ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+      itemCount: employes.length,
+      itemBuilder: (_, i) => _employeCard(employes[i]),
+    ),
+  );
+
   Widget _employeCard(Map e) {
-    final poste = e['poste'] ?? e['role'] ?? 'Employé';
-    final salaire = (e['salaire'] as num? ?? 0).toDouble();
-    final color = poste == 'manager' || poste == 'admin' ? kPurple : kBlue;
-    return Container(margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)]),
+    final poste = e['poste'] ?? 'employe';
+    final salaire = ((e['salaire'] ?? 0) as num).toDouble();
+    final color = _posteColor(poste);
+    final nom = e['nom'] ?? 'Employé';
+
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(context,
+            MaterialPageRoute(builder: (_) => EmployeDetailScreen(employe: e)));
+        if (result == true) _load();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(14),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
         child: Row(children: [
-          CircleAvatar(backgroundColor: color.withOpacity(0.15), radius: 24,
-              child: Text((e['nom'] as String? ?? 'E').substring(0, 1).toUpperCase(),
-                  style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 18))),
+          // Avatar
+          Container(width: 48, height: 48,
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: [color, color.withOpacity(0.7)]),
+                  shape: BoxShape.circle),
+              child: Center(child: Text(
+                  nom.substring(0, 1).toUpperCase(),
+                  style: const TextStyle(color: Colors.white,
+                      fontWeight: FontWeight.w900, fontSize: 20)))),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(e['nom'] ?? 'Sans nom', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-            Text(poste, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-            if (e['telephone'] != null)
-              Text('📞 ${e['telephone']}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+            Text(nom, style: const TextStyle(
+                fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B))),
+            const SizedBox(height: 3),
+            Row(children: [
+              Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                      color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                  child: Text(poste, style: TextStyle(
+                      color: color, fontSize: 10, fontWeight: FontWeight.w600))),
+              if (e['telephone'] != null) ...[
+                const SizedBox(width: 8),
+                Text(e['telephone'], style: const TextStyle(
+                    color: Colors.grey, fontSize: 10)),
+              ],
+            ]),
           ])),
-          if (salaire > 0) Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('${salaire.toStringAsFixed(0)} FCFA', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kGreen)),
-            const Text('/ mois', style: TextStyle(color: Colors.grey, fontSize: 10)),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            if (salaire > 0) ...[
+              Text('${(salaire / 1000).toStringAsFixed(0)}K',
+                  style: const TextStyle(fontWeight: FontWeight.w900,
+                      fontSize: 15, color: kGreen)),
+              const Text('FCFA', style: TextStyle(color: Colors.grey, fontSize: 9)),
+            ],
+            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey, size: 12),
           ]),
-        ]));
+        ]),
+      ),
+    );
   }
 
-  void _showAdd(BuildContext context) {
-    final nomCtrl = TextEditingController();
-    final telCtrl = TextEditingController();
-    final salaireCtrl = TextEditingController();
-    String posteSelected = 'employe';
-    showModalBottomSheet(context: context, isScrollControlled: true,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-        builder: (ctx) => StatefulBuilder(builder: (ctx, setModalState) =>
-            Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 20, right: 20, top: 24),
-                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Nouvel Employé', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kBlue)),
-                  const SizedBox(height: 16),
-                  _field(nomCtrl, 'Nom complet', Icons.person_rounded),
-                  const SizedBox(height: 10),
-                  _field(telCtrl, 'Téléphone', Icons.phone_rounded, isPhone: true),
-                  const SizedBox(height: 10),
-                  _field(salaireCtrl, 'Salaire mensuel (FCFA)', Icons.attach_money_rounded, isNumber: true),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<String>(value: posteSelected,
-                      decoration: InputDecoration(labelText: 'Poste',
-                          prefixIcon: const Icon(Icons.work_rounded, color: kBlueLight),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          filled: true, fillColor: const Color(0xFFF8FAFC)),
-                      items: ['employe', 'manager', 'veterinaire', 'chauffeur', 'gardien']
-                          .map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
-                      onChanged: (v) => setModalState(() => posteSelected = v!)),
-                  const SizedBox(height: 16),
-                  SizedBox(width: double.infinity, height: 50,
-                      child: ElevatedButton(
-                          onPressed: () async {
-                            final ok = await ApiService.createEmploye({
-                              'nom': nomCtrl.text.trim(),
-                              'telephone': telCtrl.text.trim(),
-                              'salaire': double.tryParse(salaireCtrl.text) ?? 0,
-                              'poste': posteSelected,
-                              'ferme_id': '11111111-1111-1111-1111-111111111111',
-                            });
-                            Navigator.pop(context);
-                            if (ok) { _load(); _snack('✅ Employé ajouté !', kGreen); }
-                            else { _snack('❌ Erreur', kRed); }
-                          },
-                          style: ElevatedButton.styleFrom(backgroundColor: kBlue, foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0),
-                          child: const Text('Ajouter', style: TextStyle(fontWeight: FontWeight.w700)))),
-                  const SizedBox(height: 20),
-                ]))));
-  }
-
-  Widget _field(TextEditingController ctrl, String label, IconData icon, {bool isNumber = false, bool isPhone = false}) =>
-      TextField(controller: ctrl,
-          keyboardType: isNumber ? TextInputType.number : isPhone ? TextInputType.phone : TextInputType.text,
-          decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon, color: kBlueLight, size: 18),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              filled: true, fillColor: const Color(0xFFF8FAFC)));
+  Widget _headerStat(String value, String label, Color color) =>
+      Expanded(child: Column(children: [
+        Text(value, style: TextStyle(
+            color: color == kBlue ? Colors.white : color,
+            fontSize: 16, fontWeight: FontWeight.w900)),
+        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9)),
+      ]));
 }
