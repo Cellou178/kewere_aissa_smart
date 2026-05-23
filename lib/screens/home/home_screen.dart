@@ -23,6 +23,8 @@ import '../agenda/agenda_screen.dart';
 import '../marche/marche_screen.dart';
 import '../vitrine/vitrine_screen.dart';
 import '../investissement/investissement_screen.dart';
+import '../maintenance/maintenance_screen.dart';
+
 
 
 class HomeScreen extends StatefulWidget {
@@ -61,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 10: return const MeteoScreen();
       case 11: return const VitrineScreen();
       case 12: return const InvestissementScreen();
+      case 13: return const MaintenanceScreen();
       default: return _emptyPage('Bientôt disponible',
           Icons.construction_rounded, kBlue);
     }
@@ -222,7 +225,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Color(0xFF16A34A)),_drawerSection('FINANCE & INVEST.'),
                     _drawerItem(12, Icons.trending_up_rounded, 'Investissement',
                         const Color(0xFF16A34A)),
-
+                    _drawerItem(13, Icons.build_rounded, 'Maintenance',
+                        const Color(0xFF6B7280)),
                   ])),
 
               // ── Fixés en bas ──
