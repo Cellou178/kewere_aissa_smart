@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'managers/session_manager.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/dashboard/dashboard_page.dart';
@@ -30,7 +30,7 @@ class KewereApp extends StatelessWidget {
     );
     // Dans main.dart, dans MaterialApp ajoute :
     theme: AppTheme.lightTheme,
-    cardTheme: CardThemeData(
+    // cardTheme: CardThemeData(
 
   }
 }

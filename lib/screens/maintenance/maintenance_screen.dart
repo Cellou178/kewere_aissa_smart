@@ -1,4 +1,4 @@
-Ôªøimport 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants/app_constants.dart';
@@ -16,31 +16,31 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
   bool _loadingIA = false;
   String? _planIA;
 
-  // T√¢ches de maintenance
+  // T‚ches de maintenance
   final List<Map<String, dynamic>> _taches = [
     {
-      'titre': 'V√©rification syst√®me ventilation',
-      'batiment': 'B√¢timent A',
+      'titre': 'VÈrification systËme ventilation',
+      'batiment': 'B‚timent A',
       'priorite': 'haute',
       'type': 'ventilation',
       'statut': 'en_attente',
       'date': '25/05/2026',
       'cout': 15000,
-      'description': 'Contr√¥ler les ventilateurs et courroies',
+      'description': 'ContrÙler les ventilateurs et courroies',
     },
     {
-      'titre': 'D√©sinfection compl√®te',
-      'batiment': 'B√¢timent B',
+      'titre': 'DÈsinfection complËte',
+      'batiment': 'B‚timent B',
       'priorite': 'critique',
       'type': 'hygiene',
       'statut': 'en_cours',
       'date': '24/05/2026',
       'cout': 45000,
-      'description': 'D√©sinfection apr√®s fin de cycle',
+      'description': 'DÈsinfection aprËs fin de cycle',
     },
     {
-      'titre': 'R√©paration abreuvoirs',
-      'batiment': 'B√¢timent C',
+      'titre': 'RÈparation abreuvoirs',
+      'batiment': 'B‚timent C',
       'priorite': 'normale',
       'type': 'equipement',
       'statut': 'termine',
@@ -49,32 +49,32 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       'description': 'Remplacement joints abreuvoirs automatiques',
     },
     {
-      'titre': 'Contr√¥le √©clairage',
-      'batiment': 'B√¢timent A',
+      'titre': 'ContrÙle Èclairage',
+      'batiment': 'B‚timent A',
       'priorite': 'normale',
       'type': 'electricite',
       'statut': 'en_attente',
       'date': '28/05/2026',
       'cout': 12000,
-      'description': 'V√©rifier ampoules et minuteries',
+      'description': 'VÈrifier ampoules et minuteries',
     },
     {
-      'titre': 'Nettoyage goutti√®res',
+      'titre': 'Nettoyage gouttiËres',
       'batiment': 'Tous',
       'priorite': 'faible',
       'type': 'structure',
       'statut': 'en_attente',
       'date': '30/05/2026',
       'cout': 5000,
-      'description': 'D√©boucher et nettoyer les goutti√®res',
+      'description': 'DÈboucher et nettoyer les gouttiËres',
     },
   ];
 
-  // √âquipements
+  // …quipements
   final List<Map<String, dynamic>> _equipements = [
     {
       'nom': 'Ventilateur principal A1',
-      'batiment': 'B√¢timent A',
+      'batiment': 'B‚timent A',
       'etat': 'bon',
       'derniereMaintenance': '01/04/2026',
       'prochaineMaintenance': '01/07/2026',
@@ -83,8 +83,8 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       'color': kBlue,
     },
     {
-      'nom': 'Syst√®me d\'abreuvement',
-      'batiment': 'B√¢timent B',
+      'nom': 'SystËme d\'abreuvement',
+      'batiment': 'B‚timent B',
       'etat': 'attention',
       'derniereMaintenance': '15/03/2026',
       'prochaineMaintenance': '15/06/2026',
@@ -94,7 +94,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
     },
     {
       'nom': 'Chauffage infrarouge',
-      'batiment': 'B√¢timent C',
+      'batiment': 'B‚timent C',
       'etat': 'critique',
       'derniereMaintenance': '01/01/2026',
       'prochaineMaintenance': '01/04/2026',
@@ -113,8 +113,8 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       'color': kGreen,
     },
     {
-      'nom': 'Syst√®me d\'√©clairage',
-      'batiment': 'B√¢timent A',
+      'nom': 'SystËme d\'Èclairage',
+      'batiment': 'B‚timent A',
       'etat': 'bon',
       'derniereMaintenance': '20/04/2026',
       'prochaineMaintenance': '20/07/2026',
@@ -143,28 +143,28 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       final coutTotal = _taches.fold<int>(0,
               (s, t) => s + (t['cout'] as int));
 
-      final prompt = '''Tu es un expert en maintenance de fermes avicoles au S√©n√©gal.
-G√©n√®re un plan de maintenance optimis√© pour cette ferme.
+      final prompt = '''Tu es un expert en maintenance de fermes avicoles au SÈnÈgal.
+GÈnËre un plan de maintenance optimisÈ pour cette ferme.
 
-√âTAT ACTUEL:
-- T√¢ches en attente: $tachesEnAttente
-- √âquipements critiques: $equipementsCritiques
-- Budget maintenance estim√©: $coutTotal FCFA
+…TAT ACTUEL:
+- T‚ches en attente: $tachesEnAttente
+- …quipements critiques: $equipementsCritiques
+- Budget maintenance estimÈ: $coutTotal FCFA
 
-T√ÇCHES URGENTES:
+T¬CHES URGENTES:
 ${_taches.where((t) => t['priorite'] == 'critique' || t['priorite'] == 'haute').map((t) => '- ${t['titre']} (${t['batiment']}) - ${t['cout']} FCFA').join('\n')}
 
-√âQUIPEMENTS EN MAUVAIS √âTAT:
+…QUIPEMENTS EN MAUVAIS …TAT:
 ${_equipements.where((e) => e['etat'] != 'bon').map((e) => '- ${e['nom']} (${e['etat']})').join('\n')}
 
-G√©n√®re un plan de maintenance sur 30 jours incluant:
-1. Priorit√©s imm√©diates (semaine 1)
+GÈnËre un plan de maintenance sur 30 jours incluant:
+1. PrioritÈs immÈdiates (semaine 1)
 2. Actions semaine 2-3
-3. Maintenance pr√©ventive semaine 4
-4. Budget recommand√©
-5. Conseils pour r√©duire les co√ªts
+3. Maintenance prÈventive semaine 4
+4. Budget recommandÈ
+5. Conseils pour rÈduire les co˚ts
 
-En fran√ßais, pratique et structur√©.''';
+En franÁais, pratique et structurÈ.''';
 
       final response = await http.post(
         Uri.parse('https://api.anthropic.com/v1/messages'),
@@ -213,7 +213,7 @@ En fran√ßais, pratique et structur√©.''';
           onPressed: () => _showAjouterTache(),
           backgroundColor: kOrange,
           icon: const Icon(Icons.add_rounded, color: Colors.white),
-          label: const Text('Nouvelle t√¢che',
+          label: const Text('Nouvelle t‚che',
               style: TextStyle(color: Colors.white,
                   fontWeight: FontWeight.w700))),
       body: Column(children: [
@@ -241,7 +241,7 @@ En fran√ßais, pratique et structur√©.''';
                     Text('Maintenance', style: TextStyle(
                         color: Colors.white, fontSize: 18,
                         fontWeight: FontWeight.w900)),
-                    Text('Suivi √©quipements & b√¢timents',
+                    Text('Suivi Èquipements & b‚timents',
                         style: TextStyle(
                             color: Colors.white54, fontSize: 11)),
                   ])),
@@ -250,7 +250,7 @@ En fran√ßais, pratique et structur√©.''';
 
             // Stats
             Row(children: [
-              _headerStat('${_taches.length}', 'T√¢ches\ntotales',
+              _headerStat('${_taches.length}', 'T‚ches\ntotales',
                   Colors.white),
               _headerStat('$_tachesEnAttente', 'En\nattente',
                   _tachesEnAttente > 0
@@ -272,9 +272,9 @@ En fran√ßais, pratique et structur√©.''';
               labelStyle: const TextStyle(
                   fontWeight: FontWeight.w700, fontSize: 11),
               tabs: const [
-                Tab(text: 'üîß T√¢ches'),
-                Tab(text: '‚öôÔ∏è √âquipements'),
-                Tab(text: 'ü§ñ Plan IA'),
+                Tab(text: '?? T‚ches'),
+                Tab(text: '?? …quipements'),
+                Tab(text: '?? Plan IA'),
               ],
             ),
           ]),
@@ -289,7 +289,7 @@ En fran√ßais, pratique et structur√©.''';
     );
   }
 
-  // ‚îÄ‚îÄ T√ÇCHES ‚îÄ‚îÄ
+  // -- T¬CHES --
   Widget _buildTaches() => ListView(
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
     children: [
@@ -325,7 +325,7 @@ En fran√ßais, pratique et structur√©.''';
       onDismissed: (_) {
         setState(() => t['statut'] = 'termine');
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('‚úÖ T√¢che marqu√©e comme termin√©e !'),
+            content: Text('? T‚che marquÈe comme terminÈe !'),
             backgroundColor: kGreen,
             behavior: SnackBarBehavior.floating));
       },
@@ -354,7 +354,7 @@ En fran√ßais, pratique et structur√©.''';
                   ? Colors.grey : const Color(0xFF1E293B))),
           subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${t['batiment']} ‚Ä¢ ${t['date']}',
+            Text('${t['batiment']} ï ${t['date']}',
                 style: const TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 4),
             Row(children: [
@@ -372,14 +372,14 @@ En fran√ßais, pratique et structur√©.''';
     );
   }
 
-  // ‚îÄ‚îÄ √âQUIPEMENTS ‚îÄ‚îÄ
+  // -- …QUIPEMENTS --
   Widget _buildEquipements() => ListView(
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
     children: [
-      // R√©sum√© √©tat
+      // RÈsumÈ Ètat
       _card(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('üìä √âtat des √©quipements', style: TextStyle(
+        const Text('?? …tat des Èquipements', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 14,
             color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
@@ -447,9 +447,9 @@ En fran√ßais, pratique et structur√©.''';
                 Text('Heures d\'utilisation: $heures h',
                     style: const TextStyle(
                         color: Colors.grey, fontSize: 11)),
-                Text(etat == 'critique' ? '‚ö†Ô∏è Maintenance urgente'
-                    : etat == 'attention' ? '‚ö†Ô∏è √Ä surveiller'
-                    : '‚úÖ OK',
+                Text(etat == 'critique' ? '?? Maintenance urgente'
+                    : etat == 'attention' ? '?? ¿ surveiller'
+                    : '? OK',
                     style: TextStyle(color: color, fontSize: 10,
                         fontWeight: FontWeight.w600)),
               ]),
@@ -466,15 +466,15 @@ En fran√ßais, pratique et structur√©.''';
         const SizedBox(height: 8),
 
         Row(children: [
-          _infoChip('üìÖ Derni√®re: ${e['derniereMaintenance']}'),
+          _infoChip('?? DerniËre: ${e['derniereMaintenance']}'),
           const SizedBox(width: 8),
-          _infoChip('‚è∞ Prochaine: ${e['prochaineMaintenance']}'),
+          _infoChip('? Prochaine: ${e['prochaineMaintenance']}'),
         ]),
       ]),
     );
   }
 
-  // ‚îÄ‚îÄ PLAN IA ‚îÄ‚îÄ
+  // -- PLAN IA --
   Widget _buildPlanIA() => SingleChildScrollView(
     padding: const EdgeInsets.all(16),
     child: Column(children: [
@@ -492,7 +492,7 @@ En fran√ßais, pratique et structur√©.''';
           const Text('Plan de Maintenance IA', style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.w900,
               fontSize: 16)),
-          const Text('Planification optimis√©e par Claude AI',
+          const Text('Planification optimisÈe par Claude AI',
               style: TextStyle(color: Colors.white54, fontSize: 11)),
           const SizedBox(height: 16),
           SizedBox(width: double.infinity,
@@ -504,7 +504,7 @@ En fran√ßais, pratique et structur√©.''';
                           color: kOrange, strokeWidth: 2))
                       : const Icon(Icons.auto_awesome_rounded, size: 18),
                   label: Text(_loadingIA
-                      ? 'G√©n√©ration...' : 'G√©n√©rer le plan',
+                      ? 'GÈnÈration...' : 'GÈnÈrer le plan',
                       style: const TextStyle(fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -533,10 +533,10 @@ En fran√ßais, pratique et structur√©.''';
       ])),
       const SizedBox(height: 16),
 
-      // R√©sum√© budget
+      // RÈsumÈ budget
       _card(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('üí∞ Budget Maintenance', style: TextStyle(
+        const Text('?? Budget Maintenance', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 14,
             color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
@@ -563,14 +563,14 @@ En fran√ßais, pratique et structur√©.''';
     ]),
   );
 
-  // ‚îÄ‚îÄ MODAL AJOUTER T√ÇCHE ‚îÄ‚îÄ
+  // -- MODAL AJOUTER T¬CHE --
   void _showAjouterTache() {
     final titreCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     final coutCtrl = TextEditingController();
     String priorite = 'normale';
     String type = 'equipement';
-    String batiment = 'B√¢timent A';
+    String batiment = 'B‚timent A';
 
     showModalBottomSheet(
       context: context, isScrollControlled: true,
@@ -582,7 +582,7 @@ En fran√ßais, pratique et structur√©.''';
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20,
                 left: 20, right: 20, top: 24),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Text('Nouvelle T√¢che', style: TextStyle(
+              const Text('Nouvelle T‚che', style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w800,
                   color: Color(0xFF1E293B))),
               const SizedBox(height: 16),
@@ -594,7 +594,7 @@ En fran√ßais, pratique et structur√©.''';
               Row(children: [
                 Expanded(child: DropdownButtonFormField<String>(
                     value: priorite,
-                    decoration: _dropDeco('Priorit√©'),
+                    decoration: _dropDeco('PrioritÈ'),
                     items: ['faible', 'normale', 'haute', 'critique']
                         .map((p) => DropdownMenuItem(
                         value: p, child: Text(p))).toList(),
@@ -602,16 +602,16 @@ En fran√ßais, pratique et structur√©.''';
                 const SizedBox(width: 10),
                 Expanded(child: DropdownButtonFormField<String>(
                     value: batiment,
-                    decoration: _dropDeco('B√¢timent'),
-                    items: ['B√¢timent A', 'B√¢timent B',
-                      'B√¢timent C', 'Tous']
+                    decoration: _dropDeco('B‚timent'),
+                    items: ['B‚timent A', 'B‚timent B',
+                      'B‚timent C', 'Tous']
                         .map((b) => DropdownMenuItem(
                         value: b, child: Text(b))).toList(),
                     onChanged: (v) => setModal(
                             () => batiment = v!))),
               ]),
               const SizedBox(height: 10),
-              _fieldInput(coutCtrl, 'Co√ªt estim√© (FCFA)',
+              _fieldInput(coutCtrl, 'Co˚t estimÈ (FCFA)',
                   Icons.attach_money_rounded, isNumber: true),
               const SizedBox(height: 16),
               SizedBox(width: double.infinity, height: 48,
@@ -632,7 +632,7 @@ En fran√ßais, pratique et structur√©.''';
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('‚úÖ T√¢che ajout√©e !'),
+                                  content: Text('? T‚che ajoutÈe !'),
                                   backgroundColor: kGreen,
                                   behavior: SnackBarBehavior.floating));
                         }
@@ -643,7 +643,7 @@ En fran√ßais, pratique et structur√©.''';
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                           elevation: 0),
-                      child: const Text('Ajouter la t√¢che',
+                      child: const Text('Ajouter la t‚che',
                           style: TextStyle(
                               fontWeight: FontWeight.w700)))),
             ]),
@@ -651,7 +651,7 @@ En fran√ßais, pratique et structur√©.''';
     );
   }
 
-  // ‚îÄ‚îÄ HELPERS ‚îÄ‚îÄ
+  // -- HELPERS --
   IconData _typeIcon(String type) {
     switch (type) {
       case 'ventilation': return Icons.air_rounded;
