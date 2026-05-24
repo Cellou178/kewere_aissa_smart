@@ -3,7 +3,7 @@ import 'managers/session_manager.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/dashboard/dashboard_page.dart';
 import 'core/constants/app_constants.dart';
-import 'core/constants/app_theme.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SessionManager.init();
@@ -23,15 +23,34 @@ class KewereApp extends StatelessWidget {
         fontFamily: 'Roboto',
         scaffoldBackgroundColor: const Color(0xFFF1F5F9),
         useMaterial3: true,
+        // Card theme
+        cardTheme: const CardThemeData(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+        ),
+        // AppBar theme
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1B3A6B),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        // Button theme
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1B3A6B),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
       ),
       home: SessionManager.isLoggedIn
           ? const DashboardPage()
           : const SplashScreen(),
     );
-    // Dans main.dart, dans MaterialApp ajoute :
-
-    theme: AppTheme.lightTheme,
-     cardTheme: CardThemeData(
-
   }
 }

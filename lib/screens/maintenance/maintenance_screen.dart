@@ -16,31 +16,31 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
   bool _loadingIA = false;
   String? _planIA;
 
-  // T�ches de maintenance
+  // Tâches de maintenance
   final List<Map<String, dynamic>> _taches = [
     {
-      'titre': 'V�rification syst�me ventilation',
-      'batiment': 'B�timent A',
+      'titre': 'Vérification système ventilation',
+      'batiment': 'Bâtiment A',
       'priorite': 'haute',
       'type': 'ventilation',
       'statut': 'en_attente',
       'date': '25/05/2026',
       'cout': 15000,
-      'description': 'Contr�ler les ventilateurs et courroies',
+      'description': 'Contrôler les ventilateurs et courroies',
     },
     {
-      'titre': 'D�sinfection compl�te',
-      'batiment': 'B�timent B',
+      'titre': 'Désinfection complète',
+      'batiment': 'Bâtiment B',
       'priorite': 'critique',
       'type': 'hygiene',
       'statut': 'en_cours',
       'date': '24/05/2026',
       'cout': 45000,
-      'description': 'D�sinfection apr�s fin de cycle',
+      'description': 'Désinfection après fin de cycle',
     },
     {
-      'titre': 'R�paration abreuvoirs',
-      'batiment': 'B�timent C',
+      'titre': 'Réparation abreuvoirs',
+      'batiment': 'Bâtiment C',
       'priorite': 'normale',
       'type': 'equipement',
       'statut': 'termine',
@@ -49,32 +49,32 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       'description': 'Remplacement joints abreuvoirs automatiques',
     },
     {
-      'titre': 'Contr�le �clairage',
-      'batiment': 'B�timent A',
+      'titre': 'Contrôle éclairage',
+      'batiment': 'Bâtiment A',
       'priorite': 'normale',
       'type': 'electricite',
       'statut': 'en_attente',
       'date': '28/05/2026',
       'cout': 12000,
-      'description': 'V�rifier ampoules et minuteries',
+      'description': 'Vérifier ampoules et minuteries',
     },
     {
-      'titre': 'Nettoyage goutti�res',
+      'titre': 'Nettoyage gouttières',
       'batiment': 'Tous',
       'priorite': 'faible',
       'type': 'structure',
       'statut': 'en_attente',
       'date': '30/05/2026',
       'cout': 5000,
-      'description': 'D�boucher et nettoyer les goutti�res',
+      'description': 'Déboucher et nettoyer les gouttières',
     },
   ];
 
-  // �quipements
+  // Équipements
   final List<Map<String, dynamic>> _equipements = [
     {
       'nom': 'Ventilateur principal A1',
-      'batiment': 'B�timent A',
+      'batiment': 'Bâtiment A',
       'etat': 'bon',
       'derniereMaintenance': '01/04/2026',
       'prochaineMaintenance': '01/07/2026',
@@ -83,8 +83,8 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       'color': kBlue,
     },
     {
-      'nom': 'Syst�me d\'abreuvement',
-      'batiment': 'B�timent B',
+      'nom': 'Système d\'abreuvement',
+      'batiment': 'Bâtiment B',
       'etat': 'attention',
       'derniereMaintenance': '15/03/2026',
       'prochaineMaintenance': '15/06/2026',
@@ -94,7 +94,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
     },
     {
       'nom': 'Chauffage infrarouge',
-      'batiment': 'B�timent C',
+      'batiment': 'Bâtiment C',
       'etat': 'critique',
       'derniereMaintenance': '01/01/2026',
       'prochaineMaintenance': '01/04/2026',
@@ -113,8 +113,8 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       'color': kGreen,
     },
     {
-      'nom': 'Syst�me d\'�clairage',
-      'batiment': 'B�timent A',
+      'nom': 'Système d\'éclairage',
+      'batiment': 'Bâtiment A',
       'etat': 'bon',
       'derniereMaintenance': '20/04/2026',
       'prochaineMaintenance': '20/07/2026',
@@ -143,28 +143,28 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       final coutTotal = _taches.fold<int>(0,
               (s, t) => s + (t['cout'] as int));
 
-      final prompt = '''Tu es un expert en maintenance de fermes avicoles au S�n�gal.
-G�n�re un plan de maintenance optimis� pour cette ferme.
+      final prompt = '''Tu es un expert en maintenance de fermes avicoles au Sénégal.
+Génère un plan de maintenance optimisé pour cette ferme.
 
-�TAT ACTUEL:
-- T�ches en attente: $tachesEnAttente
-- �quipements critiques: $equipementsCritiques
-- Budget maintenance estim�: $coutTotal FCFA
+ÉTAT ACTUEL:
+- Tâches en attente: $tachesEnAttente
+- Équipements critiques: $equipementsCritiques
+- Budget maintenance estimé: $coutTotal FCFA
 
-T�CHES URGENTES:
+TÂCHES URGENTES:
 ${_taches.where((t) => t['priorite'] == 'critique' || t['priorite'] == 'haute').map((t) => '- ${t['titre']} (${t['batiment']}) - ${t['cout']} FCFA').join('\n')}
 
-�QUIPEMENTS EN MAUVAIS �TAT:
+ÉQUIPEMENTS EN MAUVAIS ÉTAT:
 ${_equipements.where((e) => e['etat'] != 'bon').map((e) => '- ${e['nom']} (${e['etat']})').join('\n')}
 
-G�n�re un plan de maintenance sur 30 jours incluant:
-1. Priorit�s imm�diates (semaine 1)
+Génère un plan de maintenance sur 30 jours incluant:
+1. Priorités immédiates (semaine 1)
 2. Actions semaine 2-3
-3. Maintenance pr�ventive semaine 4
-4. Budget recommand�
-5. Conseils pour r�duire les co�ts
+3. Maintenance préventive semaine 4
+4. Budget recommandé
+5. Conseils pour réduire les coûts
 
-En fran�ais, pratique et structur�.''';
+En français, pratique et structuré.''';
 
       final response = await http.post(
         Uri.parse('https://api.anthropic.com/v1/messages'),
@@ -213,7 +213,7 @@ En fran�ais, pratique et structur�.''';
           onPressed: () => _showAjouterTache(),
           backgroundColor: kOrange,
           icon: const Icon(Icons.add_rounded, color: Colors.white),
-          label: const Text('Nouvelle t�che',
+          label: const Text('Nouvelle tâche',
               style: TextStyle(color: Colors.white,
                   fontWeight: FontWeight.w700))),
       body: Column(children: [
@@ -241,7 +241,7 @@ En fran�ais, pratique et structur�.''';
                     Text('Maintenance', style: TextStyle(
                         color: Colors.white, fontSize: 18,
                         fontWeight: FontWeight.w900)),
-                    Text('Suivi �quipements & b�timents',
+                    Text('Suivi équipements & bâtiments',
                         style: TextStyle(
                             color: Colors.white54, fontSize: 11)),
                   ])),
@@ -250,7 +250,7 @@ En fran�ais, pratique et structur�.''';
 
             // Stats
             Row(children: [
-              _headerStat('${_taches.length}', 'T�ches\ntotales',
+              _headerStat('${_taches.length}', 'Tâches\ntotales',
                   Colors.white),
               _headerStat('$_tachesEnAttente', 'En\nattente',
                   _tachesEnAttente > 0
@@ -272,9 +272,9 @@ En fran�ais, pratique et structur�.''';
               labelStyle: const TextStyle(
                   fontWeight: FontWeight.w700, fontSize: 11),
               tabs: const [
-                Tab(text: '?? T�ches'),
-                Tab(text: '?? �quipements'),
-                Tab(text: '?? Plan IA'),
+                Tab(text: '📋 Tâches'),
+                Tab(text: '🔧 Équipements'),
+                Tab(text: '🤖 Plan IA'),
               ],
             ),
           ]),
@@ -289,7 +289,7 @@ En fran�ais, pratique et structur�.''';
     );
   }
 
-  // -- T�CHES --
+  // -- TÂCHES --
   Widget _buildTaches() => ListView(
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
     children: [
@@ -325,7 +325,7 @@ En fran�ais, pratique et structur�.''';
       onDismissed: (_) {
         setState(() => t['statut'] = 'termine');
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('? T�che marqu�e comme termin�e !'),
+            content: Text('✅ Tâche marquée comme terminée !'),
             backgroundColor: kGreen,
             behavior: SnackBarBehavior.floating));
       },
@@ -354,7 +354,7 @@ En fran�ais, pratique et structur�.''';
                   ? Colors.grey : const Color(0xFF1E293B))),
           subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${t['batiment']} � ${t['date']}',
+            Text('${t['batiment']} • ${t['date']}',
                 style: const TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 4),
             Row(children: [
@@ -362,7 +362,7 @@ En fran�ais, pratique et structur�.''';
               const SizedBox(width: 6),
               _chip2(statut.replaceAll('_', ' '), sColor),
               const Spacer(),
-            Text('${(t['cout'] as int / 1000).toStringAsFixed(0)}K FCFA'),
+              Text('${(t['cout'] as int / 1000).toStringAsFixed(0)}K FCFA',
                   style: const TextStyle(color: kGreen,
                       fontWeight: FontWeight.w700, fontSize: 11)),
             ]),
@@ -372,14 +372,14 @@ En fran�ais, pratique et structur�.''';
     );
   }
 
-  // -- �QUIPEMENTS --
+  // -- ÉQUIPEMENTS --
   Widget _buildEquipements() => ListView(
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
     children: [
-      // R�sum� �tat
+      // Résumé état
       _card(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('?? �tat des �quipements', style: TextStyle(
+        const Text('📊 État des équipements', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 14,
             color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
@@ -447,9 +447,9 @@ En fran�ais, pratique et structur�.''';
                 Text('Heures d\'utilisation: $heures h',
                     style: const TextStyle(
                         color: Colors.grey, fontSize: 11)),
-                Text(etat == 'critique' ? '?? Maintenance urgente'
-                    : etat == 'attention' ? '?? � surveiller'
-                    : '? OK',
+                Text(etat == 'critique' ? '⚠️ Maintenance urgente'
+                    : etat == 'attention' ? '🟠 À surveiller'
+                    : '✅ OK',
                     style: TextStyle(color: color, fontSize: 10,
                         fontWeight: FontWeight.w600)),
               ]),
@@ -466,9 +466,9 @@ En fran�ais, pratique et structur�.''';
         const SizedBox(height: 8),
 
         Row(children: [
-          _infoChip('?? Derni�re: ${e['derniereMaintenance']}'),
+          _infoChip('📅 Dernière: ${e['derniereMaintenance']}'),
           const SizedBox(width: 8),
-          _infoChip('? Prochaine: ${e['prochaineMaintenance']}'),
+          _infoChip('⏰ Prochaine: ${e['prochaineMaintenance']}'),
         ]),
       ]),
     );
@@ -492,7 +492,7 @@ En fran�ais, pratique et structur�.''';
           const Text('Plan de Maintenance IA', style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.w900,
               fontSize: 16)),
-          const Text('Planification optimis�e par Claude AI',
+          const Text('Planification optimisée par Claude AI',
               style: TextStyle(color: Colors.white54, fontSize: 11)),
           const SizedBox(height: 16),
           SizedBox(width: double.infinity,
@@ -504,7 +504,7 @@ En fran�ais, pratique et structur�.''';
                           color: kOrange, strokeWidth: 2))
                       : const Icon(Icons.auto_awesome_rounded, size: 18),
                   label: Text(_loadingIA
-                      ? 'G�n�ration...' : 'G�n�rer le plan',
+                      ? 'Génération...' : 'Générer le plan',
                       style: const TextStyle(fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -533,10 +533,10 @@ En fran�ais, pratique et structur�.''';
       ])),
       const SizedBox(height: 16),
 
-      // R�sum� budget
+      // Résumé budget
       _card(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('?? Budget Maintenance', style: TextStyle(
+        const Text('💰 Budget Maintenance', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 14,
             color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
@@ -555,7 +555,7 @@ En fran�ais, pratique et structur�.''';
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           const Text('TOTAL', style: TextStyle(
               fontWeight: FontWeight.w800, fontSize: 13)),
-  Text('${(t['cout'] as int / 1000).toStringAsFixed(0)}K FCFA'),
+          Text('${(_coutTotal / 1000).toStringAsFixed(0)}K FCFA',
               style: const TextStyle(color: kOrange,
                   fontWeight: FontWeight.w900, fontSize: 14)),
         ]),
@@ -563,14 +563,14 @@ En fran�ais, pratique et structur�.''';
     ]),
   );
 
-  // -- MODAL AJOUTER T�CHE --
+  // -- MODAL AJOUTER TÂCHE --
   void _showAjouterTache() {
     final titreCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     final coutCtrl = TextEditingController();
     String priorite = 'normale';
     String type = 'equipement';
-    String batiment = 'B�timent A';
+    String batiment = 'Bâtiment A';
 
     showModalBottomSheet(
       context: context, isScrollControlled: true,
@@ -582,7 +582,7 @@ En fran�ais, pratique et structur�.''';
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20,
                 left: 20, right: 20, top: 24),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Text('Nouvelle T�che', style: TextStyle(
+              const Text('Nouvelle Tâche', style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w800,
                   color: Color(0xFF1E293B))),
               const SizedBox(height: 16),
@@ -594,7 +594,7 @@ En fran�ais, pratique et structur�.''';
               Row(children: [
                 Expanded(child: DropdownButtonFormField<String>(
                     value: priorite,
-                    decoration: _dropDeco('Priorit�'),
+                    decoration: _dropDeco('Priorité'),
                     items: ['faible', 'normale', 'haute', 'critique']
                         .map((p) => DropdownMenuItem(
                         value: p, child: Text(p))).toList(),
@@ -602,16 +602,16 @@ En fran�ais, pratique et structur�.''';
                 const SizedBox(width: 10),
                 Expanded(child: DropdownButtonFormField<String>(
                     value: batiment,
-                    decoration: _dropDeco('B�timent'),
-                    items: ['B�timent A', 'B�timent B',
-                      'B�timent C', 'Tous']
+                    decoration: _dropDeco('Bâtiment'),
+                    items: ['Bâtiment A', 'Bâtiment B',
+                      'Bâtiment C', 'Tous']
                         .map((b) => DropdownMenuItem(
                         value: b, child: Text(b))).toList(),
                     onChanged: (v) => setModal(
                             () => batiment = v!))),
               ]),
               const SizedBox(height: 10),
-              _fieldInput(coutCtrl, 'Co�t estim� (FCFA)',
+              _fieldInput(coutCtrl, 'Coût estimé (FCFA)',
                   Icons.attach_money_rounded, isNumber: true),
               const SizedBox(height: 16),
               SizedBox(width: double.infinity, height: 48,
@@ -632,7 +632,7 @@ En fran�ais, pratique et structur�.''';
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('? T�che ajout�e !'),
+                                  content: Text('✅ Tâche ajoutée !'),
                                   backgroundColor: kGreen,
                                   behavior: SnackBarBehavior.floating));
                         }
@@ -643,7 +643,7 @@ En fran�ais, pratique et structur�.''';
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                           elevation: 0),
-                      child: const Text('Ajouter la t�che',
+                      child: const Text('Ajouter la tâche',
                           style: TextStyle(
                               fontWeight: FontWeight.w700)))),
             ]),
