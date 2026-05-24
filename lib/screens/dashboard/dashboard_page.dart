@@ -6,7 +6,7 @@ import '../../widgets/dashboard_charts.dart';
 import '../cycles/add_cycle_screen.dart';
 import '../fermes/operations_screen.dart';
 import '../stocks/add_stock_screen.dart';
-
+import '../../core/utils/responsive.dart';
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
   @override
@@ -526,24 +526,25 @@ class _DashboardPageState extends State<DashboardPage> {
       );
 
   Widget _kpiCard(IconData icon, String value, String label,
-      Color color, bool isSmall) =>
-      Expanded(child: Container(
-        padding: EdgeInsets.all(isSmall ? 8 : 10),
-        decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withOpacity(0.3))),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(icon, color: color, size: isSmall ? 16 : 18),
-          SizedBox(height: isSmall ? 4 : 6),
-          Text(value, style: TextStyle(
-              color: Colors.white, fontSize: isSmall ? 14 : 16,
-              fontWeight: FontWeight.w900)),
-          Text(label, style: TextStyle(
-              color: Colors.white60, fontSize: isSmall ? 8 : 9)),
-        ]),
-      ));
-
+      Color color, bool isSmall) {
+    final r = Responsive(context);
+    return Expanded(child: Container(
+      padding: EdgeInsets.all(r.cardPadding),
+      decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(r.borderRadius),
+          border: Border.all(color: color.withOpacity(0.3))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, color: color, size: r.iconSm),
+        SizedBox(height: r.isSmallPhone ? 4 : 6),
+        Text(value, style: TextStyle(
+            color: Colors.white, fontSize: r.fontLg,
+            fontWeight: FontWeight.w900)),
+        Text(label, style: TextStyle(
+            color: Colors.white60, fontSize: r.fontXS)),
+      ]),
+    ));
+  }
   Widget _quickAction(IconData icon, String label, Color color,
       VoidCallback onTap) =>
       Expanded(child: GestureDetector(
