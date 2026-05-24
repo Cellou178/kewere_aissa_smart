@@ -27,5 +27,7 @@ class KewereApp extends StatelessWidget {
           ? const DashboardPage()
           : const SplashScreen(),
     );
+    // Dans main.dart, dans MaterialApp ajoute :
+    theme: kTheme,
   }
 }
