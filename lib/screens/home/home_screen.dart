@@ -109,7 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
-    final sh = MediaQuery.of(context).size.height;
     final isSmall = sw < 400;
 
     return AuthGuard(
@@ -222,8 +221,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const Divider(color: Colors.white12, height: 1),
 
-                // ── Items scrollables COMPACT ──
+                // ── Items scrollables ──
                 Expanded(child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     children: [
                       _drawerSection('GESTION'),
@@ -265,28 +265,33 @@ class _HomeScreenState extends State<HomeScreen> {
                           'Investissement', const Color(0xFF16A34A)),
                       _drawerItem(13, Icons.build_rounded, 'Maintenance',
                           const Color(0xFF6B7280)),
-                      _drawerItem(14, Icons.security_rounded, 'Accès & Rôles',
-                          const Color(0xFFDC2626)),
+                      _drawerItem(14, Icons.security_rounded,
+                          'Accès & Rôles', const Color(0xFFDC2626)),
                       _drawerItem(17, Icons.diamond_rounded, 'Abonnement',
                           const Color(0xFF059669)),
+                      const SizedBox(height: 4),
                     ])),
 
-                // ── Fixés en bas COMPACT ──
+                // ── Fixés en bas ──
                 const Divider(color: Colors.white12, height: 1),
                 _drawerItem(16, Icons.settings_rounded, 'Paramètres',
                     const Color(0xFF6B7280)),
                 ListTile(
                   dense: true,
                   visualDensity: const VisualDensity(vertical: -4),
-                  leading: Container(padding: const EdgeInsets.all(5),
+                  minLeadingWidth: 0,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 0),
+                  leading: Container(
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                           color: Colors.red.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(7)),
+                          borderRadius: BorderRadius.circular(6)),
                       child: const Icon(Icons.logout_rounded,
-                          color: Colors.redAccent, size: 14)),
+                          color: Colors.redAccent, size: 13)),
                   title: const Text('Déconnexion', style: TextStyle(
                       color: Colors.redAccent,
-                      fontWeight: FontWeight.w600, fontSize: 11)),
+                      fontWeight: FontWeight.w600, fontSize: 10)),
                   onTap: () async {
                     await SessionManager.clear();
                     Navigator.pushNamedAndRemoveUntil(
@@ -300,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           body: _pages[_currentIndex],
 
-          // ── BOTTOM NAV COMPACT ──
+          // ── BOTTOM NAV ──
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -361,25 +366,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _drawerSection(String title) => Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 1),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
       child: Text(title, style: const TextStyle(
-          color: Colors.white24, fontSize: 8,
-          fontWeight: FontWeight.w700, letterSpacing: 1.0)));
+          color: Colors.white24, fontSize: 7,
+          fontWeight: FontWeight.w700, letterSpacing: 0.8)));
 
   Widget _drawerItem(int index, IconData icon, String label, Color color) =>
       ListTile(
         dense: true,
         visualDensity: const VisualDensity(vertical: -4),
-        leading: Container(padding: const EdgeInsets.all(5),
+        minLeadingWidth: 0,
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12, vertical: 0),
+        leading: Container(
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
                 color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(7)),
-            child: Icon(icon, color: color, size: 14)),
+                borderRadius: BorderRadius.circular(6)),
+            child: Icon(icon, color: color, size: 13)),
         title: Text(label, style: const TextStyle(
-            color: Colors.white, fontSize: 11,
+            color: Colors.white, fontSize: 10,
             fontWeight: FontWeight.w500)),
         trailing: const Icon(Icons.arrow_forward_ios_rounded,
-            color: Colors.white12, size: 9),
+            color: Colors.white12, size: 8),
         onTap: () => _navigateDrawer(index),
       );
 }
