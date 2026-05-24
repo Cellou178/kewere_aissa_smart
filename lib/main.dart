@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'managers/session_manager.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/dashboard/dashboard_page.dart';
 import 'core/constants/app_constants.dart';
+import 'core/constants/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SessionManager.init();
@@ -28,6 +29,8 @@ class KewereApp extends StatelessWidget {
           : const SplashScreen(),
     );
     // Dans main.dart, dans MaterialApp ajoute :
-    theme: kTheme,
+    theme: AppTheme.lightTheme,
+    cardTheme: CardThemeData(
+
   }
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 // ── API ──
 const String API_URL = 'https://kewere-aissa-smart.onrender.com';
@@ -142,7 +142,7 @@ ThemeData kTheme = ThemeData(
         borderSide: BorderSide(color: kBlue, width: 2)),
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
   ),
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     color: Colors.white,
     elevation: 0,
     shape: RoundedRectangleBorder(borderRadius: kBorderRadius),
