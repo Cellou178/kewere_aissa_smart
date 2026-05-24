@@ -16,31 +16,31 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
   bool _loadingIA = false;
   String? _planIA;
 
-  // Tâches de maintenance
+  // Tï¿½ches de maintenance
   final List<Map<String, dynamic>> _taches = [
     {
-      'titre': 'Vérification système ventilation',
-      'batiment': 'Bâtiment A',
+      'titre': 'Vï¿½rification systï¿½me ventilation',
+      'batiment': 'Bï¿½timent A',
       'priorite': 'haute',
       'type': 'ventilation',
       'statut': 'en_attente',
       'date': '25/05/2026',
       'cout': 15000,
-      'description': 'Contrôler les ventilateurs et courroies',
+      'description': 'Contrï¿½ler les ventilateurs et courroies',
     },
     {
-      'titre': 'Désinfection complète',
-      'batiment': 'Bâtiment B',
+      'titre': 'Dï¿½sinfection complï¿½te',
+      'batiment': 'Bï¿½timent B',
       'priorite': 'critique',
       'type': 'hygiene',
       'statut': 'en_cours',
       'date': '24/05/2026',
       'cout': 45000,
-      'description': 'Désinfection après fin de cycle',
+      'description': 'Dï¿½sinfection aprï¿½s fin de cycle',
     },
     {
-      'titre': 'Réparation abreuvoirs',
-      'batiment': 'Bâtiment C',
+      'titre': 'Rï¿½paration abreuvoirs',
+      'batiment': 'Bï¿½timent C',
       'priorite': 'normale',
       'type': 'equipement',
       'statut': 'termine',
@@ -49,32 +49,32 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       'description': 'Remplacement joints abreuvoirs automatiques',
     },
     {
-      'titre': 'Contrôle éclairage',
-      'batiment': 'Bâtiment A',
+      'titre': 'Contrï¿½le ï¿½clairage',
+      'batiment': 'Bï¿½timent A',
       'priorite': 'normale',
       'type': 'electricite',
       'statut': 'en_attente',
       'date': '28/05/2026',
       'cout': 12000,
-      'description': 'Vérifier ampoules et minuteries',
+      'description': 'Vï¿½rifier ampoules et minuteries',
     },
     {
-      'titre': 'Nettoyage gouttières',
+      'titre': 'Nettoyage gouttiï¿½res',
       'batiment': 'Tous',
       'priorite': 'faible',
       'type': 'structure',
       'statut': 'en_attente',
       'date': '30/05/2026',
       'cout': 5000,
-      'description': 'Déboucher et nettoyer les gouttières',
+      'description': 'Dï¿½boucher et nettoyer les gouttiï¿½res',
     },
   ];
 
-  // Équipements
+  // ï¿½quipements
   final List<Map<String, dynamic>> _equipements = [
     {
       'nom': 'Ventilateur principal A1',
-      'batiment': 'Bâtiment A',
+      'batiment': 'Bï¿½timent A',
       'etat': 'bon',
       'derniereMaintenance': '01/04/2026',
       'prochaineMaintenance': '01/07/2026',
@@ -83,8 +83,8 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       'color': kBlue,
     },
     {
-      'nom': 'Système d\'abreuvement',
-      'batiment': 'Bâtiment B',
+      'nom': 'Systï¿½me d\'abreuvement',
+      'batiment': 'Bï¿½timent B',
       'etat': 'attention',
       'derniereMaintenance': '15/03/2026',
       'prochaineMaintenance': '15/06/2026',
@@ -94,7 +94,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
     },
     {
       'nom': 'Chauffage infrarouge',
-      'batiment': 'Bâtiment C',
+      'batiment': 'Bï¿½timent C',
       'etat': 'critique',
       'derniereMaintenance': '01/01/2026',
       'prochaineMaintenance': '01/04/2026',
@@ -113,8 +113,8 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       'color': kGreen,
     },
     {
-      'nom': 'Système d\'éclairage',
-      'batiment': 'Bâtiment A',
+      'nom': 'Systï¿½me d\'ï¿½clairage',
+      'batiment': 'Bï¿½timent A',
       'etat': 'bon',
       'derniereMaintenance': '20/04/2026',
       'prochaineMaintenance': '20/07/2026',
@@ -143,28 +143,28 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       final coutTotal = _taches.fold<int>(0,
               (s, t) => s + (t['cout'] as int));
 
-      final prompt = '''Tu es un expert en maintenance de fermes avicoles au Sénégal.
-Génère un plan de maintenance optimisé pour cette ferme.
+      final prompt = '''Tu es un expert en maintenance de fermes avicoles au Sï¿½nï¿½gal.
+Gï¿½nï¿½re un plan de maintenance optimisï¿½ pour cette ferme.
 
-ÉTAT ACTUEL:
-- Tâches en attente: $tachesEnAttente
-- Équipements critiques: $equipementsCritiques
-- Budget maintenance estimé: $coutTotal FCFA
+ï¿½TAT ACTUEL:
+- Tï¿½ches en attente: $tachesEnAttente
+- ï¿½quipements critiques: $equipementsCritiques
+- Budget maintenance estimï¿½: $coutTotal FCFA
 
-TÂCHES URGENTES:
+Tï¿½CHES URGENTES:
 ${_taches.where((t) => t['priorite'] == 'critique' || t['priorite'] == 'haute').map((t) => '- ${t['titre']} (${t['batiment']}) - ${t['cout']} FCFA').join('\n')}
 
-ÉQUIPEMENTS EN MAUVAIS ÉTAT:
+ï¿½QUIPEMENTS EN MAUVAIS ï¿½TAT:
 ${_equipements.where((e) => e['etat'] != 'bon').map((e) => '- ${e['nom']} (${e['etat']})').join('\n')}
 
-Génère un plan de maintenance sur 30 jours incluant:
-1. Priorités immédiates (semaine 1)
+Gï¿½nï¿½re un plan de maintenance sur 30 jours incluant:
+1. Prioritï¿½s immï¿½diates (semaine 1)
 2. Actions semaine 2-3
-3. Maintenance préventive semaine 4
-4. Budget recommandé
-5. Conseils pour réduire les coûts
+3. Maintenance prï¿½ventive semaine 4
+4. Budget recommandï¿½
+5. Conseils pour rï¿½duire les coï¿½ts
 
-En français, pratique et structuré.''';
+En franï¿½ais, pratique et structurï¿½.''';
 
       final response = await http.post(
         Uri.parse('https://api.anthropic.com/v1/messages'),
@@ -213,7 +213,7 @@ En français, pratique et structuré.''';
           onPressed: () => _showAjouterTache(),
           backgroundColor: kOrange,
           icon: const Icon(Icons.add_rounded, color: Colors.white),
-          label: const Text('Nouvelle tâche',
+          label: const Text('Nouvelle tï¿½che',
               style: TextStyle(color: Colors.white,
                   fontWeight: FontWeight.w700))),
       body: Column(children: [
@@ -241,7 +241,7 @@ En français, pratique et structuré.''';
                     Text('Maintenance', style: TextStyle(
                         color: Colors.white, fontSize: 18,
                         fontWeight: FontWeight.w900)),
-                    Text('Suivi équipements & bâtiments',
+                    Text('Suivi ï¿½quipements & bï¿½timents',
                         style: TextStyle(
                             color: Colors.white54, fontSize: 11)),
                   ])),
@@ -250,7 +250,7 @@ En français, pratique et structuré.''';
 
             // Stats
             Row(children: [
-              _headerStat('${_taches.length}', 'Tâches\ntotales',
+              _headerStat('${_taches.length}', 'Tï¿½ches\ntotales',
                   Colors.white),
               _headerStat('$_tachesEnAttente', 'En\nattente',
                   _tachesEnAttente > 0
@@ -272,8 +272,8 @@ En français, pratique et structuré.''';
               labelStyle: const TextStyle(
                   fontWeight: FontWeight.w700, fontSize: 11),
               tabs: const [
-                Tab(text: '?? Tâches'),
-                Tab(text: '?? Équipements'),
+                Tab(text: '?? Tï¿½ches'),
+                Tab(text: '?? ï¿½quipements'),
                 Tab(text: '?? Plan IA'),
               ],
             ),
@@ -289,7 +289,7 @@ En français, pratique et structuré.''';
     );
   }
 
-  // -- TÂCHES --
+  // -- Tï¿½CHES --
   Widget _buildTaches() => ListView(
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
     children: [
@@ -325,7 +325,7 @@ En français, pratique et structuré.''';
       onDismissed: (_) {
         setState(() => t['statut'] = 'termine');
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('? Tâche marquée comme terminée !'),
+            content: Text('? Tï¿½che marquï¿½e comme terminï¿½e !'),
             backgroundColor: kGreen,
             behavior: SnackBarBehavior.floating));
       },
@@ -354,7 +354,7 @@ En français, pratique et structuré.''';
                   ? Colors.grey : const Color(0xFF1E293B))),
           subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${t['batiment']} • ${t['date']}',
+            Text('${t['batiment']} ï¿½ ${t['date']}',
                 style: const TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 4),
             Row(children: [
@@ -362,7 +362,7 @@ En français, pratique et structuré.''';
               const SizedBox(width: 6),
               _chip2(statut.replaceAll('_', ' '), sColor),
               const Spacer(),
-              Text('${(t['cout'] as int / 1000).toStringAsFixed(0)}K FCFA',
+            Text('${(t['cout'] as int / 1000).toStringAsFixed(0)}K FCFA'),
                   style: const TextStyle(color: kGreen,
                       fontWeight: FontWeight.w700, fontSize: 11)),
             ]),
@@ -372,14 +372,14 @@ En français, pratique et structuré.''';
     );
   }
 
-  // -- ÉQUIPEMENTS --
+  // -- ï¿½QUIPEMENTS --
   Widget _buildEquipements() => ListView(
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
     children: [
-      // Résumé état
+      // Rï¿½sumï¿½ ï¿½tat
       _card(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('?? État des équipements', style: TextStyle(
+        const Text('?? ï¿½tat des ï¿½quipements', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 14,
             color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
@@ -448,7 +448,7 @@ En français, pratique et structuré.''';
                     style: const TextStyle(
                         color: Colors.grey, fontSize: 11)),
                 Text(etat == 'critique' ? '?? Maintenance urgente'
-                    : etat == 'attention' ? '?? À surveiller'
+                    : etat == 'attention' ? '?? ï¿½ surveiller'
                     : '? OK',
                     style: TextStyle(color: color, fontSize: 10,
                         fontWeight: FontWeight.w600)),
@@ -466,7 +466,7 @@ En français, pratique et structuré.''';
         const SizedBox(height: 8),
 
         Row(children: [
-          _infoChip('?? Dernière: ${e['derniereMaintenance']}'),
+          _infoChip('?? Derniï¿½re: ${e['derniereMaintenance']}'),
           const SizedBox(width: 8),
           _infoChip('? Prochaine: ${e['prochaineMaintenance']}'),
         ]),
@@ -492,7 +492,7 @@ En français, pratique et structuré.''';
           const Text('Plan de Maintenance IA', style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.w900,
               fontSize: 16)),
-          const Text('Planification optimisée par Claude AI',
+          const Text('Planification optimisï¿½e par Claude AI',
               style: TextStyle(color: Colors.white54, fontSize: 11)),
           const SizedBox(height: 16),
           SizedBox(width: double.infinity,
@@ -504,7 +504,7 @@ En français, pratique et structuré.''';
                           color: kOrange, strokeWidth: 2))
                       : const Icon(Icons.auto_awesome_rounded, size: 18),
                   label: Text(_loadingIA
-                      ? 'Génération...' : 'Générer le plan',
+                      ? 'Gï¿½nï¿½ration...' : 'Gï¿½nï¿½rer le plan',
                       style: const TextStyle(fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -533,7 +533,7 @@ En français, pratique et structuré.''';
       ])),
       const SizedBox(height: 16),
 
-      // Résumé budget
+      // Rï¿½sumï¿½ budget
       _card(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('?? Budget Maintenance', style: TextStyle(
@@ -555,7 +555,7 @@ En français, pratique et structuré.''';
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           const Text('TOTAL', style: TextStyle(
               fontWeight: FontWeight.w800, fontSize: 13)),
-          Text('${(_coutTotal / 1000).toStringAsFixed(0)}K FCFA',
+  Text('${(t['cout'] as int / 1000).toStringAsFixed(0)}K FCFA'),
               style: const TextStyle(color: kOrange,
                   fontWeight: FontWeight.w900, fontSize: 14)),
         ]),
@@ -563,14 +563,14 @@ En français, pratique et structuré.''';
     ]),
   );
 
-  // -- MODAL AJOUTER TÂCHE --
+  // -- MODAL AJOUTER Tï¿½CHE --
   void _showAjouterTache() {
     final titreCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     final coutCtrl = TextEditingController();
     String priorite = 'normale';
     String type = 'equipement';
-    String batiment = 'Bâtiment A';
+    String batiment = 'Bï¿½timent A';
 
     showModalBottomSheet(
       context: context, isScrollControlled: true,
@@ -582,7 +582,7 @@ En français, pratique et structuré.''';
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20,
                 left: 20, right: 20, top: 24),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Text('Nouvelle Tâche', style: TextStyle(
+              const Text('Nouvelle Tï¿½che', style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w800,
                   color: Color(0xFF1E293B))),
               const SizedBox(height: 16),
@@ -594,7 +594,7 @@ En français, pratique et structuré.''';
               Row(children: [
                 Expanded(child: DropdownButtonFormField<String>(
                     value: priorite,
-                    decoration: _dropDeco('Priorité'),
+                    decoration: _dropDeco('Prioritï¿½'),
                     items: ['faible', 'normale', 'haute', 'critique']
                         .map((p) => DropdownMenuItem(
                         value: p, child: Text(p))).toList(),
@@ -602,16 +602,16 @@ En français, pratique et structuré.''';
                 const SizedBox(width: 10),
                 Expanded(child: DropdownButtonFormField<String>(
                     value: batiment,
-                    decoration: _dropDeco('Bâtiment'),
-                    items: ['Bâtiment A', 'Bâtiment B',
-                      'Bâtiment C', 'Tous']
+                    decoration: _dropDeco('Bï¿½timent'),
+                    items: ['Bï¿½timent A', 'Bï¿½timent B',
+                      'Bï¿½timent C', 'Tous']
                         .map((b) => DropdownMenuItem(
                         value: b, child: Text(b))).toList(),
                     onChanged: (v) => setModal(
                             () => batiment = v!))),
               ]),
               const SizedBox(height: 10),
-              _fieldInput(coutCtrl, 'Coût estimé (FCFA)',
+              _fieldInput(coutCtrl, 'Coï¿½t estimï¿½ (FCFA)',
                   Icons.attach_money_rounded, isNumber: true),
               const SizedBox(height: 16),
               SizedBox(width: double.infinity, height: 48,
@@ -632,7 +632,7 @@ En français, pratique et structuré.''';
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('? Tâche ajoutée !'),
+                                  content: Text('? Tï¿½che ajoutï¿½e !'),
                                   backgroundColor: kGreen,
                                   behavior: SnackBarBehavior.floating));
                         }
@@ -643,7 +643,7 @@ En français, pratique et structuré.''';
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                           elevation: 0),
-                      child: const Text('Ajouter la tâche',
+                      child: const Text('Ajouter la tï¿½che',
                           style: TextStyle(
                               fontWeight: FontWeight.w700)))),
             ]),
