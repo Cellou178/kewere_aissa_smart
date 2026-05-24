@@ -3,6 +3,7 @@ import '../../core/constants/app_constants.dart';
 import '../../managers/session_manager.dart';
 import '../../core/utils/auth_guard.dart';
 import '../../core/utils/session_timeout.dart';
+import '../../core/utils/app_transitions.dart';
 import '../../services/notification_service.dart';
 import '../dashboard/dashboard_page.dart';
 import '../fermes/fermes_screen.dart';
@@ -25,8 +26,9 @@ import '../vitrine/vitrine_screen.dart';
 import '../investissement/investissement_screen.dart';
 import '../maintenance/maintenance_screen.dart';
 import '../acces/acces_screen.dart';
-//import '../stats/stats_screen.dart';
+import '../stats/stats_screen.dart';
 import '../chat/chat_screen.dart';
+import '../abonnement/abonnement_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -66,8 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 12: return const InvestissementScreen();
       case 13: return const MaintenanceScreen();
       case 14: return const AccesScreen();
-      case 15: return _emptyPage('Statistiques', Icons.analytics_rounded, kBlue);
+      case 15: return const StatsScreen();
       case 16: return const SettingsScreen();
+      case 17: return const AbonnementScreen();
       default: return _emptyPage('Bientôt disponible',
           Icons.construction_rounded, kBlue);
     }
@@ -100,12 +103,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateDrawer(int index) {
     Navigator.pop(context);
     Navigator.push(context,
-        MaterialPageRoute(builder: (_) => _getDrawerPage(index)));
+        AppTransitions.slideFade(_getDrawerPage(index)));
   }
 
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
     final isSmall = sw < 400;
 
     return AuthGuard(
@@ -118,58 +122,58 @@ class _HomeScreenState extends State<HomeScreen> {
           // ── APP BAR ──
           appBar: AppBar(
             backgroundColor: kDark, elevation: 0,
+            toolbarHeight: 50,
             leading: IconButton(
               icon: const Icon(Icons.menu_rounded,
                   color: Colors.white, size: 22),
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             title: Row(children: [
-              const Text('🐔', style: TextStyle(fontSize: 18)),
+              const Text('🐔', style: TextStyle(fontSize: 16)),
               const SizedBox(width: 6),
-              const Text('Kewere Smart', style: TextStyle(
-                  color: Colors.white, fontSize: 15,
+              Text('Kewere Smart', style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isSmall ? 13 : 15,
                   fontWeight: FontWeight.w800)),
             ]),
             actions: [
-              // Notifications badge
               Stack(children: [
                 IconButton(
-                  icon: const Icon(Icons.notifications_outlined,
-                      color: Colors.white, size: 22),
+                  icon: Icon(Icons.notifications_outlined,
+                      color: Colors.white, size: isSmall ? 20 : 22),
                   onPressed: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) =>
-                      const NotificationsScreen())),
+                      AppTransitions.slideFade(
+                          const NotificationsScreen())),
                 ),
                 if (NotificationService.nonLues > 0)
                   Positioned(top: 8, right: 8, child: Container(
-                      width: 16, height: 16,
+                      width: 14, height: 14,
                       decoration: const BoxDecoration(
                           color: Colors.redAccent,
                           shape: BoxShape.circle),
                       child: Center(child: Text(
                           '${NotificationService.nonLues}',
                           style: const TextStyle(color: Colors.white,
-                              fontSize: 8,
+                              fontSize: 7,
                               fontWeight: FontWeight.w800))))),
               ]),
-              // Badge rôle compact
               Container(
-                margin: const EdgeInsets.only(right: 10),
+                margin: const EdgeInsets.only(right: 8),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 7, vertical: 3),
+                    horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                     color: SessionManager.roleColor.withOpacity(0.25),
                     borderRadius: BorderRadius.circular(20)),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Text(SessionManager.roleBadge,
-                      style: const TextStyle(fontSize: 10)),
-                  const SizedBox(width: 3),
+                      style: const TextStyle(fontSize: 9)),
+                  const SizedBox(width: 2),
                   Text(
-                      SessionManager.role.length > 6
-                          ? SessionManager.role.substring(0, 6).toUpperCase()
+                      SessionManager.role.length > 5
+                          ? SessionManager.role.substring(0, 5).toUpperCase()
                           : SessionManager.role.toUpperCase(),
                       style: const TextStyle(color: Colors.white,
-                          fontSize: 8, fontWeight: FontWeight.w700)),
+                          fontSize: 7, fontWeight: FontWeight.w700)),
                 ]),
               ),
             ],
@@ -177,24 +181,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // ── DRAWER ──
           drawer: SizedBox(
-            // ✅ Fix #1 — Drawer 75% largeur écran
             width: sw * 0.75,
             child: Drawer(
               backgroundColor: kDark,
               child: SafeArea(child: Column(children: [
                 // Header compact
                 Container(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                   decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.04)),
                   child: Row(children: [
-                    Container(width: 40, height: 40,
+                    Container(width: 34, height: 34,
                         decoration: BoxDecoration(
                             color: kBlue.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(10)),
                         child: const Center(child: Text('🐔',
-                            style: TextStyle(fontSize: 20)))),
-                    const SizedBox(width: 10),
+                            style: TextStyle(fontSize: 17)))),
+                    const SizedBox(width: 8),
                     Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -202,27 +205,27 @@ class _HomeScreenState extends State<HomeScreen> {
                               SessionManager.nom.isNotEmpty
                                   ? SessionManager.nom : 'Utilisateur',
                               style: const TextStyle(color: Colors.white,
-                                  fontWeight: FontWeight.w700, fontSize: 13),
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  fontWeight: FontWeight.w700, fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
                           Row(children: [
                             Text(SessionManager.roleBadge,
-                                style: const TextStyle(fontSize: 10)),
-                            const SizedBox(width: 3),
+                                style: const TextStyle(fontSize: 9)),
+                            const SizedBox(width: 2),
                             Text(SessionManager.role, style: TextStyle(
                                 color: SessionManager.roleColor,
-                                fontSize: 10, fontWeight: FontWeight.w600)),
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600)),
                           ]),
                         ])),
                   ]),
                 ),
                 const Divider(color: Colors.white12, height: 1),
 
-                // ── Items scrollables ──
+                // ── Items scrollables COMPACT ──
                 Expanded(child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 2),
                     children: [
-
-                      // GESTION
                       _drawerSection('GESTION'),
                       _drawerItem(0, Icons.agriculture_rounded, 'Fermes',
                           const Color(0xFF16A34A)),
@@ -233,7 +236,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       _drawerItem(3, Icons.terrain_rounded, 'Terrain',
                           const Color(0xFF16A34A)),
 
-                      // ANALYTICS
                       _drawerSection('ANALYTICS'),
                       _drawerItem(4, Icons.bar_chart_rounded, 'Graphiques',
                           const Color(0xFF2563EB)),
@@ -246,82 +248,78 @@ class _HomeScreenState extends State<HomeScreen> {
                       _drawerItem(15, Icons.analytics_rounded,
                           'Statistiques', const Color(0xFF2563EB)),
 
-                      // RAPPORTS
                       _drawerSection('RAPPORTS & PLANNING'),
                       _drawerItem(8, Icons.assessment_rounded, 'Rapports',
                           const Color(0xFF6366F1)),
-                      _drawerItem(9, Icons.calendar_month_rounded,
-                          'Agenda', const Color(0xFF0891B2)),
+                      _drawerItem(9, Icons.calendar_month_rounded, 'Agenda',
+                          const Color(0xFF0891B2)),
 
-                      // MARCHÉ
                       _drawerSection('MARCHÉ & VITRINE'),
-                      _drawerItem(10, Icons.store_rounded,
-                          'Marché AOF', const Color(0xFFD97706)),
-                      _drawerItem(11, Icons.storefront_rounded,
-                          'Ma Vitrine', const Color(0xFF16A34A)),
+                      _drawerItem(10, Icons.store_rounded, 'Marché AOF',
+                          const Color(0xFFD97706)),
+                      _drawerItem(11, Icons.storefront_rounded, 'Ma Vitrine',
+                          const Color(0xFF16A34A)),
 
-                      // FINANCE
                       _drawerSection('FINANCE & INVEST.'),
                       _drawerItem(12, Icons.trending_up_rounded,
                           'Investissement', const Color(0xFF16A34A)),
-                      _drawerItem(13, Icons.build_rounded,
-                          'Maintenance', const Color(0xFF6B7280)),
-                      _drawerItem(14, Icons.security_rounded,
-                          'Accès & Rôles', const Color(0xFFDC2626)),
+                      _drawerItem(13, Icons.build_rounded, 'Maintenance',
+                          const Color(0xFF6B7280)),
+                      _drawerItem(14, Icons.security_rounded, 'Accès & Rôles',
+                          const Color(0xFFDC2626)),
+                      _drawerItem(17, Icons.diamond_rounded, 'Abonnement',
+                          const Color(0xFF059669)),
                     ])),
 
-                // ── Fixés en bas ──
+                // ── Fixés en bas COMPACT ──
                 const Divider(color: Colors.white12, height: 1),
                 _drawerItem(16, Icons.settings_rounded, 'Paramètres',
                     const Color(0xFF6B7280)),
                 ListTile(
                   dense: true,
-                  visualDensity: const VisualDensity(vertical: -2),
+                  visualDensity: const VisualDensity(vertical: -4),
                   leading: Container(padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
                           color: Colors.red.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(7)),
                       child: const Icon(Icons.logout_rounded,
-                          color: Colors.redAccent, size: 16)),
+                          color: Colors.redAccent, size: 14)),
                   title: const Text('Déconnexion', style: TextStyle(
                       color: Colors.redAccent,
-                      fontWeight: FontWeight.w600, fontSize: 12)),
+                      fontWeight: FontWeight.w600, fontSize: 11)),
                   onTap: () async {
                     await SessionManager.clear();
                     Navigator.pushNamedAndRemoveUntil(
                         context, '/', (route) => false);
                   },
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
               ])),
             ),
           ),
 
           body: _pages[_currentIndex],
 
-          // ── BOTTOM NAV — compact ──
+          // ── BOTTOM NAV COMPACT ──
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [BoxShadow(
                   color: Colors.black.withOpacity(0.08),
-                  blurRadius: 12, offset: const Offset(0, -2))],
+                  blurRadius: 10, offset: const Offset(0, -1))],
             ),
             child: SafeArea(
               child: SizedBox(
-                // ✅ Fix #4 — hauteur réduite
-                height: isSmall ? 52 : 56,
+                height: isSmall ? 50 : 54,
                 child: Row(children: [
                   _bottomItem(0, Icons.dashboard_rounded,
                       'Accueil', kBlue),
-                  _bottomItem(1, Icons.loop_rounded, 'Cycles',
-                      kOrange),
+                  _bottomItem(1, Icons.loop_rounded, 'Cycles', kOrange),
                   _bottomItem(2, Icons.attach_money_rounded,
                       'Finance', kRed),
                   _bottomItem(3, Icons.notifications_rounded,
                       'Alertes', const Color(0xFFF59E0B)),
-                  _bottomItem(4, Icons.person_rounded, 'Profil',
-                      kPurple),
+                  _bottomItem(4, Icons.person_rounded, 'Profil', kPurple),
                 ]),
               ),
             ),
@@ -331,8 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _bottomItem(int index, IconData icon, String label,
-      Color color) {
+  Widget _bottomItem(int index, IconData icon, String label, Color color) {
     final isSelected = _currentIndex == index;
     return Expanded(
       child: GestureDetector(
@@ -349,11 +346,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Column(
               mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon, size: isSelected ? 22 : 20,
+            Icon(icon, size: isSelected ? 20 : 18,
                 color: isSelected ? color : Colors.grey.shade400),
             const SizedBox(height: 2),
             Text(label, style: TextStyle(
-                fontSize: 9,
+                fontSize: 8,
                 fontWeight: isSelected
                     ? FontWeight.w700 : FontWeight.w400,
                 color: isSelected ? color : Colors.grey.shade400)),
@@ -364,26 +361,25 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _drawerSection(String title) => Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 3),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 1),
       child: Text(title, style: const TextStyle(
-          color: Colors.white24, fontSize: 9,
-          fontWeight: FontWeight.w700, letterSpacing: 1.2)));
+          color: Colors.white24, fontSize: 8,
+          fontWeight: FontWeight.w700, letterSpacing: 1.0)));
 
-  Widget _drawerItem(int index, IconData icon, String label,
-      Color color) =>
+  Widget _drawerItem(int index, IconData icon, String label, Color color) =>
       ListTile(
         dense: true,
-        visualDensity: const VisualDensity(vertical: -2),
+        visualDensity: const VisualDensity(vertical: -4),
         leading: Container(padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
                 color: color.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(7)),
-            child: Icon(icon, color: color, size: 16)),
+            child: Icon(icon, color: color, size: 14)),
         title: Text(label, style: const TextStyle(
-            color: Colors.white, fontSize: 12,
+            color: Colors.white, fontSize: 11,
             fontWeight: FontWeight.w500)),
         trailing: const Icon(Icons.arrow_forward_ios_rounded,
-            color: Colors.white12, size: 10),
+            color: Colors.white12, size: 9),
         onTap: () => _navigateDrawer(index),
       );
 }
