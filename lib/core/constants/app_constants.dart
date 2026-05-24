@@ -54,24 +54,27 @@ const double kRadius = 12.0;
 const double kRadiusLarge = 16.0;
 const double kRadiusXL = 24.0;
 
-const BorderRadius kBorderRadius = BorderRadius.all(Radius.circular(kRadius));
-const BorderRadius kBorderRadiusLarge = BorderRadius.all(Radius.circular(kRadiusLarge));
-const BorderRadius kBorderRadiusXL = BorderRadius.all(Radius.circular(kRadiusXL));
+const BorderRadius kBorderRadius =
+BorderRadius.all(Radius.circular(kRadius));
+const BorderRadius kBorderRadiusLarge =
+BorderRadius.all(Radius.circular(kRadiusLarge));
+const BorderRadius kBorderRadiusXL =
+BorderRadius.all(Radius.circular(kRadiusXL));
 
 // ── OMBRES ──
 List<BoxShadow> kShadowSm = [
-  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6,
-      offset: const Offset(0, 2))
+  BoxShadow(color: Colors.black.withOpacity(0.04),
+      blurRadius: 6, offset: const Offset(0, 2))
 ];
 
 List<BoxShadow> kShadowMd = [
-  BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10,
-      offset: const Offset(0, 3))
+  BoxShadow(color: Colors.black.withOpacity(0.06),
+      blurRadius: 10, offset: const Offset(0, 3))
 ];
 
 List<BoxShadow> kShadowLg = [
-  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20,
-      offset: const Offset(0, 6))
+  BoxShadow(color: Colors.black.withOpacity(0.1),
+      blurRadius: 20, offset: const Offset(0, 6))
 ];
 
 // ── ESPACEMENTS ──
@@ -81,10 +84,12 @@ const double kPaddingLg = 24.0;
 
 // ── STYLES DE TEXTE ──
 const TextStyle kTitle = TextStyle(
-    fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1E293B));
+    fontSize: 18, fontWeight: FontWeight.w900,
+    color: Color(0xFF1E293B));
 
 const TextStyle kSubtitle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1E293B));
+    fontSize: 14, fontWeight: FontWeight.w600,
+    color: Color(0xFF1E293B));
 
 const TextStyle kBody = TextStyle(
     fontSize: 13, color: Color(0xFF1E293B));
@@ -93,7 +98,8 @@ const TextStyle kCaption = TextStyle(
     fontSize: 11, color: Colors.grey);
 
 const TextStyle kTitleWhite = TextStyle(
-    fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white);
+    fontSize: 18, fontWeight: FontWeight.w900,
+    color: Colors.white);
 
 // ── THÈME APP ──
 ThemeData kTheme = ThemeData(
@@ -108,7 +114,8 @@ ThemeData kTheme = ThemeData(
     foregroundColor: Colors.white,
     elevation: 0,
     titleTextStyle: TextStyle(
-        color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+        color: Colors.white, fontSize: 16,
+        fontWeight: FontWeight.w800),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
@@ -117,7 +124,8 @@ ThemeData kTheme = ThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: kBorderRadius),
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+      textStyle: const TextStyle(
+          fontWeight: FontWeight.w700, fontSize: 14),
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
@@ -140,7 +148,8 @@ ThemeData kTheme = ThemeData(
     focusedBorder: const OutlineInputBorder(
         borderRadius: kBorderRadius,
         borderSide: BorderSide(color: kBlue, width: 2)),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    contentPadding: const EdgeInsets.symmetric(
+        horizontal: 12, vertical: 12),
   ),
   cardTheme: CardThemeData(
     color: Colors.white,
@@ -186,7 +195,8 @@ ThemeData kTheme = ThemeData(
     states.contains(WidgetState.selected) ? kBlue : Colors.grey),
     trackColor: WidgetStateProperty.resolveWith((states) =>
     states.contains(WidgetState.selected)
-        ? kBlue.withOpacity(0.3) : Colors.grey.withOpacity(0.3)),
+        ? kBlue.withOpacity(0.3)
+        : Colors.grey.withOpacity(0.3)),
   ),
 );
 
@@ -215,12 +225,15 @@ String formatFcfa(double v) {
 }
 
 String formatFcfaFull(double v) =>
-    '${v.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]} ')} FCFA';
+    '${v.toStringAsFixed(0).replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+            (m) => '${m[1]} ')} FCFA';
 
 String formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
 String formatDateHeure(DateTime d) =>
-    '${d.day}/${d.month}/${d.year} à ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
+    '${d.day}/${d.month}/${d.year} à '
+        '${d.hour}:${d.minute.toString().padLeft(2, '0')}';
 
 // ── CONSTANTES AVICULTURE ──
 const double kTempIdealeBas = 25.0;
@@ -232,5 +245,5 @@ const double kHumiditeCritique = 80.0;
 const double kTauxMortaliteAcceptable = 3.0;
 const double kTauxMortaliteEleve = 5.0;
 const double kTauxMortaliteCritique = 10.0;
-const int kAgePouletOptimal = 42; // jours
-const int kDureeCycleStandard = 45; // jours
+const int kAgePouletOptimal = 42;
+const int kDureeCycleStandard = 45;
