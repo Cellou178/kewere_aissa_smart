@@ -4,7 +4,6 @@ import 'screens/splash/splash_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'core/constants/app_constants.dart';
 import 'services/cache_service.dart';
-import 'widgets/offline_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,11 +21,9 @@ class KewereApp extends StatelessWidget {
       title: 'Kewere Aissa Smart',
       debugShowCheckedModeBanner: false,
       theme: kTheme,
-      home: OfflineBanner(
-        child: SessionManager.isLoggedIn
-            ? const HomeScreen()
-            : const SplashScreen(),
-      ),
+      home: SessionManager.isLoggedIn
+          ? const HomeScreen()
+          : const SplashScreen(),
     );
   }
 }
