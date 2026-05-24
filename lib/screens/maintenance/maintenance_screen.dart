@@ -362,7 +362,7 @@ En français, pratique et structuré.''';
               const SizedBox(width: 6),
               _chip2(statut.replaceAll('_', ' '), sColor),
               const Spacer(),
-              Text('${(t['cout'] as int / 1000).toStringAsFixed(0)}K FCFA'),
+              Text('${((t['cout'] as num) / 1000).toStringAsFixed(0)}K FCFA'),
             ]),
           ]),
         ),
@@ -543,7 +543,7 @@ En français, pratique et structuré.''';
           child: Row(children: [
             Expanded(child: Text(t['titre'] as String,
                 style: const TextStyle(fontSize: 12))),
-            Text('${(t['cout'] as int / 1000).toStringAsFixed(0)}K FCFA'),
+            Text('${((t['cout'] as num) / 1000).toStringAsFixed(0)}K FCFA'),
           ]),
         )),
         const Divider(),
