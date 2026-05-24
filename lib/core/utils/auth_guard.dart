@@ -17,7 +17,7 @@ class AuthGuard extends StatelessWidget {
     if (!SessionManager.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushAndRemoveUntil(context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            MaterialPageRoute(builder: (_) => LoginScreen()),
                 (route) => false);
       });
       return const SizedBox();

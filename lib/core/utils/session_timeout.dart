@@ -45,7 +45,7 @@ class _SessionTimeoutState extends State<SessionTimeout> {
     await SessionManager.clear();
     if (mounted) {
       Navigator.pushAndRemoveUntil(context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          MaterialPageRoute(builder: (_) => LoginScreen()),
               (route) => false);
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

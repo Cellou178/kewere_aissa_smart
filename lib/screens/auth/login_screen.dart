@@ -50,7 +50,7 @@ Future<void> _login() async {
       _shakeCtrl.forward(from: 0);
     }
   } catch (e) {
-    debugPrint('Login error: $e');
+    print('Login error: $e');
     setState(() => _error = 'Erreur: ${e.toString().substring(0, 50)}');
     _shakeCtrl.forward(from: 0);
   }

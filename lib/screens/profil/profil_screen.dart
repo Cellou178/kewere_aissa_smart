@@ -99,7 +99,7 @@ class ProfilScreen extends StatelessWidget {
                       if (confirm == true) {
                         await SessionManager.clear();
                         Navigator.pushAndRemoveUntil(context,
-                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            MaterialPageRoute(builder: (_) => LoginScreen()),
                                 (route) => false);
                       }
                     },
