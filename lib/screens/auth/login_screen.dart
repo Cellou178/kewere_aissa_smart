@@ -19,11 +19,24 @@ class _LoginScreenState extends State<LoginScreen>
   bool _loading = false;
   String _error = '';
   bool _showPass = false;
+  bool _rememberMe = false;
   late AnimationController _animCtrl;
   late AnimationController _shakeCtrl;
+  late AnimationController _pulseCtrl;
   late Animation<double> _fadeAnim;
   late Animation<double> _slideAnim;
   late Animation<double> _shakeAnim;
+  late Animation<double> _pulseAnim;
+
+  // Comptes démo
+  final List<Map<String, String>> _demoComptes = [
+    {'email': 'admin@kewere.sn', 'pass': 'admin123',
+      'role': 'Admin', 'icon': '👑', 'color': 'red'},
+    {'email': 'proprio@kewere.sn', 'pass': 'proprio123',
+      'role': 'Propriétaire', 'icon': '🏆', 'color': 'blue'},
+    {'email': 'manager@kewere.sn', 'pass': 'manager123',
+      'role': 'Manager', 'icon': '⭐', 'color': 'purple'},
+  ];
 
   @override
   void initState() {
@@ -32,11 +45,15 @@ class _LoginScreenState extends State<LoginScreen>
         duration: const Duration(milliseconds: 800));
     _shakeCtrl = AnimationController(vsync: this,
         duration: const Duration(milliseconds: 400));
+    _pulseCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 1500))..repeat(reverse: true);
     _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut));
     _slideAnim = Tween<double>(begin: 40, end: 0).animate(
         CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut));
     _shakeAnim = Tween<double>(begin: 0, end: 1).animate(_shakeCtrl);
+    _pulseAnim = Tween<double>(begin: 0.97, end: 1.03).animate(
+        CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _animCtrl.forward();
   }
 
@@ -44,19 +61,18 @@ class _LoginScreenState extends State<LoginScreen>
   void dispose() {
     _loginCtrl.dispose(); _passCtrl.dispose();
     _animCtrl.dispose(); _shakeCtrl.dispose();
+    _pulseCtrl.dispose();
     super.dispose();
   }
 
   bool _isValid() {
     if (_loginCtrl.text.trim().isEmpty) {
       setState(() => _error = 'Entrez votre email ou numéro');
-      _shakeCtrl.forward(from: 0);
-      return false;
+      _shakeCtrl.forward(from: 0); return false;
     }
     if (_passCtrl.text.trim().isEmpty) {
       setState(() => _error = 'Entrez votre mot de passe');
-      _shakeCtrl.forward(from: 0);
-      return false;
+      _shakeCtrl.forward(from: 0); return false;
     }
     return true;
   }
@@ -68,7 +84,8 @@ class _LoginScreenState extends State<LoginScreen>
       final r = await http.post(
           Uri.parse('$API_URL/auth/login'),
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-          body: {'username': _loginCtrl.text.trim(), 'password': _passCtrl.text})
+          body: {'username': _loginCtrl.text.trim(),
+            'password': _passCtrl.text})
           .timeout(const Duration(seconds: 15));
 
       if (r.statusCode == 200) {
@@ -79,7 +96,8 @@ class _LoginScreenState extends State<LoginScreen>
           'Authorization': 'Bearer $token'
         };
         final meR = await http.get(Uri.parse('$API_URL/auth/me'),
-            headers: tempHeaders).timeout(const Duration(seconds: 10));
+            headers: tempHeaders)
+            .timeout(const Duration(seconds: 10));
         String role = 'proprietaire', nom = '', email = '',
             entrepriseId = '', fermeId = '';
         if (meR.statusCode == 200) {
@@ -92,11 +110,14 @@ class _LoginScreenState extends State<LoginScreen>
         }
         await SessionManager.save(
             token: token, role: role, nom: nom,
-            email: email, entrepriseId: entrepriseId, fermeId: fermeId);
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()));
-      } else {
+            email: email, entrepriseId: entrepriseId,
+            fermeId: fermeId);
+        _naviguerAccueil();
+      } else if (r.statusCode == 401) {
         setState(() => _error = 'Email ou mot de passe incorrect');
+        _shakeCtrl.forward(from: 0);
+      } else {
+        setState(() => _error = 'Erreur serveur (${r.statusCode})');
         _shakeCtrl.forward(from: 0);
       }
     } catch (e) {
@@ -106,17 +127,35 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _loading = false);
   }
 
+  void _naviguerAccueil() {
+    Navigator.pushReplacement(context,
+        PageRouteBuilder(
+            pageBuilder: (_, anim, __) => const HomeScreen(),
+            transitionsBuilder: (_, anim, __, child) =>
+                FadeTransition(opacity: anim, child: child),
+            transitionDuration: const Duration(milliseconds: 400)));
+  }
+
+  void _loginDemo(Map<String, String> compte) {
+    setState(() {
+      _loginCtrl.text = compte['email']!;
+      _passCtrl.text = compte['pass']!;
+      _error = '';
+    });
+    Future.delayed(const Duration(milliseconds: 200), _login);
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
     return Scaffold(
       body: Container(
         width: double.infinity, height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: [Color(0xFF0F172A), Color(0xFF1E3A5F), Color(0xFF0F172A)],
+            colors: [Color(0xFF0F172A), Color(0xFF1E3A5F),
+              Color(0xFF0F172A)],
           ),
         ),
         child: SafeArea(
@@ -127,48 +166,51 @@ class _LoginScreenState extends State<LoginScreen>
               builder: (_, child) => Opacity(
                 opacity: _fadeAnim.value,
                 child: Transform.translate(
-                    offset: Offset(0, _slideAnim.value),
-                    child: child),
+                    offset: Offset(0, _slideAnim.value), child: child),
               ),
               child: Column(children: [
-                SizedBox(height: size.height * 0.08),
+                SizedBox(height: size.height * 0.06),
 
                 // Logo animé
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.5, end: 1.0),
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.elasticOut,
-                  builder: (_, scale, child) => Transform.scale(
-                      scale: scale, child: child),
+                AnimatedBuilder(
+                  animation: _pulseAnim,
+                  builder: (_, child) => Transform.scale(
+                      scale: _pulseAnim.value, child: child),
                   child: Container(
                     width: 90, height: 90,
                     decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                            colors: [kBlue.withOpacity(0.3), kBlueLight.withOpacity(0.2)]),
+                        gradient: LinearGradient(colors: [
+                          kBlue.withOpacity(0.3),
+                          kBlueLight.withOpacity(0.2)
+                        ]),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.2)),
                         boxShadow: [BoxShadow(
                             color: kBlue.withOpacity(0.4),
-                            blurRadius: 24, offset: const Offset(0, 8))]),
-                    child: const Center(
-                        child: Text('🐔', style: TextStyle(fontSize: 48))),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8))]),
+                    child: const Center(child: Text('🐔',
+                        style: TextStyle(fontSize: 48))),
                   ),
                 ),
-                const SizedBox(height: 16),
-
+                const SizedBox(height: 14),
                 const Text('Kewere Aissa Smart', style: TextStyle(
                     color: Colors.white, fontSize: 24,
-                    fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                    fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20)),
-                  child: const Text('🌍 Plateforme Avicole Intelligente',
-                      style: TextStyle(color: Colors.white60, fontSize: 12)),
+                  child: const Text(
+                      '🌍 Plateforme Avicole Intelligente • Sénégal',
+                      style: TextStyle(color: Colors.white60,
+                          fontSize: 11)),
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: 28),
 
                 // Carte login
                 AnimatedBuilder(
@@ -176,8 +218,8 @@ class _LoginScreenState extends State<LoginScreen>
                   builder: (_, child) => Transform.translate(
                       offset: Offset(
                           _error.isNotEmpty
-                              ? 8 * (0.5 - (_shakeAnim.value - 0.5).abs()) : 0,
-                          0),
+                              ? 8 * (0.5 - (_shakeAnim.value - 0.5).abs())
+                              : 0, 0),
                       child: child),
                   child: Container(
                     padding: const EdgeInsets.all(24),
@@ -186,8 +228,10 @@ class _LoginScreenState extends State<LoginScreen>
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [BoxShadow(
                             color: Colors.black.withOpacity(0.2),
-                            blurRadius: 30, offset: const Offset(0, 10))]),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                            blurRadius: 30,
+                            offset: const Offset(0, 10))]),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Titre
                           Row(children: [
@@ -198,7 +242,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 child: const Icon(Icons.lock_open_rounded,
                                     color: kBlue, size: 20)),
                             const SizedBox(width: 10),
-                            const Column(crossAxisAlignment: CrossAxisAlignment.start,
+                            const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text('Connexion', style: TextStyle(
                                       fontSize: 20, fontWeight: FontWeight.w900,
@@ -207,17 +252,16 @@ class _LoginScreenState extends State<LoginScreen>
                                       color: Colors.grey, fontSize: 11)),
                                 ]),
                           ]),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
 
                           // Email
-                          _field(
-                            controller: _loginCtrl,
-                            label: 'Email ou téléphone',
-                            hint: 'nom@email.com ou +221...',
-                            icon: Icons.person_outline_rounded,
-                            type: TextInputType.emailAddress,
-                          ),
-                          const SizedBox(height: 14),
+                          _buildField(
+                              ctrl: _loginCtrl,
+                              label: 'Email ou téléphone',
+                              hint: 'nom@email.com',
+                              icon: Icons.person_outline_rounded,
+                              type: TextInputType.emailAddress),
+                          const SizedBox(height: 12),
 
                           // Mot de passe
                           TextField(
@@ -226,15 +270,17 @@ class _LoginScreenState extends State<LoginScreen>
                             onSubmitted: (_) => _login(),
                             decoration: InputDecoration(
                                 labelText: 'Mot de passe',
-                                prefixIcon: const Icon(Icons.lock_outline_rounded,
+                                prefixIcon: const Icon(
+                                    Icons.lock_outline_rounded,
                                     color: kBlueLight, size: 20),
                                 suffixIcon: IconButton(
                                     icon: Icon(
-                                        _showPass ? Icons.visibility_off_rounded
+                                        _showPass
+                                            ? Icons.visibility_off_rounded
                                             : Icons.visibility_rounded,
                                         color: Colors.grey, size: 20),
-                                    onPressed: () =>
-                                        setState(() => _showPass = !_showPass)),
+                                    onPressed: () => setState(
+                                            () => _showPass = !_showPass)),
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide(
@@ -251,19 +297,35 @@ class _LoginScreenState extends State<LoginScreen>
                                 fillColor: const Color(0xFFF8FAFC)),
                           ),
 
-                          // Mot de passe oublié
-                          Align(alignment: Alignment.centerRight,
-                              child: TextButton(
-                                  onPressed: () {},
-                                  child: const Text('Mot de passe oublié ?',
-                                      style: TextStyle(
-                                          color: kBlue, fontSize: 12,
-                                          fontWeight: FontWeight.w600)))),
+                          // Options
+                          Row(children: [
+                            Checkbox(
+                                value: _rememberMe,
+                                onChanged: (v) =>
+                                    setState(() => _rememberMe = v ?? false),
+                                activeColor: kBlue,
+                                materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap),
+                            const Text('Se souvenir de moi',
+                                style: TextStyle(
+                                    color: Colors.grey, fontSize: 12)),
+                            const Spacer(),
+                            TextButton(
+                                onPressed: () {},
+                                style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size(0, 30)),
+                                child: const Text('Oublié ?',
+                                    style: TextStyle(color: kBlue,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600))),
+                          ]),
 
                           // Erreur
                           if (_error.isNotEmpty) ...[
+                            const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                   color: Colors.red.shade50,
                                   borderRadius: BorderRadius.circular(10),
@@ -279,8 +341,10 @@ class _LoginScreenState extends State<LoginScreen>
                                         fontSize: 12))),
                               ]),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                           ],
+
+                          const SizedBox(height: 4),
 
                           // Bouton connexion
                           SizedBox(width: double.infinity, height: 52,
@@ -290,30 +354,38 @@ class _LoginScreenState extends State<LoginScreen>
                                       backgroundColor: kBlue,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(14)),
+                                          borderRadius:
+                                          BorderRadius.circular(14)),
                                       elevation: 0),
                                   child: _loading
                                       ? const SizedBox(width: 22, height: 22,
                                       child: CircularProgressIndicator(
-                                          color: Colors.white, strokeWidth: 2.5))
+                                          color: Colors.white,
+                                          strokeWidth: 2.5))
                                       : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.center,
                                       children: [
                                         Icon(Icons.login_rounded, size: 18),
                                         SizedBox(width: 8),
                                         Text('Se connecter', style: TextStyle(
-                                            fontSize: 16, fontWeight: FontWeight.w700)),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700)),
                                       ]))),
-
                           const SizedBox(height: 16),
 
                           // Séparateur
                           Row(children: [
-                            Expanded(child: Divider(color: Colors.grey.shade200)),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
+                            Expanded(child: Divider(
+                                color: Colors.grey.shade200)),
+                            Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12),
                                 child: Text('ou', style: TextStyle(
-                                    color: Colors.grey.shade400, fontSize: 12))),
-                            Expanded(child: Divider(color: Colors.grey.shade200)),
+                                    color: Colors.grey.shade400,
+                                    fontSize: 12))),
+                            Expanded(child: Divider(
+                                color: Colors.grey.shade200)),
                           ]),
                           const SizedBox(height: 12),
 
@@ -321,39 +393,92 @@ class _LoginScreenState extends State<LoginScreen>
                           SizedBox(width: double.infinity, height: 48,
                               child: OutlinedButton.icon(
                                   onPressed: () => Navigator.push(context,
-                                      MaterialPageRoute(
-                                          builder: (_) => const RegisterScreen())),
-                                  icon: const Icon(Icons.person_add_rounded, size: 18),
+                                      MaterialPageRoute(builder: (_) =>
+                                      const RegisterScreen())),
+                                  icon: const Icon(
+                                      Icons.person_add_rounded, size: 18),
                                   label: const Text('Créer un compte',
-                                      style: TextStyle(fontWeight: FontWeight.w700)),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w700)),
                                   style: OutlinedButton.styleFrom(
                                       foregroundColor: kBlue,
                                       side: const BorderSide(color: kBlue),
                                       shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(14))))),
+                                          borderRadius:
+                                          BorderRadius.circular(14))))),
                         ]),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+
+                // Comptes démo
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.1))),
+                  child: Column(children: [
+                    Row(children: [
+                      const Icon(Icons.science_rounded,
+                          color: Colors.white54, size: 14),
+                      const SizedBox(width: 6),
+                      const Text('Comptes de démonstration',
+                          style: TextStyle(color: Colors.white54,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600)),
+                    ]),
+                    const SizedBox(height: 10),
+                    Row(children: _demoComptes.map((c) =>
+                        Expanded(child: GestureDetector(
+                          onTap: () => _loginDemo(c),
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 6),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8, horizontal: 6),
+                            decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: Colors.white.withOpacity(0.15))),
+                            child: Column(children: [
+                              Text(c['icon']!,
+                                  style: const TextStyle(fontSize: 18)),
+                              const SizedBox(height: 3),
+                              Text(c['role']!, style: const TextStyle(
+                                  color: Colors.white70, fontSize: 9,
+                                  fontWeight: FontWeight.w600),
+                                  textAlign: TextAlign.center),
+                            ]),
+                          ),
+                        ))).toList()),
+                    const SizedBox(height: 8),
+                    const Text(
+                        'Cliquez pour vous connecter automatiquement',
+                        style: TextStyle(color: Colors.white30,
+                            fontSize: 9)),
+                  ]),
+                ),
+                const SizedBox(height: 20),
 
                 // Footer
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   const Icon(Icons.security_rounded,
-                      color: Colors.white24, size: 14),
-                  const SizedBox(width: 6),
-                  Text('Connexion sécurisée • v1.0.0',
-                      style: TextStyle(color: Colors.white.withOpacity(0.3),
-                          fontSize: 11)),
+                      color: Colors.white24, size: 12),
+                  const SizedBox(width: 5),
+                  Text('Connexion sécurisée SSL • v1.0.0',
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.25),
+                          fontSize: 10)),
                 ]),
-
-                // Features
-                const SizedBox(height: 20),
+                const SizedBox(height: 8),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _featureChip('🤖 IA'),
-                  const SizedBox(width: 8),
+                  _featureChip('🤖 IA Claude'),
+                  const SizedBox(width: 6),
                   _featureChip('📊 Analytics'),
-                  const SizedBox(width: 8),
-                  _featureChip('🌍 Sénégal'),
+                  const SizedBox(width: 6),
+                  _featureChip('🔒 Sécurisé'),
                 ]),
                 const SizedBox(height: 24),
               ]),
@@ -364,28 +489,30 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _field({
-    required TextEditingController controller,
+  Widget _buildField({
+    required TextEditingController ctrl,
     required String label,
     required String hint,
     required IconData icon,
     required TextInputType type,
-  }) =>
-      TextField(
-        controller: controller,
-        keyboardType: type,
-        decoration: InputDecoration(
-            labelText: label, hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-            prefixIcon: Icon(icon, color: kBlueLight, size: 20),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: kBlue, width: 2)),
-            filled: true, fillColor: const Color(0xFFF8FAFC)),
-      );
+  }) => TextField(
+    controller: ctrl,
+    keyboardType: type,
+    decoration: InputDecoration(
+        labelText: label, hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+        prefixIcon: Icon(icon, color: kBlueLight, size: 20),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: kBlue, width: 2)),
+        filled: true, fillColor: const Color(0xFFF8FAFC)),
+  );
 
   Widget _featureChip(String text) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -394,5 +521,5 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withOpacity(0.15))),
       child: Text(text, style: const TextStyle(
-          color: Colors.white60, fontSize: 11)));
+          color: Colors.white60, fontSize: 10)));
 }
