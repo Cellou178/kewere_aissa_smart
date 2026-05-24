@@ -25,7 +25,7 @@ import '../vitrine/vitrine_screen.dart';
 import '../investissement/investissement_screen.dart';
 import '../maintenance/maintenance_screen.dart';
 import '../acces/acces_screen.dart';
-import '../stats/stats_screen.dart';
+//import '../stats/stats_screen.dart';
 import '../chat/chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 12: return const InvestissementScreen();
       case 13: return const MaintenanceScreen();
       case 14: return const AccesScreen();
-      case 15: return const StatsScreen();
+      case 15: return _emptyPage('Statistiques', Icons.analytics_rounded, kBlue);
       case 16: return const SettingsScreen();
       default: return _emptyPage('Bientôt disponible',
           Icons.construction_rounded, kBlue);
