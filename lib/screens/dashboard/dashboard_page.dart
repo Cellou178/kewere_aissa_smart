@@ -93,9 +93,21 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     final r = Responsive(context);
 
-    if (_loading) return const Scaffold(
+    // ── SHIMMER LOADING ──
+    if (_loading) return Scaffold(
       backgroundColor: kBg,
-      body: Center(child: CircularProgressIndicator(color: kBlue)),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(children: [
+          const SizedBox(height: 160),
+          const ShimmerKPI(),
+          const SizedBox(height: 20),
+          const ShimmerCard(),
+          const ShimmerCard(),
+          const ShimmerCard(),
+          const ShimmerCard(),
+        ]),
+      ),
     );
 
     final temp = _meteo.isNotEmpty
@@ -110,7 +122,7 @@ class _DashboardPageState extends State<DashboardPage> {
         onRefresh: _load, color: kBlue,
         child: CustomScrollView(slivers: [
 
-          // ── HEADER COMPACT ──
+          // ── HEADER ──
           SliverToBoxAdapter(child: Container(
             decoration: const BoxDecoration(
               gradient: kGradientDark,
@@ -123,8 +135,6 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-              // Greeting + météo
               Row(mainAxisAlignment:
                   MainAxisAlignment.spaceBetween, children: [
                 Column(crossAxisAlignment:
@@ -162,36 +172,37 @@ class _DashboardPageState extends State<DashboardPage> {
                 ]),
               ]),
 
-              // Alerte critique
               if (_alertesCritiques > 0) ...[
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                      color: kRed.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: kRed.withOpacity(0.4))),
-                  child: Row(children: [
-                    const Icon(Icons.warning_rounded,
-                        color: Colors.redAccent, size: 14),
-                    const SizedBox(width: 8),
-                    Text('$_alertesCritiques alerte(s) critique(s) !',
-                        style: const TextStyle(
-                            color: Colors.redAccent,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11)),
-                    const Spacer(),
-                    const Icon(Icons.arrow_forward_ios_rounded,
-                        color: Colors.redAccent, size: 10),
-                  ]),
+                AnimatedCard(
+                  delay: const Duration(milliseconds: 50),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                        color: kRed.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: kRed.withOpacity(0.4))),
+                    child: Row(children: [
+                      const Icon(Icons.warning_rounded,
+                          color: Colors.redAccent, size: 14),
+                      const SizedBox(width: 8),
+                      Text('$_alertesCritiques alerte(s) critique(s) !',
+                          style: const TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11)),
+                      const Spacer(),
+                      const Icon(Icons.arrow_forward_ios_rounded,
+                          color: Colors.redAccent, size: 10),
+                    ]),
+                  ),
                 ),
               ],
 
               const SizedBox(height: 12),
 
-              // KPI Cards
               Row(children: [
                 _kpiCard(Icons.pets_rounded,
                     '$_totalPoulets', 'Poulets',
@@ -219,101 +230,117 @@ class _DashboardPageState extends State<DashboardPage> {
             sliver: SliverList(
                 delegate: SliverChildListDelegate([
 
-              // ── STATS COLORÉES ──
+              // ── STATS ──
               _sectionHeader('📊 Statistiques', ''),
               const SizedBox(height: 10),
-              Row(children: [
-                _statCard('Mortalité',
-                    '${_tauxMortalite.toStringAsFixed(1)}%',
-                    _tauxMortalite > 5 ? kRed : kGreen,
-                    Icons.trending_down_rounded),
-                const SizedBox(width: 10),
-                _statCard('Température',
-                    '${_avgTemp.toStringAsFixed(1)}°C',
-                    _avgTemp > 33 ? kRed : kOrange,
-                    Icons.thermostat_rounded),
-              ]),
+              AnimatedCard(
+                delay: const Duration(milliseconds: 100),
+                child: Row(children: [
+                  _statCard('Mortalité',
+                      '${_tauxMortalite.toStringAsFixed(1)}%',
+                      _tauxMortalite > 5 ? kRed : kGreen,
+                      Icons.trending_down_rounded),
+                  const SizedBox(width: 10),
+                  _statCard('Température',
+                      '${_avgTemp.toStringAsFixed(1)}°C',
+                      _avgTemp > 33 ? kRed : kOrange,
+                      Icons.thermostat_rounded),
+                ]),
+              ),
               const SizedBox(height: 10),
-              Row(children: [
-                _statCard('Humidité',
-                    '${_avgHum.toStringAsFixed(1)}%',
-                    _avgHum > 75 ? kOrange : kBlue,
-                    Icons.water_drop_rounded),
-                const SizedBox(width: 10),
-                _statCard('Stocks',
-                    '$_stocksEnAlerte alertes',
-                    _stocksEnAlerte > 0 ? kRed : kGreen,
-                    Icons.inventory_rounded),
-              ]),
+              AnimatedCard(
+                delay: const Duration(milliseconds: 150),
+                child: Row(children: [
+                  _statCard('Humidité',
+                      '${_avgHum.toStringAsFixed(1)}%',
+                      _avgHum > 75 ? kOrange : kBlue,
+                      Icons.water_drop_rounded),
+                  const SizedBox(width: 10),
+                  _statCard('Stocks',
+                      '$_stocksEnAlerte alertes',
+                      _stocksEnAlerte > 0 ? kRed : kGreen,
+                      Icons.inventory_rounded),
+                ]),
+              ),
               const SizedBox(height: 10),
-              Row(children: [
-                _statCard('Employés',
-                    '${_employes.length} actifs',
-                    kPurple, Icons.people_rounded),
-                const SizedBox(width: 10),
-                _statCard('Masse sal.',
-                    '${(_masseSalariale / 1000).toStringAsFixed(0)}K FCFA',
-                    kGreen,
-                    Icons.account_balance_wallet_rounded),
-              ]),
+              AnimatedCard(
+                delay: const Duration(milliseconds: 200),
+                child: Row(children: [
+                  _statCard('Employés',
+                      '${_employes.length} actifs',
+                      kPurple, Icons.people_rounded),
+                  const SizedBox(width: 10),
+                  _statCard('Masse sal.',
+                      '${(_masseSalariale / 1000).toStringAsFixed(0)}K FCFA',
+                      kGreen,
+                      Icons.account_balance_wallet_rounded),
+                ]),
+              ),
               const SizedBox(height: 20),
 
-              // ── SCORE PERFORMANCE ──
-              _scoreCard(),
+              // ── SCORE ──
+              AnimatedCard(
+                delay: const Duration(milliseconds: 250),
+                child: _scoreCard(),
+              ),
               const SizedBox(height: 20),
 
               // ── ACTIONS RAPIDES ──
               _sectionHeader('⚡ Actions Rapides', ''),
               const SizedBox(height: 10),
-              Row(children: [
-                _quickAction(Icons.add_circle_rounded,
-                    'Nouveau\nCycle', kBlue, () async {
-                      final result = await Navigator.push(context,
-                          AppTransitions.slideFade(
-                              const AddCycleScreen()));
-                      if (result == true) _load();
-                    }),
-                const SizedBox(width: 8),
-                _quickAction(Icons.assignment_add,
-                    'Saisir\nDonnées', kGreen, () {
-                      if (_cycles.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    'Créez d\'abord un cycle'),
-                                backgroundColor: Colors.orange));
-                        return;
-                      }
-                      Navigator.push(context,
-                          AppTransitions.slideFade(OperationsScreen(
-                              ferme: {}, cycles: _cycles)));
-                    }),
-                const SizedBox(width: 8),
-                _quickAction(Icons.add_box_rounded,
-                    'Ajouter\nStock', kOrange, () async {
-                      final result = await Navigator.push(context,
-                          AppTransitions.slideFade(
-                              const AddStockScreen()));
-                      if (result == true) _load();
-                    }),
-                const SizedBox(width: 8),
-                _quickAction(Icons.refresh_rounded,
-                    'Actualiser', Colors.grey, _load),
-              ]),
+              AnimatedCard(
+                delay: const Duration(milliseconds: 300),
+                child: Row(children: [
+                  _quickAction(Icons.add_circle_rounded,
+                      'Nouveau\nCycle', kBlue, () async {
+                        final result = await Navigator.push(context,
+                            AppTransitions.slideFade(
+                                const AddCycleScreen()));
+                        if (result == true) _load();
+                      }),
+                  const SizedBox(width: 8),
+                  _quickAction(Icons.assignment_add,
+                      'Saisir\nDonnées', kGreen, () {
+                        if (_cycles.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Créez d\'abord un cycle'),
+                                  backgroundColor: Colors.orange));
+                          return;
+                        }
+                        Navigator.push(context,
+                            AppTransitions.slideFade(OperationsScreen(
+                                ferme: {}, cycles: _cycles)));
+                      }),
+                  const SizedBox(width: 8),
+                  _quickAction(Icons.add_box_rounded,
+                      'Ajouter\nStock', kOrange, () async {
+                        final result = await Navigator.push(context,
+                            AppTransitions.slideFade(
+                                const AddStockScreen()));
+                        if (result == true) _load();
+                      }),
+                  const SizedBox(width: 8),
+                  _quickAction(Icons.refresh_rounded,
+                      'Actualiser', Colors.grey, _load),
+                ]),
+              ),
               const SizedBox(height: 20),
 
               // ── GRAPHIQUE ──
               if (_donnees.isNotEmpty) ...[
                 _sectionHeader('📈 Mortalité', ''),
                 const SizedBox(height: 10),
-                MortaliteChart(donnees: _donnees),
+                AnimatedCard(
+                  delay: const Duration(milliseconds: 350),
+                  child: MortaliteChart(donnees: _donnees),
+                ),
                 const SizedBox(height: 20),
               ],
 
               // ── CYCLES ──
               if (_cycles.isNotEmpty) ...[
-                _sectionHeader('🔄 Cycles',
-                    '${_cycles.length}'),
+                _sectionHeader('🔄 Cycles', '${_cycles.length}'),
                 const SizedBox(height: 10),
                 SizedBox(height: 110,
                     child: ListView.separated(
@@ -321,8 +348,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       itemCount: _cycles.take(5).length,
                       separatorBuilder: (_, __) =>
                       const SizedBox(width: 10),
-                      itemBuilder: (_, i) =>
-                          _cycleCard(_cycles[i], r),
+                      itemBuilder: (_, i) => AnimatedCard(
+                        delay: Duration(milliseconds: 100 * i),
+                        child: _cycleCard(_cycles[i], r),
+                      ),
                     )),
                 const SizedBox(height: 20),
               ],
@@ -333,22 +362,22 @@ class _DashboardPageState extends State<DashboardPage> {
                     '$_stocksEnAlerte'),
                 const SizedBox(height: 10),
                 ..._stocks.where((s) {
-                  final qte = ((s['quantite'] ?? 0) as num)
-                      .toDouble();
-                  final seuil = ((s['seuil_alerte'] ?? 0) as num)
-                      .toDouble();
+                  final qte = ((s['quantite'] ?? 0) as num).toDouble();
+                  final seuil = ((s['seuil_alerte'] ?? 0) as num).toDouble();
                   return qte <= seuil;
-                }).take(3).map((s) => _stockAlerteCard(s)),
+                }).take(3).map((s) => AnimatedCard(
+                    delay: const Duration(milliseconds: 100),
+                    child: _stockAlerteCard(s))),
                 const SizedBox(height: 20),
               ],
 
               // ── ALERTES ──
               if (_alertes.isNotEmpty) ...[
-                _sectionHeader('🚨 Alertes',
-                    '${_alertes.length}'),
+                _sectionHeader('🚨 Alertes', '${_alertes.length}'),
                 const SizedBox(height: 10),
-                ..._alertes.take(3).map(
-                        (a) => _alerteCard(a)),
+                ..._alertes.take(3).map((a) => AnimatedCard(
+                    delay: const Duration(milliseconds: 100),
+                    child: _alerteCard(a))),
                 const SizedBox(height: 20),
               ],
 
@@ -356,7 +385,10 @@ class _DashboardPageState extends State<DashboardPage> {
               if (_meteo.isNotEmpty) ...[
                 _sectionHeader('🌤️ Météo', 'Mbour'),
                 const SizedBox(height: 10),
-                _meteoCard(),
+                AnimatedCard(
+                  delay: const Duration(milliseconds: 200),
+                  child: _meteoCard(),
+                ),
                 const SizedBox(height: 20),
               ],
 
@@ -365,8 +397,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 _sectionHeader('📊 Données récentes',
                     '${_donnees.length}'),
                 const SizedBox(height: 10),
-                ..._donnees.reversed.take(3).map(
-                        (d) => _donneeCard(d, r)),
+                ..._donnees.reversed.take(3).map((d) => AnimatedCard(
+                    delay: const Duration(milliseconds: 100),
+                    child: _donneeCard(d, r))),
               ],
             ])),
           ),
@@ -375,7 +408,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // ── SCORE CARD ──
   Widget _scoreCard() {
     final score = _scorePerformance;
     final color = _scoreColor;
@@ -395,17 +427,14 @@ class _DashboardPageState extends State<DashboardPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
           const Text('Score de performance',
-              style: TextStyle(color: Colors.grey,
-                  fontSize: 12)),
+              style: TextStyle(color: Colors.grey, fontSize: 12)),
           const SizedBox(height: 4),
-          Row(crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text('$score', style: TextStyle(
                 color: color, fontSize: 36,
                 fontWeight: FontWeight.w900)),
             Text('/100', style: TextStyle(
-                color: color.withOpacity(0.6),
-                fontSize: 14)),
+                color: color.withOpacity(0.6), fontSize: 14)),
           ]),
           Container(
               padding: const EdgeInsets.symmetric(
@@ -414,43 +443,34 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20)),
               child: Text(label, style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w700,
+                  color: color, fontWeight: FontWeight.w700,
                   fontSize: 11))),
           const SizedBox(height: 10),
           Row(children: [
-            _scoreIndicateur('Mortalité',
-                _tauxMortalite <= 5),
-            _scoreIndicateur('Temp.',
-                _avgTemp <= 33),
-            _scoreIndicateur('Stocks',
-                _stocksEnAlerte == 0),
-            _scoreIndicateur('Alertes',
-                _alertesCritiques == 0),
+            _scoreIndicateur('Mortalité', _tauxMortalite <= 5),
+            _scoreIndicateur('Temp.', _avgTemp <= 33),
+            _scoreIndicateur('Stocks', _stocksEnAlerte == 0),
+            _scoreIndicateur('Alertes', _alertesCritiques == 0),
           ]),
         ])),
         const SizedBox(width: 16),
         SizedBox(width: 80, height: 80,
-            child: Stack(alignment: Alignment.center,
-                children: [
-              CircularProgressIndicator(
-                  value: score / 100,
-                  strokeWidth: 8,
-                  backgroundColor: color.withOpacity(0.15),
-                  valueColor: AlwaysStoppedAnimation(color)),
-              Text('$score%', style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13)),
-            ])),
+            child: Stack(alignment: Alignment.center, children: [
+          CircularProgressIndicator(
+              value: score / 100, strokeWidth: 8,
+              backgroundColor: color.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation(color)),
+          Text('$score%', style: TextStyle(
+              color: color, fontWeight: FontWeight.w900,
+              fontSize: 13)),
+        ])),
       ]),
     );
   }
 
   Widget _scoreIndicateur(String label, bool ok) =>
       Expanded(child: Column(children: [
-        Icon(ok ? Icons.check_circle_rounded
-            : Icons.cancel_rounded,
+        Icon(ok ? Icons.check_circle_rounded : Icons.cancel_rounded,
             color: ok ? kGreen : kRed, size: 14),
         Text(label, style: TextStyle(
             color: ok ? kGreen : kRed, fontSize: 8)),
@@ -465,8 +485,7 @@ class _DashboardPageState extends State<DashboardPage> {
             borderRadius: BorderRadius.circular(r.borderRadius),
             border: Border.all(color: color.withOpacity(0.3))),
         child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(icon, color: color, size: r.iconSm),
           SizedBox(height: r.isSmallPhone ? 4 : 6),
           Text(value, style: TextStyle(
@@ -484,8 +503,7 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border(left: BorderSide(
-                color: color, width: 3)),
+            border: Border(left: BorderSide(color: color, width: 3)),
             boxShadow: [BoxShadow(
                 color: Colors.black.withOpacity(0.04),
                 blurRadius: 8)]),
@@ -497,8 +515,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Icon(icon, color: color, size: 18)),
           const SizedBox(width: 10),
           Expanded(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: const TextStyle(
                 color: Colors.grey, fontSize: 10)),
             Text(value, style: TextStyle(
@@ -536,8 +553,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ));
 
   Widget _sectionHeader(String title, String subtitle) =>
-      Row(mainAxisAlignment:
-          MainAxisAlignment.spaceBetween, children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(title, style: const TextStyle(
             fontSize: 14, fontWeight: FontWeight.w800,
             color: Color(0xFF1E293B))),
@@ -563,16 +579,13 @@ class _DashboardPageState extends State<DashboardPage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8)]),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+              color: Colors.black.withOpacity(0.05), blurRadius: 8)]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-        Row(mainAxisAlignment:
-            MainAxisAlignment.spaceBetween, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
           Icon(isActif ? Icons.pets_rounded
-              : Icons.check_circle_rounded,
-              color: color, size: 20),
+              : Icons.check_circle_rounded, color: color, size: 20),
           Container(
               padding: const EdgeInsets.symmetric(
                   horizontal: 6, vertical: 2),
@@ -584,15 +597,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   fontWeight: FontWeight.w700))),
         ]),
         const Spacer(),
-        Text(c['nom'] ?? 'Cycle',
-            style: const TextStyle(
-                fontWeight: FontWeight.w800, fontSize: 12,
-                color: Color(0xFF1E293B)),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis),
+        Text(c['nom'] ?? 'Cycle', style: const TextStyle(
+            fontWeight: FontWeight.w800, fontSize: 12,
+            color: Color(0xFF1E293B)),
+            maxLines: 1, overflow: TextOverflow.ellipsis),
         Text('${c['nombre_sujets'] ?? 0} sujets',
-            style: const TextStyle(
-                color: Colors.grey, fontSize: 10)),
+            style: const TextStyle(color: Colors.grey, fontSize: 10)),
       ]),
     );
   }
@@ -608,24 +618,20 @@ class _DashboardPageState extends State<DashboardPage> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: kRed.withOpacity(0.25)),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 6)]),
+              color: Colors.black.withOpacity(0.03), blurRadius: 6)]),
       child: Row(children: [
         const Icon(Icons.inventory_rounded, color: kRed, size: 18),
         const SizedBox(width: 10),
-        Expanded(child: Text(s['produit'] ?? '',
-            style: const TextStyle(
-                fontWeight: FontWeight.w700, fontSize: 13))),
+        Expanded(child: Text(s['produit'] ?? '', style: const TextStyle(
+            fontWeight: FontWeight.w700, fontSize: 13))),
         Container(
             padding: const EdgeInsets.symmetric(
                 horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
                 color: kRed.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8)),
-            child: Text(
-                '$qte/${seuil.toInt()} ${s['unite'] ?? ''}',
-                style: const TextStyle(color: kRed,
-                    fontSize: 10,
+            child: Text('$qte/${seuil.toInt()} ${s['unite'] ?? ''}',
+                style: const TextStyle(color: kRed, fontSize: 10,
                     fontWeight: FontWeight.w700))),
       ]),
     );
@@ -633,13 +639,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _meteoCard() {
     final humidity = _meteo['main']?['humidity'] ?? 0;
-    final windSpeed = (_meteo['wind']?['speed'] ?? 0)
-        .toStringAsFixed(1);
-    final temp = (_meteo['main']?['temp'] ?? 0)
-        .toStringAsFixed(1);
+    final windSpeed = (_meteo['wind']?['speed'] ?? 0).toStringAsFixed(1);
+    final temp = (_meteo['main']?['temp'] ?? 0).toStringAsFixed(1);
     final tempVal = double.tryParse(temp) ?? 0;
-    final color = tempVal > 35 ? kRed
-        : tempVal > 30 ? kOrange : kGreen;
+    final color = tempVal > 35 ? kRed : tempVal > 30 ? kOrange : kGreen;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -649,38 +652,28 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Row(children: [
         Container(padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                shape: BoxShape.circle),
-            child: Icon(Icons.wb_sunny_rounded,
-                color: color, size: 32)),
+                color: color.withOpacity(0.15), shape: BoxShape.circle),
+            child: Icon(Icons.wb_sunny_rounded, color: color, size: 32)),
         const SizedBox(width: 12),
         Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('$temp°C', style: TextStyle(
-              color: color, fontSize: 28,
-              fontWeight: FontWeight.w900)),
+              color: color, fontSize: 28, fontWeight: FontWeight.w900)),
           Text(_meteo['weather']?[0]?['description'] ?? '',
-              style: const TextStyle(
-                  color: Colors.grey, fontSize: 12)),
+              style: const TextStyle(color: Colors.grey, fontSize: 12)),
         ])),
-        Column(crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-          _meteoChip(Icons.water_drop_rounded,
-              '$humidity%', kBlue),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          _meteoChip(Icons.water_drop_rounded, '$humidity%', kBlue),
           const SizedBox(height: 4),
-          _meteoChip(Icons.air_rounded,
-              '${windSpeed}m/s', kTeal),
+          _meteoChip(Icons.air_rounded, '${windSpeed}m/s', kTeal),
         ]),
       ]),
     );
   }
 
-  Widget _meteoChip(IconData icon, String value,
-      Color color) =>
+  Widget _meteoChip(IconData icon, String value, Color color) =>
       Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8)),
@@ -688,8 +681,7 @@ class _DashboardPageState extends State<DashboardPage> {
           Icon(icon, color: color, size: 12),
           const SizedBox(width: 3),
           Text(value, style: TextStyle(
-              color: color, fontSize: 11,
-              fontWeight: FontWeight.w600)),
+              color: color, fontSize: 11, fontWeight: FontWeight.w600)),
         ]),
       );
 
@@ -701,28 +693,21 @@ class _DashboardPageState extends State<DashboardPage> {
         : mortalite > 5 ? kOrange : kGreen;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(
-          horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border(left: BorderSide(
-              color: color, width: 3)),
+          border: Border(left: BorderSide(color: color, width: 3)),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 6)]),
+              color: Colors.black.withOpacity(0.03), blurRadius: 6)]),
       child: Row(children: [
         Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-          Text(d['date_releve'] ?? '-',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: color, fontSize: 11)),
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(d['date_releve'] ?? '-', style: TextStyle(
+              fontWeight: FontWeight.w700, color: color, fontSize: 11)),
           const SizedBox(height: 3),
           Row(children: [
-            _chip(Icons.inventory_rounded,
-                '$production', kPurple),
+            _chip(Icons.inventory_rounded, '$production', kPurple),
             const SizedBox(width: 4),
             _chip(Icons.thermostat_rounded,
                 '${temp.toStringAsFixed(0)}°', kOrange),
@@ -745,27 +730,23 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _chip(IconData icon, String text, Color color) =>
-      Container(
-          padding: const EdgeInsets.symmetric(
-              horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6)),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 10, color: color),
-            const SizedBox(width: 2),
-            Text(text, style: TextStyle(
-                color: color, fontSize: 10,
-                fontWeight: FontWeight.w600)),
-          ]));
+  Widget _chip(IconData icon, String text, Color color) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 10, color: color),
+        const SizedBox(width: 2),
+        Text(text, style: TextStyle(
+            color: color, fontSize: 10, fontWeight: FontWeight.w600)),
+      ]));
 
   Widget _alerteCard(Map a) {
     final type = a['type'] ?? 'info';
     final color = type == 'danger' ? kRed
         : type == 'warning' ? kOrange : kBlue;
-    final icon = type == 'danger'
-        ? Icons.dangerous_rounded
+    final icon = type == 'danger' ? Icons.dangerous_rounded
         : type == 'warning' ? Icons.warning_rounded
         : Icons.info_rounded;
     return Container(
@@ -782,10 +763,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: color, size: 16)),
         const SizedBox(width: 10),
-        Expanded(child: Text(
-            a['titre'] ?? a['message'] ?? '',
-            style: TextStyle(
-                fontWeight: FontWeight.w600,
+        Expanded(child: Text(a['titre'] ?? a['message'] ?? '',
+            style: TextStyle(fontWeight: FontWeight.w600,
                 fontSize: 12, color: color))),
         Icon(Icons.arrow_forward_ios_rounded,
             color: color.withOpacity(0.5), size: 12),
@@ -796,29 +775,28 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildFAB(BuildContext context) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       if (_fabOpen) ...[
-        _fabItem(Icons.add_circle_rounded,
-            'Nouveau Cycle', kBlue, () async {
-          setState(() => _fabOpen = false);
-          final result = await Navigator.push(context,
-              AppTransitions.slideFade(const AddCycleScreen()));
-          if (result == true) _load();
-        }),
+        _fabItem(Icons.add_circle_rounded, 'Nouveau Cycle', kBlue,
+                () async {
+              setState(() => _fabOpen = false);
+              final result = await Navigator.push(context,
+                  AppTransitions.slideFade(const AddCycleScreen()));
+              if (result == true) _load();
+            }),
         const SizedBox(height: 8),
-        _fabItem(Icons.assignment_add, 'Saisir Données',
-            kGreen, () {
+        _fabItem(Icons.assignment_add, 'Saisir Données', kGreen, () {
           setState(() => _fabOpen = false);
           if (_cycles.isEmpty) return;
           Navigator.push(context, AppTransitions.slideFade(
               OperationsScreen(ferme: {}, cycles: _cycles)));
         }),
         const SizedBox(height: 8),
-        _fabItem(Icons.add_box_rounded, 'Ajouter Stock',
-            kOrange, () async {
-          setState(() => _fabOpen = false);
-          final result = await Navigator.push(context,
-              AppTransitions.slideFade(const AddStockScreen()));
-          if (result == true) _load();
-        }),
+        _fabItem(Icons.add_box_rounded, 'Ajouter Stock', kOrange,
+                () async {
+              setState(() => _fabOpen = false);
+              final result = await Navigator.push(context,
+                  AppTransitions.slideFade(const AddStockScreen()));
+              if (result == true) _load();
+            }),
         const SizedBox(height: 8),
       ],
       FloatingActionButton(
@@ -846,19 +824,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8)]),
+                    color: Colors.black.withOpacity(0.1), blurRadius: 8)]),
             child: Text(label, style: TextStyle(
-                color: color, fontWeight: FontWeight.w700,
-                fontSize: 12)),
+                color: color, fontWeight: FontWeight.w700, fontSize: 12)),
           ),
           const SizedBox(width: 8),
           Container(width: 40, height: 40,
               decoration: BoxDecoration(
                   color: color, shape: BoxShape.circle,
                   boxShadow: [BoxShadow(
-                      color: color.withOpacity(0.3),
-                      blurRadius: 8)]),
+                      color: color.withOpacity(0.3), blurRadius: 8)]),
               child: Icon(icon, color: Colors.white, size: 20)),
         ]),
       );
