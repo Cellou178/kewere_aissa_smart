@@ -135,8 +135,8 @@ class _LoginScreenState extends State<LoginScreen>
       }
     } catch (e) {
       final msg = e.toString();
-      setState(() => _error = msg.length > 60
-          ? '${msg.substring(0, 60)}...' : msg);
+      setState(() => _error = msg.length > 100
+          ? '${msg.substring(0, 100)}...' : msg);
       _shakeCtrl.forward(from: 0);
     }
     setState(() => _loading = false);
@@ -249,7 +249,6 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Titre
                           Row(children: [
                             Container(padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
@@ -271,7 +270,6 @@ class _LoginScreenState extends State<LoginScreen>
                           ]),
                           const SizedBox(height: 20),
 
-                          // Email
                           TextField(
                             controller: _loginCtrl,
                             keyboardType: TextInputType.emailAddress,
@@ -298,7 +296,6 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           const SizedBox(height: 12),
 
-                          // Mot de passe
                           TextField(
                             controller: _passCtrl,
                             obscureText: !_showPass,
@@ -332,7 +329,6 @@ class _LoginScreenState extends State<LoginScreen>
                                 fillColor: const Color(0xFFF8FAFC)),
                           ),
 
-                          // Remember me
                           Row(children: [
                             Checkbox(
                                 value: _rememberMe,
@@ -356,7 +352,6 @@ class _LoginScreenState extends State<LoginScreen>
                                         fontWeight: FontWeight.w600))),
                           ]),
 
-                          // Erreur
                           if (_error.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Container(
@@ -381,7 +376,6 @@ class _LoginScreenState extends State<LoginScreen>
 
                           const SizedBox(height: 4),
 
-                          // Bouton connexion
                           SizedBox(width: double.infinity, height: 52,
                               child: ElevatedButton(
                                   onPressed: _loading ? null : _login,
@@ -409,7 +403,6 @@ class _LoginScreenState extends State<LoginScreen>
                                       ]))),
                           const SizedBox(height: 16),
 
-                          // Séparateur
                           Row(children: [
                             Expanded(child: Divider(
                                 color: Colors.grey.shade200)),
@@ -424,7 +417,6 @@ class _LoginScreenState extends State<LoginScreen>
                           ]),
                           const SizedBox(height: 12),
 
-                          // Créer compte
                           SizedBox(width: double.infinity, height: 48,
                               child: OutlinedButton.icon(
                                   onPressed: () => Navigator.push(context,
@@ -446,7 +438,6 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 const SizedBox(height: 24),
 
-                // Comptes démo
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -497,7 +488,6 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 const SizedBox(height: 20),
 
-                // Footer
                 Row(mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.security_rounded,
