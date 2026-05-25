@@ -30,20 +30,22 @@ class TokenSchema(BaseModel):
 
 @router.post("/register", status_code=201)
 def register(data: RegisterSchema, db: Session = Depends(get_db)):
+    existing = db.execute(text("""
+        SELECT id FROM utilisateurs WHERE email = :email LIMIT 1
+    """), {"email": data.email}).fetchone()
 
-    existing = db.query(Utilisateur).filter(
-        Utilisateur.email == data.email).first()
     if existing:
         raise HTTPException(status_code=400,
             detail="Email déjà utilisé")
 
-    role = db.query(Role).filter(
-        Role.nom == "proprietaire").first()
+    role = db.execute(text("""
+        SELECT id FROM roles WHERE nom = 'proprietaire' LIMIT 1
+    """)).fetchone()
+
     if not role:
         raise HTTPException(status_code=400,
             detail="Rôle propriétaire introuvable")
 
-    # CRÉER ENTREPRISE
     entreprise_id = str(uuid.uuid4())
     db.execute(text("""
         INSERT INTO entreprises (id, nom, email)
@@ -54,7 +56,6 @@ def register(data: RegisterSchema, db: Session = Depends(get_db)):
         "email": data.email
     })
 
-    # CRÉER FERME
     ferme_id = str(uuid.uuid4())
     db.execute(text("""
         INSERT INTO fermes (id, nom, entreprise_id)
@@ -65,63 +66,78 @@ def register(data: RegisterSchema, db: Session = Depends(get_db)):
         "eid": entreprise_id
     })
 
-    # CRÉER UTILISATEUR
-    user = Utilisateur(
-        id=uuid.uuid4(),
-        nom=data.nom.strip(),
-        email=data.email.strip().lower(),
-        mot_de_passe=hash_password(data.mot_de_passe),
-        role_id=role.id,
-        entreprise_id=uuid.UUID(entreprise_id),
-        ferme_id=uuid.UUID(ferme_id),
-        telephone=data.telephone.strip() if data.telephone else None
-    )
+    user_id = str(uuid.uuid4())
+    db.execute(text("""
+        INSERT INTO utilisateurs (
+            id, nom, email, mot_de_passe,
+            role_id, entreprise_id, ferme_id, telephone, actif
+        )
+        VALUES (
+            :id, :nom, :email, :mdp,
+            :role_id, :eid, :fid, :tel, true
+        )
+    """), {
+        "id": user_id,
+        "nom": data.nom.strip(),
+        "email": data.email.strip().lower(),
+        "mdp": hash_password(data.mot_de_passe),
+        "role_id": role.id,
+        "eid": entreprise_id,
+        "fid": ferme_id,
+        "tel": data.telephone.strip() if data.telephone else None
+    })
 
-    db.add(user)
     db.commit()
-    db.refresh(user)
 
     return {
         "success": True,
         "message": "Compte créé avec succès",
-        "id": str(user.id),
+        "id": user_id,
         "entreprise_id": entreprise_id,
         "ferme_id": ferme_id
     }
 
 @router.post("/login", response_model=TokenSchema)
-def login(form: OAuth2PasswordRequestForm = Depends(),
-          db: Session = Depends(get_db)):
+def login(
+    form: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    result = db.execute(text("""
+        SELECT u.id, u.email, u.mot_de_passe, u.actif,
+               r.nom as role_nom,
+               u.entreprise_id, u.ferme_id
+        FROM utilisateurs u
+        JOIN roles r ON r.id = u.role_id
+        WHERE u.email = :email
+        LIMIT 1
+    """), {"email": form.username.lower()}).fetchone()
 
-    user = db.query(Utilisateur).filter(
-        Utilisateur.email == form.username.lower()).first()
-
-    if not user or not verify_password(
-            form.password, user.mot_de_passe):
+    if not result or not verify_password(
+            form.password, result.mot_de_passe):
         raise HTTPException(status_code=401,
             detail="Email ou mot de passe incorrect")
 
-    if not user.actif:
+    if not result.actif:
         raise HTTPException(status_code=403,
             detail="Compte désactivé")
 
     token = create_access_token({
-        "sub": user.email,
-        "role": user.role.nom,
-        "uid": str(user.id),
-        "entreprise_id": str(user.entreprise_id),
-        "ferme_id": str(user.ferme_id)
+        "sub": result.email,
+        "role": result.role_nom,
+        "uid": str(result.id),
+        "entreprise_id": str(result.entreprise_id),
+        "ferme_id": str(result.ferme_id)
     })
 
     return {"access_token": token, "token_type": "bearer"}
 
 @router.get("/me")
-def me(current_user: Utilisateur = Depends(get_current_user)):
+def me(current_user = Depends(get_current_user)):
     return {
         "id": str(current_user.id),
         "nom": current_user.nom,
         "email": current_user.email,
-        "telephone": current_user.telephone,
+        "telephone": getattr(current_user, 'telephone', ''),
         "role": current_user.role.nom,
         "entreprise_id": str(current_user.entreprise_id),
         "ferme_id": str(current_user.ferme_id),
