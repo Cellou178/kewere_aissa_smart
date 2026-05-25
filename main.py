@@ -37,30 +37,27 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-origins = ["*"]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
+    max_age=3600,
 )
-
-@app.options("/{rest_of_path:path}")
-async def preflight(rest_of_path: str):
-    return JSONResponse(
-        status_code=200,
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            "Access-Control-Allow-Headers": "*",
-        }
-    )
 
 @app.middleware("http")
 async def catch_exceptions(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return JSONResponse(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                "Access-Control-Allow-Headers": "*",
+            }
+        )
     try:
         response = await call_next(request)
         response.headers["Access-Control-Allow-Origin"] = "*"
