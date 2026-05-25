@@ -46,7 +46,7 @@ class _AppDrawerState extends State<AppDrawer> {
     final sw = MediaQuery.of(context).size.width;
 
     return SizedBox(
-      width: sw * 0.72,
+      width: sw * 0.60,
       child: Drawer(
         backgroundColor: const Color(0xFF0F172A),
         child: SafeArea(child: Column(children: [
