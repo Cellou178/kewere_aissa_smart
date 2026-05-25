@@ -32,6 +32,7 @@ class Utilisateur(Base):
     nom = Column(String(150), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
     mot_de_passe = Column(String(255), nullable=False)
+    telephone = Column(String(50), nullable=True)
     actif = Column(Boolean, default=True)
     date_creation = Column(TIMESTAMP, server_default=func.now())
     derniere_connexion = Column(TIMESTAMP, nullable=True)
