@@ -70,11 +70,11 @@ def register(data: RegisterSchema, db: Session = Depends(get_db)):
     db.execute(text("""
         INSERT INTO utilisateurs (
             id, nom, email, mot_de_passe,
-            role_id, entreprise_id, ferme_id, telephone, actif
+            role_id, entreprise_id, ferme_id, actif
         )
         VALUES (
             :id, :nom, :email, :mdp,
-            :role_id, :eid, :fid, :tel, true
+            :role_id, :eid, :fid, true
         )
     """), {
         "id": user_id,
@@ -84,7 +84,6 @@ def register(data: RegisterSchema, db: Session = Depends(get_db)):
         "role_id": role.id,
         "eid": entreprise_id,
         "fid": ferme_id,
-        "tel": data.telephone.strip() if data.telephone else None
     })
 
     db.commit()
