@@ -21,59 +21,24 @@ import '../screens/acces/acces_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/abonnement/abonnement_screen.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
 
-  Widget _getPage(int index, BuildContext context) {
-    switch (index) {
-      case 0: return const FermesScreen();
-      case 1: return const StocksScreen();
-      case 2: return const EmployesScreen();
-      case 3: return const TerrainScreen();
-      case 4: return const GraphiquesScreen();
-      case 5: return const PredictionsScreen();
-      case 6: return const MeteoScreen();
-      case 7: return const ChatScreen();
-      case 8: return const RapportsScreen();
-      case 9: return const AgendaScreen();
-      case 10: return const MarcheScreen();
-      case 11: return const VitrineScreen();
-      case 12: return const InvestissementScreen();
-      case 13: return const MaintenanceScreen();
-      case 14: return const AccesScreen();
-      case 15: return const StatsScreen();
-      case 16: return const SettingsScreen();
-      case 17: return const AbonnementScreen();
-      default: return _emptyPage('Bientôt disponible');
-    }
-  }
+class _AppDrawerState extends State<AppDrawer> {
+  final Map<String, bool> _expanded = {
+    'gestion': true,
+    'analytics': false,
+    'planning': false,
+    'marche': false,
+    'finance': false,
+  };
 
-  Widget _emptyPage(String title) => Scaffold(
-    backgroundColor: kBg,
-    appBar: AppBar(
-      backgroundColor: kDark,
-      foregroundColor: Colors.white,
-      title: Text(title,
-          style: const TextStyle(fontWeight: FontWeight.w800)),
-    ),
-    body: Center(child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.construction_rounded,
-              size: 40, color: kBlue),
-          const SizedBox(height: 14),
-          Text(title, style: const TextStyle(
-              fontSize: 18, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 6),
-          const Text('En cours de développement',
-              style: TextStyle(color: Colors.grey, fontSize: 13)),
-        ])),
-  );
-
-  void _navigate(BuildContext context, int index) {
+  void _navigate(Widget screen) {
     Navigator.pop(context);
-    Navigator.push(context,
-        AppTransitions.slideFade(_getPage(index, context)));
+    Navigator.push(context, AppTransitions.slideFade(screen));
   }
 
   @override
@@ -83,24 +48,24 @@ class AppDrawer extends StatelessWidget {
     return SizedBox(
       width: sw * 0.72,
       child: Drawer(
-        backgroundColor: kDark,
+        backgroundColor: const Color(0xFF0F172A),
         child: SafeArea(child: Column(children: [
 
-          // ── Header ──
+          // ── HEADER ──
           Container(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
             decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.04)),
+                color: Colors.white.withOpacity(0.05)),
             child: Row(children: [
               Container(
-                  width: 34, height: 34,
+                  width: 38, height: 38,
                   decoration: BoxDecoration(
                       color: kBlue.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(10)),
                   child: const Center(
                       child: Text('🐔',
-                          style: TextStyle(fontSize: 17)))),
-              const SizedBox(width: 8),
+                          style: TextStyle(fontSize: 18)))),
+              const SizedBox(width: 10),
               Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -110,17 +75,17 @@ class AppDrawer extends StatelessWidget {
                         style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
-                            fontSize: 12),
+                            fontSize: 13),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     Row(children: [
                       Text(SessionManager.roleBadge,
-                          style: const TextStyle(fontSize: 9)),
-                      const SizedBox(width: 2),
+                          style: const TextStyle(fontSize: 10)),
+                      const SizedBox(width: 3),
                       Text(SessionManager.role,
                           style: TextStyle(
                               color: SessionManager.roleColor,
-                              fontSize: 9,
+                              fontSize: 10,
                               fontWeight: FontWeight.w600)),
                     ]),
                   ])),
@@ -128,116 +93,207 @@ class AppDrawer extends StatelessWidget {
           ),
           const Divider(color: Colors.white12, height: 1),
 
-          // ── Menu items ──
+          // ── MENU ──
           Expanded(child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 2),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               children: [
-                _section('GESTION'),
-                _item(context, 0, Icons.agriculture_rounded,
-                    'Fermes', const Color(0xFF16A34A)),
-                _item(context, 1, Icons.inventory_rounded,
-                    'Stocks', const Color(0xFFEA580C)),
-                _item(context, 2, Icons.people_rounded,
-                    'Employés', const Color(0xFF7C3AED)),
-                _item(context, 3, Icons.terrain_rounded,
-                    'Terrain', const Color(0xFF16A34A)),
 
-                _section('ANALYTICS'),
-                _item(context, 4, Icons.bar_chart_rounded,
-                    'Graphiques', const Color(0xFF2563EB)),
-                _item(context, 5, Icons.psychology_rounded,
-                    'Prédictions IA', const Color(0xFF0891B2)),
-                _item(context, 6, Icons.cloud_rounded,
-                    'Météo', const Color(0xFF38BDF8)),
-                _item(context, 7, Icons.chat_rounded,
-                    'Chat IA', const Color(0xFF4C1D95)),
-                _item(context, 15, Icons.analytics_rounded,
-                    'Statistiques', const Color(0xFF2563EB)),
+                // GESTION
+                _collapsibleSection(
+                  key: 'gestion',
+                  title: 'GESTION',
+                  icon: Icons.business_center_rounded,
+                  color: kGreen,
+                  items: [
+                    _item(Icons.agriculture_rounded, 'Fermes',
+                        const Color(0xFF16A34A),
+                        () => _navigate(const FermesScreen())),
+                    _item(Icons.inventory_rounded, 'Stocks',
+                        const Color(0xFFEA580C),
+                        () => _navigate(const StocksScreen())),
+                    _item(Icons.people_rounded, 'Employés',
+                        const Color(0xFF7C3AED),
+                        () => _navigate(const EmployesScreen())),
+                    _item(Icons.terrain_rounded, 'Terrain',
+                        const Color(0xFF16A34A),
+                        () => _navigate(const TerrainScreen())),
+                  ],
+                ),
 
-                _section('RAPPORTS & PLANNING'),
-                _item(context, 8, Icons.assessment_rounded,
-                    'Rapports', const Color(0xFF6366F1)),
-                _item(context, 9, Icons.calendar_month_rounded,
-                    'Agenda', const Color(0xFF0891B2)),
+                // ANALYTICS
+                _collapsibleSection(
+                  key: 'analytics',
+                  title: 'ANALYTICS & IA',
+                  icon: Icons.analytics_rounded,
+                  color: kBlue,
+                  items: [
+                    _item(Icons.bar_chart_rounded, 'Graphiques',
+                        const Color(0xFF2563EB),
+                        () => _navigate(const GraphiquesScreen())),
+                    _item(Icons.psychology_rounded, 'Prédictions IA',
+                        const Color(0xFF0891B2),
+                        () => _navigate(const PredictionsScreen())),
+                    _item(Icons.cloud_rounded, 'Météo',
+                        const Color(0xFF38BDF8),
+                        () => _navigate(const MeteoScreen())),
+                    _item(Icons.chat_rounded, 'Chat IA',
+                        const Color(0xFF4C1D95),
+                        () => _navigate(const ChatScreen())),
+                    _item(Icons.analytics_rounded, 'Statistiques',
+                        const Color(0xFF2563EB),
+                        () => _navigate(const StatsScreen())),
+                  ],
+                ),
 
-                _section('MARCHÉ & VITRINE'),
-                _item(context, 10, Icons.store_rounded,
-                    'Marché AOF', const Color(0xFFD97706)),
-                _item(context, 11, Icons.storefront_rounded,
-                    'Ma Vitrine', const Color(0xFF16A34A)),
+                // RAPPORTS & PLANNING
+                _collapsibleSection(
+                  key: 'planning',
+                  title: 'RAPPORTS & PLANNING',
+                  icon: Icons.calendar_month_rounded,
+                  color: kIndigo,
+                  items: [
+                    _item(Icons.assessment_rounded, 'Rapports',
+                        const Color(0xFF6366F1),
+                        () => _navigate(const RapportsScreen())),
+                    _item(Icons.calendar_month_rounded, 'Agenda',
+                        const Color(0xFF0891B2),
+                        () => _navigate(const AgendaScreen())),
+                  ],
+                ),
 
-                _section('FINANCE & INVEST.'),
-                _item(context, 12, Icons.trending_up_rounded,
-                    'Investissement', const Color(0xFF16A34A)),
-                _item(context, 13, Icons.build_rounded,
-                    'Maintenance', const Color(0xFF6B7280)),
-                _item(context, 14, Icons.security_rounded,
-                    'Accès & Rôles', const Color(0xFFDC2626)),
-                _item(context, 17, Icons.diamond_rounded,
-                    'Abonnement', const Color(0xFF059669)),
+                // MARCHÉ & VITRINE
+                _collapsibleSection(
+                  key: 'marche',
+                  title: 'MARCHÉ & VITRINE',
+                  icon: Icons.store_rounded,
+                  color: kOrange,
+                  items: [
+                    _item(Icons.store_rounded, 'Marché AOF',
+                        const Color(0xFFD97706),
+                        () => _navigate(const MarcheScreen())),
+                    _item(Icons.storefront_rounded, 'Ma Vitrine',
+                        const Color(0xFF16A34A),
+                        () => _navigate(const VitrineScreen())),
+                  ],
+                ),
+
+                // FINANCE & INVEST
+                _collapsibleSection(
+                  key: 'finance',
+                  title: 'FINANCE & INVEST.',
+                  icon: Icons.trending_up_rounded,
+                  color: kGreen,
+                  items: [
+                    _item(Icons.trending_up_rounded, 'Investissement',
+                        const Color(0xFF16A34A),
+                        () => _navigate(const InvestissementScreen())),
+                    _item(Icons.build_rounded, 'Maintenance',
+                        const Color(0xFF6B7280),
+                        () => _navigate(const MaintenanceScreen())),
+                    _item(Icons.security_rounded, 'Accès & Rôles',
+                        const Color(0xFFDC2626),
+                        () => _navigate(const AccesScreen())),
+                    _item(Icons.diamond_rounded, 'Abonnement',
+                        const Color(0xFF059669),
+                        () => _navigate(const AbonnementScreen())),
+                  ],
+                ),
+
                 const SizedBox(height: 4),
               ])),
 
-          // ── Bas fixe ──
+          // ── BAS FIXE ──
           const Divider(color: Colors.white12, height: 1),
-          _item(context, 16, Icons.settings_rounded,
-              'Paramètres', const Color(0xFF6B7280)),
+          _item(Icons.settings_rounded, 'Paramètres',
+              const Color(0xFF6B7280),
+              () => _navigate(const SettingsScreen())),
           ListTile(
             dense: true,
             visualDensity: const VisualDensity(vertical: -4),
             minLeadingWidth: 0,
             contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 0),
+                horizontal: 14, vertical: 0),
             leading: Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6)),
+                    borderRadius: BorderRadius.circular(7)),
                 child: const Icon(Icons.logout_rounded,
-                    color: Colors.redAccent, size: 13)),
+                    color: Colors.redAccent, size: 14)),
             title: const Text('Déconnexion',
                 style: TextStyle(
                     color: Colors.redAccent,
                     fontWeight: FontWeight.w600,
-                    fontSize: 10)),
+                    fontSize: 11)),
             onTap: () async {
               await SessionManager.clear();
               Navigator.pushNamedAndRemoveUntil(
                   context, '/', (route) => false);
             },
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
         ])),
       ),
     );
   }
 
-  Widget _section(String title) => Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-      child: Text(title, style: const TextStyle(
-          color: Colors.white24, fontSize: 7,
-          fontWeight: FontWeight.w700, letterSpacing: 0.8)));
+  Widget _collapsibleSection({
+    required String key,
+    required String title,
+    required IconData icon,
+    required Color color,
+    required List<Widget> items,
+  }) {
+    final isOpen = _expanded[key] ?? false;
+    return Column(children: [
+      InkWell(
+        onTap: () => setState(() => _expanded[key] = !isOpen),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+              color: isOpen
+                  ? color.withOpacity(0.08)
+                  : Colors.transparent),
+          child: Row(children: [
+            Icon(icon, color: color, size: 14),
+            const SizedBox(width: 8),
+            Expanded(child: Text(title,
+                style: TextStyle(
+                    color: color,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8))),
+            Icon(
+                isOpen ? Icons.expand_less_rounded
+                    : Icons.expand_more_rounded,
+                color: color, size: 16),
+          ]),
+        ),
+      ),
+      if (isOpen) ...items,
+    ]);
+  }
 
-  Widget _item(BuildContext context, int index,
-      IconData icon, String label, Color color) =>
+  Widget _item(IconData icon, String label,
+      Color color, VoidCallback onTap) =>
       ListTile(
         dense: true,
         visualDensity: const VisualDensity(vertical: -4),
         minLeadingWidth: 0,
-        contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12, vertical: 0),
+        contentPadding: const EdgeInsets.fromLTRB(
+            24, 0, 14, 0),
         leading: Container(
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
                 color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6)),
+                borderRadius: BorderRadius.circular(7)),
             child: Icon(icon, color: color, size: 13)),
         title: Text(label, style: const TextStyle(
-            color: Colors.white, fontSize: 10,
+            color: Colors.white, fontSize: 11,
             fontWeight: FontWeight.w500)),
         trailing: const Icon(Icons.arrow_forward_ios_rounded,
-            color: Colors.white12, size: 8),
-        onTap: () => _navigate(context, index),
+            color: Colors.white12, size: 9),
+        onTap: onTap,
       );
 }
