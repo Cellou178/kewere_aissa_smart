@@ -9,11 +9,34 @@ from app.routes.stocks import router as stocks_router
 from app.routes.donnees_journalieres import router as donnees_router
 from app.routes.dashboard import router as dashboard_router
 import traceback
+import asyncio
+import httpx
+from contextlib import asynccontextmanager
+
+async def keep_alive():
+    await asyncio.sleep(60)
+    while True:
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.get(
+                    "https://kewere-aissa-smart.onrender.com/health",
+                    timeout=10
+                )
+                print("✅ Keep-alive ping envoyé")
+        except Exception as e:
+            print(f"⚠️ Keep-alive échoué: {e}")
+        await asyncio.sleep(600)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(keep_alive())
+    yield
 
 app = FastAPI(
     title="Kewere Aissa Smart API",
     description="API de gestion de fermes avicoles",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -62,3 +85,7 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/auth/me")
+def auth_me():
+    return {"status": "ok", "message": "API active"}
