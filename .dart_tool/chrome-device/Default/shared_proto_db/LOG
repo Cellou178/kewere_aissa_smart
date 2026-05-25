@@ -1,3 +1,13 @@
-2026/05/25-13:20:35.125 97a8 Reusing MANIFEST C:\Users\LENOVO\AppData\Local\Temp\flutter_tools.9b71826a\flutter_tools_chrome_device.9f8f26fd\Default\shared_proto_db/MANIFEST-000001
-2026/05/25-13:20:35.125 97a8 Recovering log #3
-2026/05/25-13:20:35.127 97a8 Reusing old log C:\Users\LENOVO\AppData\Local\Temp\flutter_tools.9b71826a\flutter_tools_chrome_device.9f8f26fd\Default\shared_proto_db/000003.log 
+2026/05/25-16:32:38.125 5acc Reusing MANIFEST C:\Users\LENOVO\AppData\Local\Temp\flutter_tools.e366602a\flutter_tools_chrome_device.784a5b92\Default\shared_proto_db/MANIFEST-000001
+2026/05/25-16:32:38.126 5acc Recovering log #3
+2026/05/25-16:32:38.127 5acc Level-0 table #3: started
+2026/05/25-16:32:38.134 5acc Level-0 table #3: 68203 bytes OK
+2026/05/25-16:32:38.134 5acc Recovering log #4
+2026/05/25-16:32:38.135 5acc Level-0 table #4: started
+2026/05/25-16:32:38.142 5acc Level-0 table #4: 135169 bytes OK
+2026/05/25-16:32:38.142 5acc Recovering log #7
+2026/05/25-16:32:38.143 5acc Reusing old log C:\Users\LENOVO\AppData\Local\Temp\flutter_tools.e366602a\flutter_tools_chrome_device.784a5b92\Default\shared_proto_db/000007.log 
+2026/05/25-16:32:38.145 5acc Delete type=0 #3
+2026/05/25-16:32:38.146 5acc Delete type=0 #4
+2026/05/25-16:32:38.146 5acc Delete type=2 #5
+2026/05/25-16:32:38.146 5acc Delete type=2 #8
