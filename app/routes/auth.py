@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -15,116 +15,57 @@ router = APIRouter(
     tags=["Authentification"]
 )
 
-# ==========================================
-# SCHEMAS
-# ==========================================
 class RegisterSchema(BaseModel):
-
-    nom: str = Field(
-        min_length=2,
-        max_length=100
-    )
-
+    nom: str = Field(min_length=2, max_length=100)
     email: EmailStr
-
-    mot_de_passe: str = Field(
-        min_length=6,
-        max_length=100
-    )
-
+    mot_de_passe: str = Field(min_length=6, max_length=100)
     telephone: Optional[str] = Field(
-        default=None,
-        min_length=8,
-        max_length=20
-    )
-
+        default=None, min_length=8, max_length=20)
     nom_ferme: Optional[str] = Field(
-        default="Ma Ferme",
-        min_length=2,
-        max_length=100
-    )
-
+        default="Ma Ferme", min_length=2, max_length=100)
 
 class TokenSchema(BaseModel):
     access_token: str
     token_type: str
 
-
-# ==========================================
-# REGISTER
-# ==========================================
 @router.post("/register", status_code=201)
-def register(
-    data: RegisterSchema,
-    db: Session = Depends(get_db)
-):
+def register(data: RegisterSchema, db: Session = Depends(get_db)):
 
-    # Vérifier email
     existing = db.query(Utilisateur).filter(
-        Utilisateur.email == data.email
-    ).first()
-
+        Utilisateur.email == data.email).first()
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Email déjà utilisé"
-        )
+        raise HTTPException(status_code=400,
+            detail="Email déjà utilisé")
 
-    # Récupérer rôle propriétaire
     role = db.query(Role).filter(
-        Role.nom == "proprietaire"
-    ).first()
-
+        Role.nom == "proprietaire").first()
     if not role:
-        raise HTTPException(
-            status_code=400,
-            detail="Rôle propriétaire introuvable"
-        )
+        raise HTTPException(status_code=400,
+            detail="Rôle propriétaire introuvable")
 
-    # ==========================================
     # CRÉER ENTREPRISE
-    # ==========================================
     entreprise_id = str(uuid.uuid4())
-
     db.execute(text("""
-        INSERT INTO entreprises (
-            id,
-            nom
-        )
-        VALUES (
-            :id,
-            :nom
-        )
+        INSERT INTO entreprises (id, nom, email)
+        VALUES (:id, :nom, :email)
     """), {
         "id": entreprise_id,
-        "nom": f"Entreprise {data.nom}"
+        "nom": f"Entreprise {data.nom}",
+        "email": data.email
     })
 
-    # ==========================================
     # CRÉER FERME
-    # ==========================================
     ferme_id = str(uuid.uuid4())
-
     db.execute(text("""
-        INSERT INTO fermes (
-            id,
-            nom,
-            entreprise_id
-        )
-        VALUES (
-            :id,
-            :nom,
-            :eid
-        )
+        INSERT INTO fermes (id, nom, entreprise_id)
+        VALUES (:id, :nom, :eid)
     """), {
         "id": ferme_id,
         "nom": data.nom_ferme,
         "eid": entreprise_id
     })
 
-    # ==========================================
     # CRÉER UTILISATEUR
-    # ==========================================
     user = Utilisateur(
         id=uuid.uuid4(),
         nom=data.nom.strip(),
@@ -137,7 +78,6 @@ def register(
     )
 
     db.add(user)
-
     db.commit()
     db.refresh(user)
 
@@ -149,39 +89,22 @@ def register(
         "ferme_id": ferme_id
     }
 
-
-# ==========================================
-# LOGIN
-# ==========================================
 @router.post("/login", response_model=TokenSchema)
-def login(
-    form: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
+def login(form: OAuth2PasswordRequestForm = Depends(),
+          db: Session = Depends(get_db)):
 
-    # Recherche email
     user = db.query(Utilisateur).filter(
-        Utilisateur.email == form.username.lower()
-    ).first()
+        Utilisateur.email == form.username.lower()).first()
 
-    # Vérification
     if not user or not verify_password(
-        form.password,
-        user.mot_de_passe
-    ):
-        raise HTTPException(
-            status_code=401,
-            detail="Email ou mot de passe incorrect"
-        )
+            form.password, user.mot_de_passe):
+        raise HTTPException(status_code=401,
+            detail="Email ou mot de passe incorrect")
 
-    # Vérifier actif
     if not user.actif:
-        raise HTTPException(
-            status_code=403,
-            detail="Compte désactivé"
-        )
+        raise HTTPException(status_code=403,
+            detail="Compte désactivé")
 
-    # JWT TOKEN
     token = create_access_token({
         "sub": user.email,
         "role": user.role.nom,
@@ -190,20 +113,10 @@ def login(
         "ferme_id": str(user.ferme_id)
     })
 
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    return {"access_token": token, "token_type": "bearer"}
 
-
-# ==========================================
-# CURRENT USER
-# ==========================================
 @router.get("/me")
-def me(
-    current_user: Utilisateur = Depends(get_current_user)
-):
-
+def me(current_user: Utilisateur = Depends(get_current_user)):
     return {
         "id": str(current_user.id),
         "nom": current_user.nom,
