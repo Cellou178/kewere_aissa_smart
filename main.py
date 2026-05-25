@@ -22,9 +22,8 @@ async def keep_alive():
                     "https://kewere-aissa-smart.onrender.com/health",
                     timeout=10
                 )
-                print("✅ Keep-alive ping envoyé")
-        except Exception as e:
-            print(f"⚠️ Keep-alive échoué: {e}")
+        except:
+            pass
         await asyncio.sleep(600)
 
 @asynccontextmanager
@@ -34,23 +33,40 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Kewere Aissa Smart API",
-    description="API de gestion de fermes avicoles",
     version="1.0.0",
     lifespan=lifespan
 )
 
+origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+@app.options("/{rest_of_path:path}")
+async def preflight(rest_of_path: str):
+    return JSONResponse(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 @app.middleware("http")
 async def catch_exceptions(request: Request, call_next):
     try:
-        return await call_next(request)
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
     except Exception as e:
         traceback.print_exc()
         return JSONResponse(status_code=500, content={"detail": str(e)})
@@ -70,7 +86,3 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-@app.get("/auth/me")
-def auth_me():
-    return {"status": "ok", "message": "API active"}
