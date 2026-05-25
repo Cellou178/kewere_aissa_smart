@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants/app_constants.dart';
 import '../../services/api_service.dart';
+import '../../core/utils/app_transitions.dart';
 
 class GraphiquesScreen extends StatefulWidget {
   const GraphiquesScreen({super.key});
@@ -50,11 +51,13 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
 
   List _donneesFiltered() {
     var filtered = _selectedCycleId == null ? _donnees :
-    _donnees.where((d) => d['cycle_id']?.toString() == _selectedCycleId).toList();
-    filtered.sort((a, b) => (a['date_releve'] ?? '').compareTo(b['date_releve'] ?? ''));
-    // Filtre période
+    _donnees.where((d) =>
+        d['cycle_id']?.toString() == _selectedCycleId).toList();
+    filtered.sort((a, b) =>
+        (a['date_releve'] ?? '').compareTo(b['date_releve'] ?? ''));
     final now = DateTime.now();
-    final jours = _periode == '7j' ? 7 : _periode == '14j' ? 14 : _periode == '30j' ? 30 : 999;
+    final jours = _periode == '7j' ? 7 : _periode == '14j' ? 14
+        : _periode == '30j' ? 30 : 999;
     if (jours < 999) {
       filtered = filtered.where((d) {
         try {
@@ -143,7 +146,8 @@ Sois précis et pratique. En français.''';
 
   Map<String, dynamic> _calculerStats(String type, List data) {
     if (data.isEmpty) return {};
-    final values = data.map((d) => ((d[type] ?? 0) as num).toDouble()).toList();
+    final values = data.map((d) =>
+        ((d[type] ?? 0) as num).toDouble()).toList();
     final avg = values.reduce((a, b) => a + b) / values.length;
     final max = values.reduce((a, b) => a > b ? a : b);
     final min = values.reduce((a, b) => a < b ? a : b);
@@ -202,81 +206,130 @@ ${normes[type]}
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator(color: kBlue));
+    // ── SHIMMER LOADING ──
+    if (_loading) return Scaffold(
+      backgroundColor: const Color(0xFFF1F5F9),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(children: [
+          const SizedBox(height: 200),
+          const ShimmerKPI(),
+          const SizedBox(height: 16),
+          const ShimmerCard(),
+          const ShimmerCard(),
+          const ShimmerCard(),
+        ]),
+      ),
+    );
+
     final filtered = _donneesFiltered();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       body: Column(children: [
-        // Header
+
+        // ── HEADER ──
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF0F172A), Color(0xFF1E3A5F)],
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(24)),
           ),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Column(children: [
             Row(children: [
-              const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 22),
+              const Icon(Icons.bar_chart_rounded,
+                  color: Colors.white, size: 22),
               const SizedBox(width: 8),
-              const Expanded(child: Text('Graphiques Avancés', style: TextStyle(
-                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900))),
-              IconButton(icon: const Icon(Icons.refresh_rounded,
-                  color: Colors.white54, size: 20), onPressed: _load),
+              const Expanded(child: Text('Graphiques Avancés',
+                  style: TextStyle(color: Colors.white,
+                      fontSize: 18, fontWeight: FontWeight.w900))),
+              IconButton(
+                  icon: const Icon(Icons.refresh_rounded,
+                      color: Colors.white54, size: 20),
+                  onPressed: _load),
             ]),
             const SizedBox(height: 8),
+
             // Sélecteur cycle
             DropdownButtonFormField<String>(
                 value: _selectedCycleId,
                 dropdownColor: const Color(0xFF1E293B),
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 13),
                 decoration: InputDecoration(
                     labelText: 'Cycle',
-                    labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.white30)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.white30)),
-                    filled: true, fillColor: Colors.white.withOpacity(0.05),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                    labelStyle: const TextStyle(
+                        color: Colors.white70, fontSize: 12),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                            color: Colors.white30)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                            color: Colors.white30)),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.05),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8)),
                 items: _cycles.map((c) => DropdownMenuItem<String>(
                     value: c['id']?.toString(),
                     child: Text(c['nom']?.toString() ?? '',
-                        style: const TextStyle(color: Colors.white)))).toList(),
+                        style: const TextStyle(
+                            color: Colors.white)))).toList(),
                 onChanged: (v) {
-                  setState(() { _selectedCycleId = v; _interpretations.clear(); });
+                  setState(() {
+                    _selectedCycleId = v;
+                    _interpretations.clear();
+                  });
                   _analyserTout();
                 }),
             const SizedBox(height: 8),
+
             // Filtre période
             Row(children: [
-              const Text('Période:', style: TextStyle(color: Colors.white54, fontSize: 11)),
+              const Text('Période:',
+                  style: TextStyle(
+                      color: Colors.white54, fontSize: 11)),
               const SizedBox(width: 8),
-              ...['7j', '14j', '30j', 'Tout'].map((p) => GestureDetector(
-                onTap: () {
-                  setState(() { _periode = p; _interpretations.clear(); });
-                  _analyserTout();
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: _periode == p ? kBlueLight : Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20)),
-                  child: Text(p, style: TextStyle(
-                      color: _periode == p ? Colors.white : Colors.white54,
-                      fontSize: 11, fontWeight: _periode == p
-                      ? FontWeight.w700 : FontWeight.w400)),
-                ),
-              )),
+              ...['7j', '14j', '30j', 'Tout'].map((p) =>
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _periode = p;
+                        _interpretations.clear();
+                      });
+                      _analyserTout();
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: _periode == p
+                              ? kBlueLight
+                              : Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Text(p, style: TextStyle(
+                          color: _periode == p
+                              ? Colors.white : Colors.white54,
+                          fontSize: 11,
+                          fontWeight: _periode == p
+                              ? FontWeight.w700 : FontWeight.w400)),
+                    ),
+                  )),
               const Spacer(),
               Text('${filtered.length} relevés',
-                  style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                  style: const TextStyle(
+                      color: Colors.white38, fontSize: 11)),
             ]),
             const SizedBox(height: 8),
+
             TabBar(
               controller: _tabCtrl,
               isScrollable: true,
@@ -284,7 +337,8 @@ ${normes[type]}
               unselectedLabelColor: Colors.white38,
               indicatorColor: kBlueLight,
               indicatorWeight: 2,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+              labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 11),
               tabs: const [
                 Tab(text: '💀 Mortalité'),
                 Tab(text: '🌡️ Température'),
@@ -297,14 +351,16 @@ ${normes[type]}
           ]),
         ),
 
-        Expanded(child: TabBarView(controller: _tabCtrl, children: [
-          _buildChartTab('mortalite', filtered),
-          _buildChartTab('temperature', filtered),
-          _buildChartTab('humidite', filtered),
-          _buildChartTab('production', filtered),
-          _buildComparaison(filtered),
-          _buildAnalyseGlobale(),
-        ])),
+        Expanded(child: TabBarView(
+            controller: _tabCtrl,
+            children: [
+              _buildChartTab('mortalite', filtered),
+              _buildChartTab('temperature', filtered),
+              _buildChartTab('humidite', filtered),
+              _buildChartTab('production', filtered),
+              _buildComparaison(filtered),
+              _buildAnalyseGlobale(),
+            ])),
       ]),
     );
   }
@@ -320,32 +376,54 @@ ${normes[type]}
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(children: [
+
         // Stats rapides
-        if (stats.isNotEmpty) Row(children: [
-          _statMini('Moy.', stats['avg']?.toStringAsFixed(1) ?? '-', color),
-          const SizedBox(width: 8),
-          _statMini('Max', stats['max']?.toStringAsFixed(1) ?? '-', kRed),
-          const SizedBox(width: 8),
-          _statMini('Min', stats['min']?.toStringAsFixed(1) ?? '-', kGreen),
-          const SizedBox(width: 8),
-          _statMini('Total', stats['total']?.toStringAsFixed(0) ?? '-', kPurple),
-        ]),
+        if (stats.isNotEmpty) AnimatedCard(
+          delay: const Duration(milliseconds: 50),
+          child: Row(children: [
+            _statMini('Moy.',
+                stats['avg']?.toStringAsFixed(1) ?? '-', color),
+            const SizedBox(width: 8),
+            _statMini('Max',
+                stats['max']?.toStringAsFixed(1) ?? '-', kRed),
+            const SizedBox(width: 8),
+            _statMini('Min',
+                stats['min']?.toStringAsFixed(1) ?? '-', kGreen),
+            const SizedBox(width: 8),
+            _statMini('Total',
+                stats['total']?.toStringAsFixed(0) ?? '-', kPurple),
+          ]),
+        ),
         const SizedBox(height: 12),
 
-        // Graphique principal
-        Container(height: 220, padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
-            child: _buildChart(type, data)),
+        // Graphique
+        AnimatedCard(
+          delay: const Duration(milliseconds: 100),
+          child: Container(
+              height: 220,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10)]),
+              child: _buildChart(type, data)),
+        ),
         const SizedBox(height: 12),
 
         // Tendance
-        if (stats.isNotEmpty) _tendanceCard(stats, color, type),
+        if (stats.isNotEmpty) AnimatedCard(
+          delay: const Duration(milliseconds: 150),
+          child: _tendanceCard(stats, color, type),
+        ),
         const SizedBox(height: 12),
 
         // Carte IA
-        _buildIACard(type),
+        AnimatedCard(
+          delay: const Duration(milliseconds: 200),
+          child: _buildIACard(type),
+        ),
       ]),
     );
   }
@@ -353,39 +431,52 @@ ${normes[type]}
   Widget _tendanceCard(Map stats, Color color, String type) {
     final trend = (stats['trend'] as num).toDouble();
     final isHausse = trend > 0;
-    final isMauvais = (type == 'mortalite' || type == 'temperature' || type == 'humidite')
+    final isMauvais = (type == 'mortalite' ||
+        type == 'temperature' || type == 'humidite')
         ? isHausse : !isHausse;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8)]),
       child: Row(children: [
-        Icon(isHausse ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+        Icon(isHausse ? Icons.trending_up_rounded
+            : Icons.trending_down_rounded,
             color: isMauvais ? kRed : kGreen, size: 24),
         const SizedBox(width: 10),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Tendance sur la période',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+        Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+          const Text('Tendance sur la période',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 12)),
           Text('${isHausse ? '+' : ''}${trend.toStringAsFixed(1)} depuis le début',
-              style: TextStyle(color: isMauvais ? kRed : kGreen, fontSize: 11)),
+              style: TextStyle(
+                  color: isMauvais ? kRed : kGreen,
+                  fontSize: 11)),
         ])),
-        Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
                 color: (isMauvais ? kRed : kGreen).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20)),
             child: Text(isMauvais ? '⚠️ Attention' : '✅ Bon',
                 style: TextStyle(
                     color: isMauvais ? kRed : kGreen,
-                    fontSize: 11, fontWeight: FontWeight.w700))),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700))),
       ]),
     );
   }
 
-  // ── COMPARAISON ──
   Widget _buildComparaison(List data) {
-    if (data.isEmpty) return const Center(child: Text('Aucune donnée'));
+    if (data.isEmpty) return const Center(
+        child: Text('Aucune donnée'));
 
     final mortaliteStats = _calculerStats('mortalite', data);
     final tempStats = _calculerStats('temperature', data);
@@ -395,78 +486,178 @@ ${normes[type]}
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(children: [
-        // Radar résumé
-        _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('📊 Score par Indicateur', style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B))),
-          const SizedBox(height: 16),
-          _indicateurBar('💀 Mortalité',
-              mortaliteStats['avg'] ?? 0, 0, 20, kRed, inverse: true),
-          const SizedBox(height: 10),
-          _indicateurBar('🌡️ Température',
-              tempStats['avg'] ?? 0, 20, 40, kOrange),
-          const SizedBox(height: 10),
-          _indicateurBar('💧 Humidité',
-              humStats['avg'] ?? 0, 0, 100, Colors.blue),
-          const SizedBox(height: 10),
-          _indicateurBar('📦 Production',
-              prodStats['avg'] ?? 0, 0, 100, kGreen),
-        ])),
+
+        AnimatedCard(
+          delay: const Duration(milliseconds: 50),
+          child: _card(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+            const Text('📊 Score par Indicateur',
+                style: TextStyle(fontWeight: FontWeight.w800,
+                    fontSize: 14, color: Color(0xFF1E293B))),
+            const SizedBox(height: 16),
+            _indicateurBar('💀 Mortalité',
+                mortaliteStats['avg'] ?? 0, 0, 20, kRed,
+                inverse: true),
+            const SizedBox(height: 10),
+            _indicateurBar('🌡️ Température',
+                tempStats['avg'] ?? 0, 20, 40, kOrange),
+            const SizedBox(height: 10),
+            _indicateurBar('💧 Humidité',
+                humStats['avg'] ?? 0, 0, 100, Colors.blue),
+            const SizedBox(height: 10),
+            _indicateurBar('📦 Production',
+                prodStats['avg'] ?? 0, 0, 100, kGreen),
+          ])),
+        ),
         const SizedBox(height: 12),
 
-        // Comparaison cycles
-        if (_cycles.length > 1) _card(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('🔄 Comparaison Cycles', style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B))),
-          const SizedBox(height: 12),
-          ..._cycles.take(4).map((c) {
-            final donnesCycle = _donnees.where((d) =>
-            d['cycle_id']?.toString() == c['id']?.toString()).toList();
-            final mort = donnesCycle.fold<int>(0, (s, d) =>
-            s + ((d['mortalite'] ?? 0) as num).toInt());
-            final sujets = ((c['nombre_sujets'] ?? 0) as num).toInt();
-            final taux = sujets > 0 ? (mort / sujets * 100) : 0.0;
-            final color = taux > 5 ? kRed : taux > 2 ? kOrange : kGreen;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+        // PieChart répartition cycles
+        if (_cycles.isNotEmpty) AnimatedCard(
+          delay: const Duration(milliseconds: 100),
+          child: _card(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+            const Text('🥧 Répartition Cycles',
+                style: TextStyle(fontWeight: FontWeight.w800,
+                    fontSize: 14, color: Color(0xFF1E293B))),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 180,
               child: Row(children: [
-                Expanded(child: Text(c['nom'] ?? '', style: const TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 12))),
-                Text('${taux.toStringAsFixed(1)}% mort.',
-                    style: TextStyle(color: color,
-                        fontWeight: FontWeight.w700, fontSize: 12)),
+                Expanded(child: PieChart(PieChartData(
+                    sections: _buildPieSections(),
+                    centerSpaceRadius: 35,
+                    sectionsSpace: 2))),
+                const SizedBox(width: 12),
+                Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  _legend(kGreen, 'Actifs'),
+                  const SizedBox(height: 6),
+                  _legend(kBlue, 'Terminés'),
+                  const SizedBox(height: 6),
+                  _legend(kOrange, 'Autres'),
+                ]),
               ]),
-            );
-          }),
-        ])),
+            ),
+          ])),
+        ),
+        const SizedBox(height: 12),
+
+        if (_cycles.length > 1) AnimatedCard(
+          delay: const Duration(milliseconds: 150),
+          child: _card(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+            const Text('🔄 Comparaison Cycles',
+                style: TextStyle(fontWeight: FontWeight.w800,
+                    fontSize: 14, color: Color(0xFF1E293B))),
+            const SizedBox(height: 12),
+            ..._cycles.take(4).map((c) {
+              final donnesCycle = _donnees.where((d) =>
+              d['cycle_id']?.toString() ==
+                  c['id']?.toString()).toList();
+              final mort = donnesCycle.fold<int>(0, (s, d) =>
+              s + ((d['mortalite'] ?? 0) as num).toInt());
+              final sujets =
+                  ((c['nombre_sujets'] ?? 0) as num).toInt();
+              final taux = sujets > 0
+                  ? (mort / sujets * 100) : 0.0;
+              final color = taux > 5 ? kRed
+                  : taux > 2 ? kOrange : kGreen;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(children: [
+                  Expanded(child: Text(c['nom'] ?? '',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12))),
+                  Text('${taux.toStringAsFixed(1)}% mort.',
+                      style: TextStyle(color: color,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12)),
+                ]),
+              );
+            }),
+          ])),
+        ),
       ]),
     );
   }
 
-  Widget _indicateurBar(String label, dynamic value, double min, double max,
-      Color color, {bool inverse = false}) {
+  List<PieChartSectionData> _buildPieSections() {
+    final actifs = _cycles.where((c) =>
+    c['statut'] == 'actif' || c['statut'] == 'en_cours').length;
+    final termines = _cycles.where((c) =>
+    c['statut'] == 'termine' || c['statut'] == 'terminé').length;
+    final autres = _cycles.length - actifs - termines;
+    final sections = <PieChartSectionData>[];
+    if (actifs > 0) sections.add(PieChartSectionData(
+        value: actifs.toDouble(), color: kGreen,
+        title: '$actifs', radius: 50,
+        titleStyle: const TextStyle(color: Colors.white,
+            fontWeight: FontWeight.w800, fontSize: 12)));
+    if (termines > 0) sections.add(PieChartSectionData(
+        value: termines.toDouble(), color: kBlue,
+        title: '$termines', radius: 50,
+        titleStyle: const TextStyle(color: Colors.white,
+            fontWeight: FontWeight.w800, fontSize: 12)));
+    if (autres > 0) sections.add(PieChartSectionData(
+        value: autres.toDouble(), color: kOrange,
+        title: '$autres', radius: 50,
+        titleStyle: const TextStyle(color: Colors.white,
+            fontWeight: FontWeight.w800, fontSize: 12)));
+    if (sections.isEmpty) sections.add(PieChartSectionData(
+        value: 1, color: Colors.grey.shade300,
+        title: '0', radius: 50,
+        titleStyle: const TextStyle(color: Colors.white,
+            fontSize: 12)));
+    return sections;
+  }
+
+  Widget _legend(Color color, String label) =>
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 10, height: 10,
+            decoration: BoxDecoration(
+                color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(
+            fontSize: 11, color: Color(0xFF1E293B))),
+      ]);
+
+  Widget _indicateurBar(String label, dynamic value,
+      double min, double max, Color color,
+      {bool inverse = false}) {
     final v = (value as num).toDouble();
     final pct = ((v - min) / (max - min)).clamp(0.0, 1.0);
     final isOk = inverse ? pct < 0.3 : (pct > 0.3 && pct < 0.8);
     final statusColor = isOk ? kGreen : kRed;
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+    return Column(crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+        Text(label, style: const TextStyle(
+            fontSize: 12, fontWeight: FontWeight.w600)),
         Row(children: [
-          Text(v.toStringAsFixed(1),
-              style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 12)),
+          Text(v.toStringAsFixed(1), style: TextStyle(
+              color: color, fontWeight: FontWeight.w800,
+              fontSize: 12)),
           const SizedBox(width: 6),
           Container(width: 8, height: 8,
-              decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+              decoration: BoxDecoration(
+                  color: statusColor, shape: BoxShape.circle)),
         ]),
       ]),
       const SizedBox(height: 4),
       ClipRRect(borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
-              value: pct, backgroundColor: Colors.grey.shade200,
-              valueColor: AlwaysStoppedAnimation(color), minHeight: 6)),
+              value: pct,
+              backgroundColor: Colors.grey.shade200,
+              valueColor: AlwaysStoppedAnimation(color),
+              minHeight: 6)),
     ]);
   }
 
@@ -476,59 +667,97 @@ ${normes[type]}
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(children: [
-        Container(
-          width: double.infinity, padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                  colors: [Color(0xFF0F172A), Color(0xFF1E3A5F)],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight),
-              borderRadius: BorderRadius.circular(20)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Row(children: [
-              Text('🤖', style: TextStyle(fontSize: 28)),
-              SizedBox(width: 10),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Analyse IA Complète', style: TextStyle(
-                    color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
-                Text('Powered by Claude AI',
-                    style: TextStyle(color: Colors.white38, fontSize: 10)),
-              ]),
-            ]),
-            const SizedBox(height: 14),
-            if (isLoading)
-              const Center(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                SizedBox(width: 18, height: 18,
-                    child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 2)),
+        AnimatedCard(
+          delay: const Duration(milliseconds: 50),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF1E3A5F)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight),
+                borderRadius: BorderRadius.circular(20)),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+              const Row(children: [
+                Text('🤖', style: TextStyle(fontSize: 28)),
                 SizedBox(width: 10),
-                Text('Analyse en cours...', style: TextStyle(color: Colors.white54, fontSize: 13)),
-              ]))
-            else
-              Text(interpretation ?? 'Appuyez sur relancer pour analyser.',
-                  style: TextStyle(color: Colors.white.withOpacity(0.87),
-                      fontSize: 13, height: 1.5)),
-            const SizedBox(height: 12),
-            SizedBox(width: double.infinity,
-                child: OutlinedButton.icon(
-                    onPressed: () => _analyserGlobal(_donneesFiltered()),
-                    icon: const Icon(Icons.refresh_rounded, color: Colors.white60, size: 16),
-                    label: const Text('Relancer', style: TextStyle(color: Colors.white60)),
-                    style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white24),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10))))),
-          ]),
+                Column(crossAxisAlignment:
+                    CrossAxisAlignment.start, children: [
+                  Text('Analyse IA Complète',
+                      style: TextStyle(color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900)),
+                  Text('Powered by Claude AI',
+                      style: TextStyle(
+                          color: Colors.white38, fontSize: 10)),
+                ]),
+              ]),
+              const SizedBox(height: 14),
+              if (isLoading)
+                const Center(child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                  SizedBox(width: 18, height: 18,
+                      child: CircularProgressIndicator(
+                          color: Colors.white54,
+                          strokeWidth: 2)),
+                  SizedBox(width: 10),
+                  Text('Analyse en cours...',
+                      style: TextStyle(
+                          color: Colors.white54, fontSize: 13)),
+                ]))
+              else
+                Text(interpretation ??
+                    'Appuyez sur relancer pour analyser.',
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.87),
+                        fontSize: 13, height: 1.5)),
+              const SizedBox(height: 12),
+              SizedBox(width: double.infinity,
+                  child: OutlinedButton.icon(
+                      onPressed: () =>
+                          _analyserGlobal(_donneesFiltered()),
+                      icon: const Icon(Icons.refresh_rounded,
+                          color: Colors.white60, size: 16),
+                      label: const Text('Relancer',
+                          style: TextStyle(
+                              color: Colors.white60)),
+                      style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                              color: Colors.white24),
+                          shape: RoundedRectangleBorder(
+                              borderRadius:
+                              BorderRadius.circular(10))))),
+            ]),
+          ),
         ),
         const SizedBox(height: 16),
         const Text('Par Indicateur', style: TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
+            fontSize: 14, fontWeight: FontWeight.w800,
+            color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
-        _buildIACard('mortalite'),
+        AnimatedCard(
+          delay: const Duration(milliseconds: 100),
+          child: _buildIACard('mortalite'),
+        ),
         const SizedBox(height: 10),
-        _buildIACard('temperature'),
+        AnimatedCard(
+          delay: const Duration(milliseconds: 150),
+          child: _buildIACard('temperature'),
+        ),
         const SizedBox(height: 10),
-        _buildIACard('humidite'),
+        AnimatedCard(
+          delay: const Duration(milliseconds: 200),
+          child: _buildIACard('humidite'),
+        ),
         const SizedBox(height: 10),
-        _buildIACard('production'),
+        AnimatedCard(
+          delay: const Duration(milliseconds: 250),
+          child: _buildIACard('production'),
+        ),
       ]),
     );
   }
@@ -553,30 +782,40 @@ ${normes[type]}
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          color: color.withOpacity(0.05), borderRadius: BorderRadius.circular(14),
+          color: color.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withOpacity(0.2))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
         Row(children: [
-          Text(icons[type] ?? '🤖', style: const TextStyle(fontSize: 18)),
+          Text(icons[type] ?? '🤖',
+              style: const TextStyle(fontSize: 18)),
           const SizedBox(width: 8),
           Text(titles[type] ?? '', style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 13, color: color)),
+              fontWeight: FontWeight.w800, fontSize: 13,
+              color: color)),
           const Spacer(),
           if (!isLoading) GestureDetector(
-              onTap: () => _analyserGraphique(type, _donneesFiltered()),
-              child: Icon(Icons.refresh_rounded, color: color, size: 16)),
+              onTap: () => _analyserGraphique(
+                  type, _donneesFiltered()),
+              child: Icon(Icons.refresh_rounded,
+                  color: color, size: 16)),
         ]),
         const SizedBox(height: 8),
         if (isLoading)
           Row(children: [
             SizedBox(width: 14, height: 14,
-                child: CircularProgressIndicator(color: color, strokeWidth: 2)),
+                child: CircularProgressIndicator(
+                    color: color, strokeWidth: 2)),
             const SizedBox(width: 8),
-            const Text('Analyse...', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            const Text('Analyse...',
+                style: TextStyle(
+                    color: Colors.grey, fontSize: 12)),
           ])
         else
           Text(interpretation ?? 'Appuyez sur actualiser.',
-              style: TextStyle(color: color.withOpacity(0.8),
+              style: TextStyle(
+                  color: color.withOpacity(0.8),
                   fontSize: 12, height: 1.5)),
       ]),
     );
@@ -609,7 +848,8 @@ ${normes[type]}
       return BarChart(BarChartData(
           gridData: FlGridData(show: true,
               getDrawingHorizontalLine: (_) => FlLine(
-                  color: Colors.grey.withOpacity(0.15), strokeWidth: 1)),
+                  color: Colors.grey.withOpacity(0.15),
+                  strokeWidth: 1)),
           titlesData: _titlesData(unit),
           borderData: FlBorderData(show: false),
           barGroups: bars));
@@ -623,54 +863,75 @@ ${normes[type]}
     return LineChart(LineChartData(
         gridData: FlGridData(show: true,
             getDrawingHorizontalLine: (_) => FlLine(
-                color: Colors.grey.withOpacity(0.15), strokeWidth: 1)),
+                color: Colors.grey.withOpacity(0.15),
+                strokeWidth: 1)),
         titlesData: _titlesData(unit),
         borderData: FlBorderData(show: false),
         lineBarsData: [LineChartBarData(
-            spots: spots, isCurved: true, color: color, barWidth: 2.5,
-            belowBarData: BarAreaData(show: true, color: color.withOpacity(0.08)),
-            dotData: FlDotData(show: spots.length <= 10,
-                getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
-                    radius: 3, color: color, strokeWidth: 1.5,
-                    strokeColor: Colors.white)))]));
+            spots: spots, isCurved: true,
+            color: color, barWidth: 2.5,
+            belowBarData: BarAreaData(
+                show: true,
+                color: color.withOpacity(0.08)),
+            dotData: FlDotData(
+                show: spots.length <= 10,
+                getDotPainter: (_, __, ___, ____) =>
+                    FlDotCirclePainter(
+                        radius: 3, color: color,
+                        strokeWidth: 1.5,
+                        strokeColor: Colors.white)))]));
   }
 
   FlTitlesData _titlesData(String unit) => FlTitlesData(
-      bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true,
+      bottomTitles: AxisTitles(sideTitles: SideTitles(
+          showTitles: true,
           getTitlesWidget: (v, _) => Text('J${v.toInt()+1}',
-              style: const TextStyle(fontSize: 8, color: Colors.grey)),
+              style: const TextStyle(
+                  fontSize: 8, color: Colors.grey)),
           reservedSize: 18)),
-      leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true,
-          getTitlesWidget: (v, _) => Text('${v.toInt()}$unit',
-              style: const TextStyle(fontSize: 8, color: Colors.grey)),
+      leftTitles: AxisTitles(sideTitles: SideTitles(
+          showTitles: true,
+          getTitlesWidget: (v, _) =>
+              Text('${v.toInt()}$unit',
+                  style: const TextStyle(
+                      fontSize: 8, color: Colors.grey)),
           reservedSize: 32)),
-      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)));
+      topTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false)),
+      rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false)));
 
   Widget _statMini(String label, String value, Color color) =>
       Expanded(child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+            color: color.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(10)),
         child: Column(children: [
           Text(value, style: TextStyle(
-              fontWeight: FontWeight.w900, fontSize: 14, color: color)),
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 9)),
+              fontWeight: FontWeight.w900,
+              fontSize: 14, color: color)),
+          Text(label, style: const TextStyle(
+              color: Colors.grey, fontSize: 9)),
         ]),
       ));
 
   Widget _emptyChart(String msg) => Center(child: Column(
       mainAxisAlignment: MainAxisAlignment.center, children: [
-    const Icon(Icons.bar_chart_rounded, size: 36, color: Colors.grey),
+    const Icon(Icons.bar_chart_rounded,
+        size: 36, color: Colors.grey),
     const SizedBox(height: 8),
-    Text(msg, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+    Text(msg, style: const TextStyle(
+        color: Colors.grey, fontSize: 12)),
   ]));
 
   Widget _card({required Widget child}) => Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(14),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8)]),
       child: child);
 }
