@@ -42,8 +42,6 @@ class DonneeSchema(BaseModel):
     temperature_standard: Optional[str] = None
     humidite_valeur: Optional[float] = None
     humidite_standard: Optional[str] = None
-    temperature: Optional[float] = None
-    humidite: Optional[float] = None
     
     # Alimentation
     aliment_consomme: Optional[float] = None
@@ -54,6 +52,62 @@ class DonneeSchema(BaseModel):
     ic_inis: Optional[float] = None
     taux_mortalite: Optional[float] = None
     commentaire: Optional[str] = None
+
+
+def _calc(data: DonneeSchema):
+    """Calculs automatiques communs à create et update."""
+    poids_list = [p for p in [
+        data.poids_g1, data.poids_g2, data.poids_g3,
+        data.poids_g4, data.poids_g5
+    ] if p is not None]
+
+    poids_moyen = data.poids_moyen_global
+    if poids_list and not poids_moyen:
+        poids_moyen = sum(poids_list) / len(poids_list)
+
+    homogeneite = data.homogeneite
+    if len(poids_list) >= 2 and not homogeneite:
+        homogeneite = max(poids_list) - min(poids_list)
+
+    temp_moy = None
+    if data.temperature_matin and data.temperature_soir:
+        temp_moy = (data.temperature_matin + data.temperature_soir) / 2
+
+    return poids_moyen, homogeneite, temp_moy
+
+
+def _params(data: DonneeSchema, poids_moyen, homogeneite, temp_moy):
+    """Dictionnaire de paramètres SQL commun."""
+    return {
+        "cid": data.cycle_id,
+        "date": data.date_releve,
+        "action": data.action,
+        "mort": data.mortalite,
+        "vendus": data.nombre_sujets_vendus,
+        "prod": data.production,
+        "g1": data.poids_g1,
+        "g2": data.poids_g2,
+        "g3": data.poids_g3,
+        "g4": data.poids_g4,
+        "g5": data.poids_g5,
+        "poids_moyen": poids_moyen,
+        "homogeneite": homogeneite,
+        "poids_std": data.poids_standard,
+        "dev_plus": data.deviation_plus,
+        "dev_moins": data.deviation_moins,
+        "temp_matin": data.temperature_matin,
+        "temp_soir": data.temperature_soir,
+        "temp_moy": temp_moy,
+        "temp_std": data.temperature_standard,
+        "hum_val": data.humidite_valeur,
+        "hum_std": data.humidite_standard,
+        "aliment_conso": data.aliment_consomme,
+        "aliment_rest": data.aliment_restant,
+        "sacs_rest": data.sacs_restants,
+        "ic": data.ic_inis,
+        "taux_mort": data.taux_mortalite,
+        "commentaire": data.commentaire,
+    }
 
 
 @router.get("/")
@@ -101,27 +155,10 @@ def create_donnee(
     if not cycle:
         raise HTTPException(status_code=403, detail="Cycle interdit")
 
-    # Calcul automatique poids moyen global
-    poids_list = [p for p in [
-        data.poids_g1, data.poids_g2, data.poids_g3,
-        data.poids_g4, data.poids_g5
-    ] if p is not None]
-    
-    poids_moyen = data.poids_moyen_global
-    if poids_list and not poids_moyen:
-        poids_moyen = sum(poids_list) / len(poids_list)
-    
-    # Calcul homogénéité
-    homogeneite = data.homogeneite
-    if len(poids_list) >= 2 and not homogeneite:
-        homogeneite = max(poids_list) - min(poids_list)
-
-    # Température moyenne
-    temp = data.temperature
-    if data.temperature_matin and data.temperature_soir and not temp:
-        temp = (data.temperature_matin + data.temperature_soir) / 2
-
+    poids_moyen, homogeneite, temp_moy = _calc(data)
     donnee_id = str(uuid.uuid4())
+    params = _params(data, poids_moyen, homogeneite, temp_moy)
+    params["id"] = donnee_id
 
     db.execute(text("""
         INSERT INTO donnees_journalieres (
@@ -132,7 +169,6 @@ def create_donnee(
             deviation_plus, deviation_moins,
             temperature_matin, temperature_soir, temperature_standard,
             humidite_valeur, humidite_standard,
-            temperature, humidite,
             aliment_consomme, aliment_restant, sacs_restants,
             ic_inis, taux_mortalite, commentaire
         ) VALUES (
@@ -143,42 +179,10 @@ def create_donnee(
             :dev_plus, :dev_moins,
             :temp_matin, :temp_soir, :temp_std,
             :hum_val, :hum_std,
-            :temp, :hum,
             :aliment_conso, :aliment_rest, :sacs_rest,
             :ic, :taux_mort, :commentaire
         )
-    """), {
-        "id": donnee_id,
-        "cid": data.cycle_id,
-        "date": data.date_releve,
-        "action": data.action,
-        "mort": data.mortalite,
-        "vendus": data.nombre_sujets_vendus,
-        "prod": data.production,
-        "g1": data.poids_g1,
-        "g2": data.poids_g2,
-        "g3": data.poids_g3,
-        "g4": data.poids_g4,
-        "g5": data.poids_g5,
-        "poids_moyen": poids_moyen,
-        "homogeneite": homogeneite,
-        "poids_std": data.poids_standard,
-        "dev_plus": data.deviation_plus,
-        "dev_moins": data.deviation_moins,
-        "temp_matin": data.temperature_matin,
-        "temp_soir": data.temperature_soir,
-        "temp_std": data.temperature_standard,
-        "hum_val": data.humidite_valeur,
-        "hum_std": data.humidite_standard,
-        "temp": temp,
-        "hum": data.humidite_valeur,
-        "aliment_conso": data.aliment_consomme,
-        "aliment_rest": data.aliment_restant,
-        "sacs_rest": data.sacs_restants,
-        "ic": data.ic_inis,
-        "taux_mort": data.taux_mortalite,
-        "commentaire": data.commentaire,
-    })
+    """), params)
 
     db.commit()
     return {
@@ -195,22 +199,10 @@ def update_donnee(
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(get_current_user)
 ):
-    poids_list = [p for p in [
-        data.poids_g1, data.poids_g2, data.poids_g3,
-        data.poids_g4, data.poids_g5
-    ] if p is not None]
-
-    poids_moyen = data.poids_moyen_global
-    if poids_list and not poids_moyen:
-        poids_moyen = sum(poids_list) / len(poids_list)
-
-    homogeneite = data.homogeneite
-    if len(poids_list) >= 2 and not homogeneite:
-        homogeneite = max(poids_list) - min(poids_list)
-
-    temp = data.temperature
-    if data.temperature_matin and data.temperature_soir and not temp:
-        temp = (data.temperature_matin + data.temperature_soir) / 2
+    poids_moyen, homogeneite, temp_moy = _calc(data)
+    params = _params(data, poids_moyen, homogeneite, temp_moy)
+    params["id"] = str(donnee_id)
+    params["eid"] = current_user.entreprise_id
 
     result = db.execute(text("""
         UPDATE donnees_journalieres SET
@@ -223,7 +215,6 @@ def update_donnee(
             temperature_matin=:temp_matin, temperature_soir=:temp_soir,
             temperature_standard=:temp_std,
             humidite_valeur=:hum_val, humidite_standard=:hum_std,
-            temperature=:temp, humidite=:hum,
             aliment_consomme=:aliment_conso, aliment_restant=:aliment_rest,
             sacs_restants=:sacs_rest, ic_inis=:ic,
             taux_mortalite=:taux_mort, commentaire=:commentaire
@@ -233,36 +224,7 @@ def update_donnee(
             JOIN fermes f ON f.id = c.ferme_id
             WHERE f.entreprise_id = :eid
         )
-    """), {
-        "date": data.date_releve,
-        "action": data.action,
-        "mort": data.mortalite,
-        "vendus": data.nombre_sujets_vendus,
-        "prod": data.production,
-        "g1": data.poids_g1, "g2": data.poids_g2,
-        "g3": data.poids_g3, "g4": data.poids_g4,
-        "g5": data.poids_g5,
-        "poids_moyen": poids_moyen,
-        "homogeneite": homogeneite,
-        "poids_std": data.poids_standard,
-        "dev_plus": data.deviation_plus,
-        "dev_moins": data.deviation_moins,
-        "temp_matin": data.temperature_matin,
-        "temp_soir": data.temperature_soir,
-        "temp_std": data.temperature_standard,
-        "hum_val": data.humidite_valeur,
-        "hum_std": data.humidite_standard,
-        "temp": temp,
-        "hum": data.humidite_valeur,
-        "aliment_conso": data.aliment_consomme,
-        "aliment_rest": data.aliment_restant,
-        "sacs_rest": data.sacs_restants,
-        "ic": data.ic_inis,
-        "taux_mort": data.taux_mortalite,
-        "commentaire": data.commentaire,
-        "id": str(donnee_id),
-        "eid": current_user.entreprise_id
-    })
+    """), params)
 
     db.commit()
 
