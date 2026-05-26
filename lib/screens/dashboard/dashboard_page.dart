@@ -49,31 +49,48 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+  Future<void> _ouvrirSaisieDonnees() async {
+    final cycles = await ApiService.getCycles();
+    if (!mounted) return;
+    if (cycles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Créez d\'abord un cycle'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating));
+      return;
+    }
+    Navigator.push(context, AppTransitions.slideFade(
+        OperationsScreen(ferme: {}, cycles: cycles)));
+  }
+
   int get _cyclesActifs => _cycles.where((c) =>
-  c['statut'] == 'actif' || c['statut'] == 'en_cours').length;
+      c['statut'] == 'actif' || c['statut'] == 'en_cours').length;
   int get _totalPoulets => _cycles.fold<int>(0, (s, c) =>
-  s + ((c['nombre_sujets'] ?? 0) as num).toInt());
+      s + ((c['nombre_sujets'] ?? 0) as num).toInt());
   int get _totalMorts => _donnees.fold<int>(0, (s, d) =>
-  s + ((d['mortalite'] ?? 0) as num).toInt());
+      s + ((d['mortalite'] ?? 0) as num).toInt());
   double get _tauxMortalite => _totalPoulets > 0
       ? (_totalMorts / _totalPoulets * 100) : 0;
   double get _avgTemp => _donnees.isEmpty ? 0 :
-  _donnees.fold<double>(0, (s, d) =>
-  s + ((d['temperature'] ?? 0) as num).toDouble()) / _donnees.length;
+      _donnees.fold<double>(0, (s, d) =>
+          s + ((d['temperature'] ?? 0) as num).toDouble()) /
+          _donnees.length;
   double get _avgHum => _donnees.isEmpty ? 0 :
-  _donnees.fold<double>(0, (s, d) =>
-  s + ((d['humidite'] ?? 0) as num).toDouble()) / _donnees.length;
+      _donnees.fold<double>(0, (s, d) =>
+          s + ((d['humidite'] ?? 0) as num).toDouble()) /
+          _donnees.length;
   int get _totalProd => _donnees.fold<int>(0, (s, d) =>
-  s + ((d['production'] ?? 0) as num).toInt());
+      s + ((d['production'] ?? 0) as num).toInt());
   int get _stocksEnAlerte => _stocks.where((s) {
     final qte = ((s['quantite'] ?? 0) as num).toDouble();
     final seuil = ((s['seuil_alerte'] ?? 0) as num).toDouble();
     return qte <= seuil;
   }).length;
   int get _alertesCritiques => _alertes.where((a) =>
-  a['type'] == 'danger').length;
+      a['type'] == 'danger').length;
   double get _masseSalariale => _employes.fold<double>(0, (s, e) =>
-  s + ((e['salaire'] ?? 0) as num).toDouble());
+      s + ((e['salaire'] ?? 0) as num).toDouble());
 
   int get _scorePerformance {
     int score = 100;
@@ -93,7 +110,6 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     final r = Responsive(context);
 
-    // ── SHIMMER LOADING ──
     if (_loading) return Scaffold(
       backgroundColor: kBg,
       body: SingleChildScrollView(
@@ -300,18 +316,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       }),
                   const SizedBox(width: 8),
                   _quickAction(Icons.assignment_add,
-                      'Saisir\nDonnées', kGreen, () {
-                        if (_cycles.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Créez d\'abord un cycle'),
-                                  backgroundColor: Colors.orange));
-                          return;
-                        }
-                        Navigator.push(context,
-                            AppTransitions.slideFade(OperationsScreen(
-                                ferme: {}, cycles: _cycles)));
-                      }),
+                      'Saisir\nDonnées', kGreen,
+                      _ouvrirSaisieDonnees),
                   const SizedBox(width: 8),
                   _quickAction(Icons.add_box_rounded,
                       'Ajouter\nStock', kOrange, () async {
@@ -347,7 +353,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       scrollDirection: Axis.horizontal,
                       itemCount: _cycles.take(5).length,
                       separatorBuilder: (_, __) =>
-                      const SizedBox(width: 10),
+                          const SizedBox(width: 10),
                       itemBuilder: (_, i) => AnimatedCard(
                         delay: Duration(milliseconds: 100 * i),
                         child: _cycleCard(_cycles[i], r),
@@ -363,7 +369,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 const SizedBox(height: 10),
                 ..._stocks.where((s) {
                   final qte = ((s['quantite'] ?? 0) as num).toDouble();
-                  final seuil = ((s['seuil_alerte'] ?? 0) as num).toDouble();
+                  final seuil = ((s['seuil_alerte'] ?? 0) as num)
+                      .toDouble();
                   return qte <= seuil;
                 }).take(3).map((s) => AnimatedCard(
                     delay: const Duration(milliseconds: 100),
@@ -429,7 +436,8 @@ class _DashboardPageState extends State<DashboardPage> {
           const Text('Score de performance',
               style: TextStyle(color: Colors.grey, fontSize: 12)),
           const SizedBox(height: 4),
-          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
             Text('$score', style: TextStyle(
                 color: color, fontSize: 36,
                 fontWeight: FontWeight.w900)),
@@ -485,7 +493,8 @@ class _DashboardPageState extends State<DashboardPage> {
             borderRadius: BorderRadius.circular(r.borderRadius),
             border: Border.all(color: color.withOpacity(0.3))),
         child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, children: [
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Icon(icon, color: color, size: r.iconSm),
           SizedBox(height: r.isSmallPhone ? 4 : 6),
           Text(value, style: TextStyle(
@@ -515,7 +524,8 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Icon(icon, color: color, size: 18)),
           const SizedBox(width: 10),
           Expanded(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, children: [
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             Text(title, style: const TextStyle(
                 color: Colors.grey, fontSize: 10)),
             Text(value, style: TextStyle(
@@ -553,7 +563,8 @@ class _DashboardPageState extends State<DashboardPage> {
       ));
 
   Widget _sectionHeader(String title, String subtitle) =>
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
         Text(title, style: const TextStyle(
             fontSize: 14, fontWeight: FontWeight.w800,
             color: Color(0xFF1E293B))),
@@ -579,7 +590,8 @@ class _DashboardPageState extends State<DashboardPage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.05), blurRadius: 8)]),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8)]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start,
           children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -602,7 +614,8 @@ class _DashboardPageState extends State<DashboardPage> {
             color: Color(0xFF1E293B)),
             maxLines: 1, overflow: TextOverflow.ellipsis),
         Text('${c['nombre_sujets'] ?? 0} sujets',
-            style: const TextStyle(color: Colors.grey, fontSize: 10)),
+            style: const TextStyle(
+                color: Colors.grey, fontSize: 10)),
       ]),
     );
   }
@@ -618,12 +631,14 @@ class _DashboardPageState extends State<DashboardPage> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: kRed.withOpacity(0.25)),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.03), blurRadius: 6)]),
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6)]),
       child: Row(children: [
         const Icon(Icons.inventory_rounded, color: kRed, size: 18),
         const SizedBox(width: 10),
-        Expanded(child: Text(s['produit'] ?? '', style: const TextStyle(
-            fontWeight: FontWeight.w700, fontSize: 13))),
+        Expanded(child: Text(s['produit'] ?? '',
+            style: const TextStyle(
+                fontWeight: FontWeight.w700, fontSize: 13))),
         Container(
             padding: const EdgeInsets.symmetric(
                 horizontal: 8, vertical: 3),
@@ -639,10 +654,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _meteoCard() {
     final humidity = _meteo['main']?['humidity'] ?? 0;
-    final windSpeed = (_meteo['wind']?['speed'] ?? 0).toStringAsFixed(1);
+    final windSpeed = (_meteo['wind']?['speed'] ?? 0)
+        .toStringAsFixed(1);
     final temp = (_meteo['main']?['temp'] ?? 0).toStringAsFixed(1);
     final tempVal = double.tryParse(temp) ?? 0;
-    final color = tempVal > 35 ? kRed : tempVal > 30 ? kOrange : kGreen;
+    final color = tempVal > 35 ? kRed
+        : tempVal > 30 ? kOrange : kGreen;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -652,17 +669,23 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Row(children: [
         Container(padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                color: color.withOpacity(0.15), shape: BoxShape.circle),
-            child: Icon(Icons.wb_sunny_rounded, color: color, size: 32)),
+                color: color.withOpacity(0.15),
+                shape: BoxShape.circle),
+            child: Icon(Icons.wb_sunny_rounded,
+                color: color, size: 32)),
         const SizedBox(width: 12),
         Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, children: [
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Text('$temp°C', style: TextStyle(
-              color: color, fontSize: 28, fontWeight: FontWeight.w900)),
+              color: color, fontSize: 28,
+              fontWeight: FontWeight.w900)),
           Text(_meteo['weather']?[0]?['description'] ?? '',
-              style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              style: const TextStyle(
+                  color: Colors.grey, fontSize: 12)),
         ])),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
           _meteoChip(Icons.water_drop_rounded, '$humidity%', kBlue),
           const SizedBox(height: 4),
           _meteoChip(Icons.air_rounded, '${windSpeed}m/s', kTeal),
@@ -673,7 +696,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _meteoChip(IconData icon, String value, Color color) =>
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+            horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8)),
@@ -681,7 +705,8 @@ class _DashboardPageState extends State<DashboardPage> {
           Icon(icon, color: color, size: 12),
           const SizedBox(width: 3),
           Text(value, style: TextStyle(
-              color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+              color: color, fontSize: 11,
+              fontWeight: FontWeight.w600)),
         ]),
       );
 
@@ -699,12 +724,15 @@ class _DashboardPageState extends State<DashboardPage> {
           borderRadius: BorderRadius.circular(12),
           border: Border(left: BorderSide(color: color, width: 3)),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.03), blurRadius: 6)]),
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6)]),
       child: Row(children: [
         Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, children: [
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Text(d['date_releve'] ?? '-', style: TextStyle(
-              fontWeight: FontWeight.w700, color: color, fontSize: 11)),
+              fontWeight: FontWeight.w700, color: color,
+              fontSize: 11)),
           const SizedBox(height: 3),
           Row(children: [
             _chip(Icons.inventory_rounded, '$production', kPurple),
@@ -731,7 +759,8 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _chip(IconData icon, String text, Color color) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+          horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(6)),
@@ -739,7 +768,8 @@ class _DashboardPageState extends State<DashboardPage> {
         Icon(icon, size: 10, color: color),
         const SizedBox(width: 2),
         Text(text, style: TextStyle(
-            color: color, fontSize: 10, fontWeight: FontWeight.w600)),
+            color: color, fontSize: 10,
+            fontWeight: FontWeight.w600)),
       ]));
 
   Widget _alerteCard(Map a) {
@@ -783,12 +813,11 @@ class _DashboardPageState extends State<DashboardPage> {
               if (result == true) _load();
             }),
         const SizedBox(height: 8),
-        _fabItem(Icons.assignment_add, 'Saisir Données', kGreen, () {
-          setState(() => _fabOpen = false);
-          if (_cycles.isEmpty) return;
-          Navigator.push(context, AppTransitions.slideFade(
-              OperationsScreen(ferme: {}, cycles: _cycles)));
-        }),
+        _fabItem(Icons.assignment_add, 'Saisir Données', kGreen,
+                () async {
+              setState(() => _fabOpen = false);
+              await _ouvrirSaisieDonnees();
+            }),
         const SizedBox(height: 8),
         _fabItem(Icons.add_box_rounded, 'Ajouter Stock', kOrange,
                 () async {
@@ -824,16 +853,19 @@ class _DashboardPageState extends State<DashboardPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [BoxShadow(
-                    color: Colors.black.withOpacity(0.1), blurRadius: 8)]),
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8)]),
             child: Text(label, style: TextStyle(
-                color: color, fontWeight: FontWeight.w700, fontSize: 12)),
+                color: color, fontWeight: FontWeight.w700,
+                fontSize: 12)),
           ),
           const SizedBox(width: 8),
           Container(width: 40, height: 40,
               decoration: BoxDecoration(
                   color: color, shape: BoxShape.circle,
                   boxShadow: [BoxShadow(
-                      color: color.withOpacity(0.3), blurRadius: 8)]),
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8)]),
               child: Icon(icon, color: Colors.white, size: 20)),
         ]),
       );
