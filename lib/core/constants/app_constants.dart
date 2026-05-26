@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
 // ── API ──
-const String API_URL = 'https://corsproxy.io/?https://kewere-aissa-smart.onrender.com';
+const String API_URL = 'http://localhost:8010/proxy';
 const String WEATHER_KEY = 'cea65cf01b5c5db78e93a83d09cbf66c';
 
 // ── COULEURS PRINCIPALES ──
@@ -55,11 +55,11 @@ const double kRadiusLarge = 16.0;
 const double kRadiusXL = 24.0;
 
 const BorderRadius kBorderRadius =
-BorderRadius.all(Radius.circular(kRadius));
+    BorderRadius.all(Radius.circular(kRadius));
 const BorderRadius kBorderRadiusLarge =
-BorderRadius.all(Radius.circular(kRadiusLarge));
+    BorderRadius.all(Radius.circular(kRadiusLarge));
 const BorderRadius kBorderRadiusXL =
-BorderRadius.all(Radius.circular(kRadiusXL));
+    BorderRadius.all(Radius.circular(kRadiusXL));
 
 // ── OMBRES ──
 List<BoxShadow> kShadowSm = [
@@ -192,11 +192,11 @@ ThemeData kTheme = ThemeData(
   ),
   switchTheme: SwitchThemeData(
     thumbColor: WidgetStateProperty.resolveWith((states) =>
-    states.contains(WidgetState.selected) ? kBlue : Colors.grey),
+        states.contains(WidgetState.selected) ? kBlue : Colors.grey),
     trackColor: WidgetStateProperty.resolveWith((states) =>
-    states.contains(WidgetState.selected)
-        ? kBlue.withOpacity(0.3)
-        : Colors.grey.withOpacity(0.3)),
+        states.contains(WidgetState.selected)
+            ? kBlue.withOpacity(0.3)
+            : Colors.grey.withOpacity(0.3)),
   ),
 );
 
@@ -233,7 +233,7 @@ String formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
 String formatDateHeure(DateTime d) =>
     '${d.day}/${d.month}/${d.year} à '
-        '${d.hour}:${d.minute.toString().padLeft(2, '0')}';
+    '${d.hour}:${d.minute.toString().padLeft(2, '0')}';
 
 // ── CONSTANTES AVICULTURE ──
 const double kTempIdealeBas = 25.0;
