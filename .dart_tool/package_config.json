@@ -62,6 +62,18 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "dio",
+      "rootUri": "file:///C:/Users/LENOVO/AppData/Local/Pub/Cache/hosted/pub.dev/dio-5.9.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
+      "name": "dio_web_adapter",
+      "rootUri": "file:///C:/Users/LENOVO/AppData/Local/Pub/Cache/hosted/pub.dev/dio_web_adapter-2.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
       "name": "equatable",
       "rootUri": "file:///C:/Users/LENOVO/AppData/Local/Pub/Cache/hosted/pub.dev/equatable-2.0.8",
       "packageUri": "lib/",
