@@ -17,79 +17,59 @@ class ApiService {
   static const Duration _timeout = Duration(seconds: 20);
   static const int _maxRetries = 2;
 
-  // ── Cache simple en mémoire ──
   static final Map<String, _CacheEntry> _cache = {};
-  static const Duration _cacheDuration = Duration(minutes: 2);
 
   static void clearCache() => _cache.clear();
   static void clearCacheFor(String key) => _cache.remove(key);
 
-  // ── Logs ──
-  static bool _logsEnabled = true;
-  static void _log(String msg) {
-    if (_logsEnabled) debugPrint('🌐 ApiService: $msg');
-  }
+  static void _log(String msg) => debugPrint('🌐 ApiService: $msg');
 
-  // ── Handler centralisé ──
-  static dynamic _handle(http.Response r, String url) {
-    _log('${r.statusCode} $url');
-    switch (r.statusCode) {
-      case 200:
-      case 201:
-        try {
-          final data = jsonDecode(utf8.decode(r.bodyBytes));
-          if (data is Map && data.containsKey('items')) return data['items'];
-          return data;
-        } catch (e) {
-          _log('Erreur parsing JSON: $e');
-          return null;
-        }
-      case 401:
-        SessionManager.clear();
-        throw const ApiException(statusCode: 401, message: 'SESSION_EXPIRED');
-      case 403:
-        throw const ApiException(statusCode: 403, message: 'ACCES_REFUSE');
-      case 404:
-        throw ApiException(statusCode: 404, message: 'Ressource introuvable: $url');
-      case 422:
-        throw const ApiException(statusCode: 422, message: 'Données invalides');
-      case 500:
-        throw const ApiException(statusCode: 500, message: 'Erreur serveur interne');
-      default:
-        throw ApiException(statusCode: r.statusCode,
-            message: 'Erreur HTTP ${r.statusCode}');
-    }
-  }
-
-  // ── GET avec cache et retry ──
+  // ── GET List ──
   static Future<List> _getList(String url,
       {bool useCache = true, String? cacheKey}) async {
     final key = cacheKey ?? url;
     if (useCache && _cache.containsKey(key)) {
       final entry = _cache[key]!;
       if (!entry.isExpired) {
-        _log('Cache hit: $key');
-        return entry.data as List;
+        final cached = entry.data;
+        if (cached is List && cached.isNotEmpty) {
+          _log('Cache hit: $key');
+          return cached;
+        }
       }
     }
     for (int attempt = 0; attempt <= _maxRetries; attempt++) {
       try {
         final r = await http.get(Uri.parse(url),
             headers: SessionManager.headers).timeout(_timeout);
-        final data = _handle(r, url);
-        if (data is List) {
-          if (useCache) {
-            _cache[key] = _CacheEntry(data);
+        _log('GET ${r.statusCode} $url');
+
+        if (r.statusCode == 401) {
+          SessionManager.clear();
+          throw const ApiException(
+              statusCode: 401, message: 'SESSION_EXPIRED');
+        }
+
+        if (r.statusCode == 200 || r.statusCode == 201) {
+          final raw = jsonDecode(utf8.decode(r.bodyBytes));
+          List data = [];
+          if (raw is List) {
+            data = raw;
+          } else if (raw is Map && raw.containsKey('items')) {
+            data = List.from(raw['items']);
+          } else if (raw is Map && raw.containsKey('data')) {
+            data = List.from(raw['data']);
           }
+          _log('$url → ${data.length} items');
+          if (useCache) _cache[key] = _CacheEntry(data);
           return data;
         }
         return [];
       } on ApiException { rethrow; }
       catch (e) {
         if (attempt == _maxRetries) {
-          _log('Échec après $_maxRetries tentatives: $url — $e');
+          _log('Échec $url — $e');
         } else {
-          _log('Tentative ${attempt + 1}/$_maxRetries: $url');
           await Future.delayed(Duration(seconds: attempt + 1));
         }
       }
@@ -97,6 +77,7 @@ class ApiService {
     return [];
   }
 
+  // ── GET Map ──
   static Future<Map<String, dynamic>> _getMap(String url,
       {bool useCache = false}) async {
     if (useCache && _cache.containsKey(url)) {
@@ -107,11 +88,21 @@ class ApiService {
       try {
         final r = await http.get(Uri.parse(url),
             headers: SessionManager.headers).timeout(_timeout);
-        final data = _handle(r, url);
-        if (data is Map) {
-          final result = Map<String, dynamic>.from(data);
-          if (useCache) _cache[url] = _CacheEntry(result);
-          return result;
+        _log('GET MAP ${r.statusCode} $url');
+
+        if (r.statusCode == 401) {
+          SessionManager.clear();
+          throw const ApiException(
+              statusCode: 401, message: 'SESSION_EXPIRED');
+        }
+
+        if (r.statusCode == 200 || r.statusCode == 201) {
+          final raw = jsonDecode(utf8.decode(r.bodyBytes));
+          if (raw is Map) {
+            final result = Map<String, dynamic>.from(raw);
+            if (useCache) _cache[url] = _CacheEntry(result);
+            return result;
+          }
         }
         return {};
       } on ApiException { rethrow; }
@@ -134,30 +125,34 @@ class ApiService {
       final r = await http.post(Uri.parse(url),
           headers: SessionManager.headers,
           body: jsonEncode(body)).timeout(_timeout);
+      _log('POST ${r.statusCode} $url');
+
+      if (r.statusCode == 401) {
+        SessionManager.clear();
+        throw const ApiException(
+            statusCode: 401, message: 'SESSION_EXPIRED');
+      }
       final ok = r.statusCode == 200 || r.statusCode == 201;
       if (ok && invalidateCache != null) {
         for (final k in invalidateCache) clearCacheFor(k);
       }
-      if (r.statusCode == 401) {
-        SessionManager.clear();
-        throw const ApiException(statusCode: 401, message: 'SESSION_EXPIRED');
-      }
-      if (!ok) _log('POST échoué ${r.statusCode}: $url');
       return ok;
     } on ApiException { rethrow; }
     catch (e) { _log('POST erreur: $url — $e'); }
     return false;
   }
 
-  // ── POST avec retour données ──
+  // ── POST avec retour ──
   static Future<Map<String, dynamic>> _postReturn(
       String url, Map<String, dynamic> body) async {
     try {
       final r = await http.post(Uri.parse(url),
           headers: SessionManager.headers,
           body: jsonEncode(body)).timeout(_timeout);
-      return {'status': r.statusCode,
-        'body': jsonDecode(utf8.decode(r.bodyBytes))};
+      return {
+        'status': r.statusCode,
+        'body': jsonDecode(utf8.decode(r.bodyBytes))
+      };
     } catch (e) { _log('POST return erreur: $url — $e'); }
     return {'status': 500, 'body': {}};
   }
@@ -170,13 +165,16 @@ class ApiService {
       final r = await http.put(Uri.parse(url),
           headers: SessionManager.headers,
           body: jsonEncode(body)).timeout(_timeout);
+      _log('PUT ${r.statusCode} $url');
+
+      if (r.statusCode == 401) {
+        SessionManager.clear();
+        throw const ApiException(
+            statusCode: 401, message: 'SESSION_EXPIRED');
+      }
       final ok = r.statusCode == 200 || r.statusCode == 201;
       if (ok && invalidateCache != null) {
         for (final k in invalidateCache) clearCacheFor(k);
-      }
-      if (r.statusCode == 401) {
-        SessionManager.clear();
-        throw const ApiException(statusCode: 401, message: 'SESSION_EXPIRED');
       }
       return ok;
     } on ApiException { rethrow; }
@@ -191,13 +189,16 @@ class ApiService {
       _log('DELETE $url');
       final r = await http.delete(Uri.parse(url),
           headers: SessionManager.headers).timeout(_timeout);
+      _log('DELETE ${r.statusCode} $url');
+
+      if (r.statusCode == 401) {
+        SessionManager.clear();
+        throw const ApiException(
+            statusCode: 401, message: 'SESSION_EXPIRED');
+      }
       final ok = r.statusCode == 200 || r.statusCode == 204;
       if (ok && invalidateCache != null) {
         for (final k in invalidateCache) clearCacheFor(k);
-      }
-      if (r.statusCode == 401) {
-        SessionManager.clear();
-        throw const ApiException(statusCode: 401, message: 'SESSION_EXPIRED');
       }
       return ok;
     } on ApiException { rethrow; }
@@ -211,7 +212,10 @@ class ApiService {
 
   // ── CYCLES ──
   static Future<List> getCycles({String? fermeId}) =>
-      _getList('$API_URL/cycles/${fermeId != null ? '?ferme_id=$fermeId' : ''}',
+      _getList(
+          fermeId != null
+              ? '$API_URL/cycles/?ferme_id=$fermeId'
+              : '$API_URL/cycles/',
           cacheKey: 'cycles_${fermeId ?? 'all'}');
 
   static Future<bool> createCycle(Map<String, dynamic> data) =>
@@ -232,9 +236,10 @@ class ApiService {
 
   // ── DONNÉES ──
   static Future<List> getDonnees({String? cycleId}) =>
-      _getList(cycleId != null
-          ? '$API_URL/donnees/?cycle_id=$cycleId'
-          : '$API_URL/donnees/',
+      _getList(
+          cycleId != null
+              ? '$API_URL/donnees/?cycle_id=$cycleId'
+              : '$API_URL/donnees/',
           cacheKey: 'donnees_${cycleId ?? 'all'}');
 
   static Future<bool> createDonnee(Map<String, dynamic> data) =>
@@ -255,40 +260,52 @@ class ApiService {
       _getList('$API_URL/stocks/', cacheKey: 'stocks_all');
 
   static Future<bool> createStock(Map<String, dynamic> data) =>
-      _post('$API_URL/stocks/', data, invalidateCache: ['stocks_all']);
+      _post('$API_URL/stocks/', data,
+          invalidateCache: ['stocks_all']);
 
   static Future<bool> updateStock(String id, Map<String, dynamic> data) =>
-      _put('$API_URL/stocks/$id', data, invalidateCache: ['stocks_all']);
+      _put('$API_URL/stocks/$id', data,
+          invalidateCache: ['stocks_all']);
 
   static Future<bool> deleteStock(String id) =>
-      _delete('$API_URL/stocks/$id', invalidateCache: ['stocks_all']);
+      _delete('$API_URL/stocks/$id',
+          invalidateCache: ['stocks_all']);
 
   // ── EMPLOYÉS ──
   static Future<List> getEmployes({String? fermeId}) =>
-      _getList('$API_URL/employes/${fermeId != null ? '?ferme_id=$fermeId' : ''}',
+      _getList(
+          fermeId != null
+              ? '$API_URL/employes/?ferme_id=$fermeId'
+              : '$API_URL/employes/',
           cacheKey: 'employes_${fermeId ?? 'all'}');
 
   static Future<bool> createEmploye(Map<String, dynamic> data) =>
-      _post('$API_URL/employes/', data, invalidateCache: ['employes_all']);
+      _post('$API_URL/employes/', data,
+          invalidateCache: ['employes_all']);
 
   static Future<bool> updateEmploye(String id, Map<String, dynamic> data) =>
-      _put('$API_URL/employes/$id', data, invalidateCache: ['employes_all']);
+      _put('$API_URL/employes/$id', data,
+          invalidateCache: ['employes_all']);
 
   static Future<bool> deleteEmploye(String id) =>
-      _delete('$API_URL/employes/$id', invalidateCache: ['employes_all']);
+      _delete('$API_URL/employes/$id',
+          invalidateCache: ['employes_all']);
 
   // ── FERMES ──
   static Future<List> getFermes() =>
       _getList('$API_URL/fermes/', cacheKey: 'fermes_all');
 
   static Future<bool> createFerme(Map<String, dynamic> data) =>
-      _post('$API_URL/fermes/', data, invalidateCache: ['fermes_all']);
+      _post('$API_URL/fermes/', data,
+          invalidateCache: ['fermes_all']);
 
   static Future<bool> updateFerme(String id, Map<String, dynamic> data) =>
-      _put('$API_URL/fermes/$id', data, invalidateCache: ['fermes_all']);
+      _put('$API_URL/fermes/$id', data,
+          invalidateCache: ['fermes_all']);
 
   static Future<bool> deleteFerme(String id) =>
-      _delete('$API_URL/fermes/$id', invalidateCache: ['fermes_all']);
+      _delete('$API_URL/fermes/$id',
+          invalidateCache: ['fermes_all']);
 
   // ── ALERTES ──
   static Future<List> getAlertes() =>
@@ -343,10 +360,7 @@ class ApiService {
     final cacheKey = 'meteo_$ville';
     if (_cache.containsKey(cacheKey)) {
       final entry = _cache[cacheKey]!;
-      if (!entry.isExpired) {
-        _log('Cache météo: $ville');
-        return entry.data as Map<String, dynamic>;
-      }
+      if (!entry.isExpired) return entry.data as Map<String, dynamic>;
     }
     try {
       final r = await http.get(Uri.parse(
@@ -377,7 +391,6 @@ class ApiService {
     } catch (_) { return false; }
   }
 
-  // ── Stats cache ──
   static Map<String, dynamic> getCacheStats() => {
     'entries': _cache.length,
     'keys': _cache.keys.toList(),
