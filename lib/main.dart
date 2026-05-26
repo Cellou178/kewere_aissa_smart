@@ -4,11 +4,13 @@ import 'screens/splash/splash_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'core/constants/app_constants.dart';
 import 'services/cache_service.dart';
+import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SessionManager.init();
   await CacheService.init();
+  ApiService.clearCache();
   runApp(const KewereApp());
 }
 
