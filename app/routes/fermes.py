@@ -24,14 +24,14 @@ def get_fermes(
         "SELECT * FROM fermes WHERE entreprise_id = :eid"
     ), {"eid": current_user.entreprise_id})
     fermes = [dict(row._mapping) for row in result]
-    return fermes
+    return {"total": len(fermes), "items": fermes}
 
 # ========== CRÉER UNE FERME ==========
 @router.post("/", status_code=201)
 def create_ferme(
     data: FermeSchema,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(require_role("admin", "manager"))
+    current_user: Utilisateur = Depends(get_current_user)
 ):
     ferme_id = uuid.uuid4()
     db.execute(text("""
@@ -44,6 +44,16 @@ def create_ferme(
         "loc": data.localisation,
         "sup": data.superficie
     })
+
+    # ── Met à jour ferme_id de l'utilisateur si NULL ──
+    db.execute(text("""
+        UPDATE utilisateurs SET ferme_id = :fid
+        WHERE id = :uid
+    """), {
+        "fid": ferme_id,
+        "uid": current_user.id
+    })
+
     db.commit()
     return {"message": "Ferme créée avec succès", "id": str(ferme_id)}
 
@@ -53,14 +63,16 @@ def update_ferme(
     ferme_id: str,
     data: FermeSchema,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(require_role("admin", "manager"))
+    current_user: Utilisateur = Depends(get_current_user)
 ):
     db.execute(text("""
         UPDATE fermes SET nom=:nom, localisation=:loc, superficie=:sup
         WHERE id=:id AND entreprise_id=:eid
     """), {
-        "nom": data.nom, "loc": data.localisation,
-        "sup": data.superficie, "id": ferme_id,
+        "nom": data.nom,
+        "loc": data.localisation,
+        "sup": data.superficie,
+        "id": ferme_id,
         "eid": current_user.entreprise_id
     })
     db.commit()
@@ -71,10 +83,25 @@ def update_ferme(
 def delete_ferme(
     ferme_id: str,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(require_role("admin"))
+    current_user: Utilisateur = Depends(get_current_user)
 ):
     db.execute(text(
         "DELETE FROM fermes WHERE id=:id AND entreprise_id=:eid"
     ), {"id": ferme_id, "eid": current_user.entreprise_id})
     db.commit()
     return {"message": "Ferme supprimée"}
+
+# ========== DÉTAIL UNE FERME ==========
+@router.get("/{ferme_id}")
+def get_ferme(
+    ferme_id: str,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)
+):
+    result = db.execute(text(
+        "SELECT * FROM fermes WHERE id=:id AND entreprise_id=:eid"
+    ), {"id": ferme_id, "eid": current_user.entreprise_id})
+    row = result.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Ferme non trouvée")
+    return dict(row._mapping)
