@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db
@@ -12,10 +12,10 @@ router = APIRouter(prefix="/cycles", tags=["cycles"])
 
 class CycleSchema(BaseModel):
     ferme_id: str
-    type_cycle: Optional[str] = "poulet"
+    type_cycle: Optional[str] = "chair"
     date_debut: Optional[str] = None
     date_fin: Optional[str] = None
-    statut: Optional[str] = "en_cours"
+    statut: Optional[str] = "actif"
     nom: Optional[str] = None
     nombre_sujets: Optional[int] = 0
     batiment: Optional[str] = None
@@ -23,24 +23,39 @@ class CycleSchema(BaseModel):
 
 @router.get("/")
 def get_cycles(
+    ferme_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(get_current_user)
 ):
     if current_user.role.nom == "admin":
-        result = db.execute(text("SELECT * FROM cycles"))
+        if ferme_id:
+            result = db.execute(text(
+                "SELECT * FROM cycles WHERE ferme_id = :fid"
+            ), {"fid": ferme_id})
+        else:
+            result = db.execute(text("SELECT * FROM cycles"))
     else:
-        result = db.execute(text("""
-            SELECT c.* FROM cycles c
-            JOIN fermes f ON f.id = c.ferme_id
-            WHERE f.entreprise_id = :eid
-        """), {"eid": current_user.entreprise_id})
-    return [dict(row._mapping) for row in result]
+        if ferme_id:
+            result = db.execute(text("""
+                SELECT c.* FROM cycles c
+                JOIN fermes f ON f.id = c.ferme_id
+                WHERE f.entreprise_id = :eid AND c.ferme_id = :fid
+            """), {"eid": current_user.entreprise_id, "fid": ferme_id})
+        else:
+            result = db.execute(text("""
+                SELECT c.* FROM cycles c
+                JOIN fermes f ON f.id = c.ferme_id
+                WHERE f.entreprise_id = :eid
+            """), {"eid": current_user.entreprise_id})
+    
+    cycles = [dict(row._mapping) for row in result]
+    return {"total": len(cycles), "items": cycles}
 
 @router.post("/", status_code=201)
 def create_cycle(
     data: CycleSchema,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(require_role("admin", "manager", "proprietaire"))
+    current_user: Utilisateur = Depends(get_current_user)
 ):
     cycle_id = uuid.uuid4()
     db.execute(text("""
@@ -74,7 +89,7 @@ def update_cycle(
     cycle_id: str,
     data: CycleSchema,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(require_role("admin", "manager", "proprietaire"))
+    current_user: Utilisateur = Depends(get_current_user)
 ):
     db.execute(text("""
         UPDATE cycles SET
@@ -107,7 +122,9 @@ def delete_cycle(
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(get_current_user)
 ):
-    db.execute(text("DELETE FROM cycles WHERE id = :id"), {"id": cycle_id})
+    db.execute(text(
+        "DELETE FROM cycles WHERE id = :id"
+    ), {"id": cycle_id})
     db.commit()
     return {"message": "Cycle supprimé avec succès"}
 
@@ -122,6 +139,5 @@ def get_cycle(
         {"id": cycle_id}
     ).fetchone()
     if not result:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Cycle introuvable")
     return dict(result._mapping)
