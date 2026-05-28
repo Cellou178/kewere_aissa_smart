@@ -19,6 +19,10 @@ class _AddEmployeScreenState extends State<AddEmployeScreen> {
   bool _loading = false;
   String _error = '';
 
+  // Fermes dynamiques
+  List _fermes = [];
+  String? _fermeIdSelected;
+
   bool get _isEdit => widget.employe != null;
 
   final List<Map<String, dynamic>> _postes = [
@@ -33,14 +37,26 @@ class _AddEmployeScreenState extends State<AddEmployeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadFermes();
     if (_isEdit) {
       _nomCtrl.text = widget.employe!['nom'] ?? '';
       _telCtrl.text = widget.employe!['telephone'] ?? '';
       _salaireCtrl.text = (widget.employe!['salaire'] ?? 0).toString();
       _emailCtrl.text = widget.employe!['email'] ?? '';
       _adresseCtrl.text = widget.employe!['adresse'] ?? '';
-      _posteSelected = widget.employe!['poste'] ?? 'employe';
+      _posteSelected = widget.employe!['role'] ?? widget.employe!['poste'] ?? 'employe';
+      _fermeIdSelected = widget.employe!['ferme_id']?.toString();
     }
+  }
+
+  Future<void> _loadFermes() async {
+    final fermes = await ApiService.getFermes();
+    setState(() {
+      _fermes = fermes;
+      if (fermes.isNotEmpty && _fermeIdSelected == null) {
+        _fermeIdSelected = fermes.first['id']?.toString();
+      }
+    });
   }
 
   @override
@@ -54,17 +70,17 @@ class _AddEmployeScreenState extends State<AddEmployeScreen> {
     if (_nomCtrl.text.trim().isEmpty) {
       setState(() => _error = 'Le nom est obligatoire'); return;
     }
+    if (_fermeIdSelected == null) {
+      setState(() => _error = 'Sélectionnez une ferme'); return;
+    }
     setState(() { _loading = true; _error = ''; });
 
     final data = {
       'nom': _nomCtrl.text.trim(),
       'telephone': _telCtrl.text.trim(),
       'salaire': double.tryParse(_salaireCtrl.text) ?? 0,
-      'email': _emailCtrl.text.trim(),
-      'adresse': _adresseCtrl.text.trim(),
-      'poste': _posteSelected,
-      'role': 'employe',
-      'ferme_id': '11111111-1111-1111-1111-111111111111',
+      'role': _posteSelected,
+      'ferme_id': _fermeIdSelected,
     };
 
     bool ok;
@@ -113,6 +129,25 @@ class _AddEmployeScreenState extends State<AddEmployeScreen> {
           )),
           const SizedBox(height: 24),
 
+          // Sélection ferme
+          _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _sectionTitle('🏡 Ferme'),
+            const SizedBox(height: 12),
+            _fermes.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : DropdownButtonFormField<String>(
+                    value: _fermeIdSelected,
+                    decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.home_rounded, color: kBlueLight, size: 18),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        filled: true, fillColor: const Color(0xFFF8FAFC)),
+                    items: _fermes.map((f) => DropdownMenuItem<String>(
+                        value: f['id']?.toString(),
+                        child: Text(f['nom']?.toString() ?? ''))).toList(),
+                    onChanged: (v) => setState(() => _fermeIdSelected = v)),
+          ])),
+          const SizedBox(height: 12),
+
           // Infos personnelles
           _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _sectionTitle('👤 Informations Personnelles'),
@@ -130,7 +165,6 @@ class _AddEmployeScreenState extends State<AddEmployeScreen> {
           _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _sectionTitle('💼 Poste & Rémunération'),
             const SizedBox(height: 12),
-            // Sélecteur poste visuel
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -177,7 +211,7 @@ class _AddEmployeScreenState extends State<AddEmployeScreen> {
               child: Row(children: [
                 Icon(Icons.error_outline, color: Colors.red.shade600, size: 18),
                 const SizedBox(width: 8),
-                Text(_error, style: TextStyle(color: Colors.red.shade700, fontSize: 13)),
+                Expanded(child: Text(_error, style: TextStyle(color: Colors.red.shade700, fontSize: 13))),
               ]),
             ),
           ],
@@ -194,6 +228,7 @@ class _AddEmployeScreenState extends State<AddEmployeScreen> {
                       ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                       : Text(_isEdit ? 'Enregistrer' : 'Ajouter l\'employé',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)))),
+          const SizedBox(height: 20),
         ]),
       ),
     );
