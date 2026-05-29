@@ -4,6 +4,7 @@ import '../../managers/session_manager.dart';
 import '../../services/api_service.dart';
 import '../../core/utils/app_transitions.dart';
 import 'add_cycle_screen.dart';
+import 'resume_cycle_screen.dart';
 
 class CyclesScreen extends StatefulWidget {
   const CyclesScreen({super.key});
@@ -474,6 +475,31 @@ class _CyclesScreenState extends State<CyclesScreen>
                     'J+${_joursDepuis(c)}'),
               ]),
               const SizedBox(height: 12),
+
+              // Bouton Résumé
+              SizedBox(width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, AppTransitions.slideFade(
+                      ResumeCycleScreen(
+                        cycle: c,
+                        donnees: donnees,
+                      ),
+                    ));
+                  },
+                  icon: const Icon(Icons.summarize_rounded, size: 16),
+                  label: const Text('Voir Résumé & Exporter',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: kBlue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      elevation: 0),
+                ),
+              ),
+              const SizedBox(height: 8),
 
               if (SessionManager.isProprietaire ||
                   SessionManager.isAdmin) ...[
