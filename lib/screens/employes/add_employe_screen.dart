@@ -72,21 +72,26 @@ class _AddEmployeScreenState extends State<AddEmployeScreen> {
     if (_nomCtrl.text.trim().isEmpty) {
       setState(() => _error = 'Le nom est obligatoire'); return;
     }
+    if (_telCtrl.text.trim().length < 8) {
+      setState(() => _error = 'Le téléphone doit avoir au moins 8 chiffres'); return;
+    }
     if (_fermeIdSelected == null) {
       setState(() => _error = 'Sélectionnez une ferme'); return;
     }
     setState(() { _loading = true; _error = ''; });
 
-    final data = {
+    final data = <String, dynamic>{
       'nom': _nomCtrl.text.trim(),
-      'telephone': _telCtrl.text.trim(),
-      'email': _emailCtrl.text.trim(),
-      'adresse': _adresseCtrl.text.trim(),
       'salaire': double.tryParse(_salaireCtrl.text) ?? 0,
       'poste': _posteSelected,
       'role': _posteSelected,
       'ferme_id': _fermeIdSelected,
     };
+    data['telephone'] = _telCtrl.text.trim();
+    if (_emailCtrl.text.trim().isNotEmpty)
+      data['email'] = _emailCtrl.text.trim();
+    if (_adresseCtrl.text.trim().isNotEmpty)
+      data['adresse'] = _adresseCtrl.text.trim();
 
     bool ok;
     if (_isEdit) {
