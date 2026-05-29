@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
 // ── API ──
-const String API_URL = 'https://corsproxy.io/?https://kewere-aissa-smart.onrender.com';
+const String API_URL = 'https://kewere-aissa-smart.onrender.com';
 const String WEATHER_KEY = 'cea65cf01b5c5db78e93a83d09cbf66c';
 
 // ── COULEURS PRINCIPALES ──

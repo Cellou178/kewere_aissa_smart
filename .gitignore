@@ -1,1 +1,17 @@
 .env
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# IntelliJ / Android Studio
+*.iml
+.idea/
+
+# Divers
+.DS_Store
+*.log
