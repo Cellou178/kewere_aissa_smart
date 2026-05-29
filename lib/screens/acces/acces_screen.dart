@@ -16,49 +16,8 @@ class _AccesScreenState extends State<AccesScreen>
   bool _loading = true;
   String _recherche = '';
 
-  // Permissions par rôle
-  final Map<String, List<Map<String, dynamic>>> _permissions = {
-    'admin': [
-      {'module': 'Dashboard', 'icon': Icons.dashboard_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Fermes', 'icon': Icons.agriculture_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Cycles', 'icon': Icons.loop_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Finance', 'icon': Icons.attach_money_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Employés', 'icon': Icons.people_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Stocks', 'icon': Icons.inventory_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Rapports', 'icon': Icons.assessment_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Paramètres', 'icon': Icons.settings_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-    ],
-    'proprietaire': [
-      {'module': 'Dashboard', 'icon': Icons.dashboard_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Fermes', 'icon': Icons.agriculture_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Cycles', 'icon': Icons.loop_rounded, 'lecture': true, 'ecriture': true, 'suppression': true},
-      {'module': 'Finance', 'icon': Icons.attach_money_rounded, 'lecture': true, 'ecriture': true, 'suppression': false},
-      {'module': 'Employés', 'icon': Icons.people_rounded, 'lecture': true, 'ecriture': true, 'suppression': false},
-      {'module': 'Stocks', 'icon': Icons.inventory_rounded, 'lecture': true, 'ecriture': true, 'suppression': false},
-      {'module': 'Rapports', 'icon': Icons.assessment_rounded, 'lecture': true, 'ecriture': true, 'suppression': false},
-      {'module': 'Paramètres', 'icon': Icons.settings_rounded, 'lecture': true, 'ecriture': false, 'suppression': false},
-    ],
-    'manager': [
-      {'module': 'Dashboard', 'icon': Icons.dashboard_rounded, 'lecture': true, 'ecriture': false, 'suppression': false},
-      {'module': 'Fermes', 'icon': Icons.agriculture_rounded, 'lecture': true, 'ecriture': true, 'suppression': false},
-      {'module': 'Cycles', 'icon': Icons.loop_rounded, 'lecture': true, 'ecriture': true, 'suppression': false},
-      {'module': 'Finance', 'icon': Icons.attach_money_rounded, 'lecture': false, 'ecriture': false, 'suppression': false},
-      {'module': 'Employés', 'icon': Icons.people_rounded, 'lecture': true, 'ecriture': false, 'suppression': false},
-      {'module': 'Stocks', 'icon': Icons.inventory_rounded, 'lecture': true, 'ecriture': true, 'suppression': false},
-      {'module': 'Rapports', 'icon': Icons.assessment_rounded, 'lecture': true, 'ecriture': false, 'suppression': false},
-      {'module': 'Paramètres', 'icon': Icons.settings_rounded, 'lecture': false, 'ecriture': false, 'suppression': false},
-    ],
-    'employe': [
-      {'module': 'Dashboard', 'icon': Icons.dashboard_rounded, 'lecture': true, 'ecriture': false, 'suppression': false},
-      {'module': 'Fermes', 'icon': Icons.agriculture_rounded, 'lecture': true, 'ecriture': false, 'suppression': false},
-      {'module': 'Cycles', 'icon': Icons.loop_rounded, 'lecture': true, 'ecriture': true, 'suppression': false},
-      {'module': 'Finance', 'icon': Icons.attach_money_rounded, 'lecture': false, 'ecriture': false, 'suppression': false},
-      {'module': 'Employés', 'icon': Icons.people_rounded, 'lecture': false, 'ecriture': false, 'suppression': false},
-      {'module': 'Stocks', 'icon': Icons.inventory_rounded, 'lecture': true, 'ecriture': true, 'suppression': false},
-      {'module': 'Rapports', 'icon': Icons.assessment_rounded, 'lecture': false, 'ecriture': false, 'suppression': false},
-      {'module': 'Paramètres', 'icon': Icons.settings_rounded, 'lecture': false, 'ecriture': false, 'suppression': false},
-    ],
-  };
+  Map<String, List<Map<String, dynamic>>> _permissions = {};
+  bool _permissionsLoaded = false;
 
   final List<Map<String, dynamic>> _roles = [
     {
@@ -107,12 +66,57 @@ class _AccesScreenState extends State<AccesScreen>
   @override
   void dispose() { _tabCtrl.dispose(); super.dispose(); }
 
+  static IconData _moduleIcon(String module) {
+    switch (module) {
+      case 'Dashboard': return Icons.dashboard_rounded;
+      case 'Fermes': return Icons.agriculture_rounded;
+      case 'Cycles': return Icons.loop_rounded;
+      case 'Finance': return Icons.attach_money_rounded;
+      case 'Employés': return Icons.people_rounded;
+      case 'Stocks': return Icons.inventory_rounded;
+      case 'Rapports': return Icons.assessment_rounded;
+      case 'Paramètres': return Icons.settings_rounded;
+      default: return Icons.circle_rounded;
+    }
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
-    final e = await ApiService.getEmployes();
+    final results = await Future.wait([
+      ApiService.getEmployes(),
+      ApiService.getPermissions(),
+    ]);
+    final e = results[0] as List;
+    final permsRaw = results[1] as Map<String, dynamic>;
+    final perms = <String, List<Map<String, dynamic>>>{};
+    permsRaw.forEach((role, modules) {
+      perms[role] = (modules as List).map((m) {
+        final map = Map<String, dynamic>.from(m as Map);
+        map['icon'] = _moduleIcon(map['module'] as String);
+        return map;
+      }).toList();
+    });
     setState(() {
-      _employes = e is List ? e : [];
+      _employes = e;
+      _permissions = perms;
+      _permissionsLoaded = true;
       _loading = false;
+    });
+  }
+
+  Future<void> _togglePermission(String role, String module, String type, bool value) async {
+    final perms = _permissions[role] ?? [];
+    final idx = perms.indexWhere((p) => p['module'] == module);
+    if (idx == -1) return;
+    final p = Map<String, dynamic>.from(perms[idx]);
+    p[type] = value;
+    setState(() => perms[idx] = p);
+    await ApiService.updatePermission({
+      'role': role,
+      'module': module,
+      'lecture': p['lecture'],
+      'ecriture': p['ecriture'],
+      'suppression': p['suppression'],
     });
   }
 
@@ -440,37 +444,38 @@ class _AccesScreenState extends State<AccesScreen>
         const SizedBox(height: 8),
 
         // Lignes permissions
-        ...(_permissions[_roleSelectionne] ?? []).map((p) =>
-            Container(
+        if (!_permissionsLoaded)
+          const Center(child: Padding(
+            padding: EdgeInsets.all(24),
+            child: CircularProgressIndicator(color: kBlue),
+          ))
+        else
+          ...(_permissions[_roleSelectionne] ?? []).map((p) {
+            final module = p['module'] as String;
+            final color = _roleColor(_roleSelectionne);
+            final canEdit = SessionManager.isAdmin;
+            return Container(
               margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 6)]),
+                      color: Colors.black.withOpacity(0.03), blurRadius: 6)]),
               child: Row(children: [
-                Icon(p['icon'] as IconData,
-                    color: _roleColor(_roleSelectionne), size: 16),
+                Icon(p['icon'] as IconData, color: color, size: 16),
                 const SizedBox(width: 8),
-                Expanded(child: Text(p['module'] as String,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 12))),
-                _permCell(p['lecture'] as bool),
-                _permCell(p['ecriture'] as bool),
-                _permCell(p['suppression'] as bool),
+                Expanded(child: Text(module, style: const TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 12))),
+                _permToggle(p['lecture'] as bool, canEdit,
+                    (v) => _togglePermission(_roleSelectionne, module, 'lecture', v)),
+                _permToggle(p['ecriture'] as bool, canEdit,
+                    (v) => _togglePermission(_roleSelectionne, module, 'ecriture', v)),
+                _permToggle(p['suppression'] as bool, canEdit,
+                    (v) => _togglePermission(_roleSelectionne, module, 'suppression', v)),
               ]),
-            )),
-
-        const SizedBox(height: 16),
-        // Légende
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _legendItem(kGreen, '✅ Autorisé'),
-          const SizedBox(width: 16),
-          _legendItem(kRed, '❌ Refusé'),
-        ]),
+            );
+          }),
       ]),
     )),
   ]);
@@ -637,15 +642,26 @@ class _AccesScreenState extends State<AccesScreen>
               const SizedBox(height: 8),
               SizedBox(width: double.infinity, height: 48,
                   child: ElevatedButton(
-                      onPressed: () {
-                        setState(() => e['role'] = roleSelected);
+                      onPressed: () async {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    '✅ Rôle mis à jour: $roleSelected'),
-                                backgroundColor: kGreen,
-                                behavior: SnackBarBehavior.floating));
+                        final ok = await ApiService.updateEmploye(
+                          e['id'].toString(),
+                          {'role': roleSelected, 'poste': roleSelected},
+                        );
+                        if (ok) {
+                          setState(() => e['role'] = roleSelected);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('✅ Rôle mis à jour : $roleSelected'),
+                                  backgroundColor: kGreen,
+                                  behavior: SnackBarBehavior.floating));
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('❌ Erreur lors de la mise à jour'),
+                                  backgroundColor: Colors.red,
+                                  behavior: SnackBarBehavior.floating));
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: kBlue,
@@ -668,18 +684,18 @@ class _AccesScreenState extends State<AccesScreen>
           fontWeight: FontWeight.w600),
           textAlign: TextAlign.center));
 
-  Widget _permCell(bool value) => SizedBox(width: 56,
-      child: Icon(value ? Icons.check_circle_rounded
-          : Icons.cancel_rounded,
-          color: value ? kGreen : kRed, size: 18));
-
-  Widget _legendItem(Color color, String label) => Row(children: [
-    Icon(color == kGreen ? Icons.check_circle_rounded
-        : Icons.cancel_rounded, color: color, size: 14),
-    const SizedBox(width: 4),
-    Text(label, style: const TextStyle(
-        fontSize: 11, color: Colors.grey)),
-  ]);
+  Widget _permToggle(bool value, bool canEdit, ValueChanged<bool> onChanged) =>
+      SizedBox(width: 56,
+          child: canEdit
+              ? Switch(
+                  value: value,
+                  onChanged: onChanged,
+                  activeThumbColor: kGreen,
+                  inactiveThumbColor: kRed,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                )
+              : Icon(value ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                  color: value ? kGreen : kRed, size: 18));
 
   Widget _headerStat(String value, String label, Color color) =>
       Expanded(child: Column(children: [

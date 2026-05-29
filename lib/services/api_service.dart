@@ -125,7 +125,7 @@ class ApiService {
       final r = await http.post(Uri.parse(url),
           headers: SessionManager.headers,
           body: jsonEncode(body)).timeout(_timeout);
-      _log('POST ${r.statusCode} $url');
+      _log('POST ${r.statusCode} $url — body: ${r.body}');
 
       if (r.statusCode == 401) {
         SessionManager.clear();
@@ -290,6 +290,14 @@ class ApiService {
   static Future<bool> deleteEmploye(String id) =>
       _delete('$API_URL/employes/$id',
           invalidateCache: ['employes_all']);
+
+  // ── PERMISSIONS ──
+  static Future<Map<String, dynamic>> getPermissions() =>
+      _getMap('$API_URL/permissions/', useCache: false);
+
+  static Future<bool> updatePermission(Map<String, dynamic> data) =>
+      _put('$API_URL/permissions/', data,
+          invalidateCache: ['permissions']);
 
   // ── FERMES ──
   static Future<List> getFermes() =>
