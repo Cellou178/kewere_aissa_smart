@@ -8,6 +8,7 @@ from app.routes.cycles import router as cycles_router
 from app.routes.stocks import router as stocks_router
 from app.routes.donnees_journalieres import router as donnees_router
 from app.routes.dashboard import router as dashboard_router
+from app.routes.permissions import router as permissions_router
 import traceback
 import asyncio
 import httpx
@@ -75,6 +76,7 @@ app.include_router(cycles_router)
 app.include_router(stocks_router)
 app.include_router(donnees_router)
 app.include_router(dashboard_router)
+app.include_router(permissions_router)
 
 @app.get("/")
 def root():
