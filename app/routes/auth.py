@@ -130,6 +130,14 @@ def login(
 
     return {"access_token": token, "token_type": "bearer"}
 
+@router.get("/activer/{email}")
+def activer_compte(email: str, db: Session = Depends(get_db)):
+    db.execute(text("""
+        UPDATE utilisateurs SET actif = true WHERE email = :email
+    """), {"email": email.lower()})
+    db.commit()
+    return {"success": True, "message": f"Compte {email} activé"}
+
 @router.get("/me")
 def me(current_user = Depends(get_current_user)):
     return {
