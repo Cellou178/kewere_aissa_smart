@@ -50,24 +50,22 @@ app.add_middleware(
 
 @app.middleware("http")
 async def catch_exceptions(request: Request, call_next):
+    cors_headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+        "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With",
+        "Access-Control-Max-Age": "3600",
+    }
     if request.method == "OPTIONS":
-        return JSONResponse(
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-                "Access-Control-Allow-Headers": "*",
-            }
-        )
+        return JSONResponse(status_code=200, headers=cors_headers)
     try:
         response = await call_next(request)
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
+        for key, value in cors_headers.items():
+            response.headers[key] = value
         return response
     except Exception as e:
         traceback.print_exc()
-        return JSONResponse(status_code=500, content={"detail": str(e)})
+        return JSONResponse(status_code=500, content={"detail": str(e)}, headers=cors_headers)
 
 app.include_router(auth_router)
 app.include_router(fermes_router)
