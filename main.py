@@ -83,5 +83,6 @@ def root():
     return {"message": "Bienvenue sur Kewere Aissa Smart API 🐔"}
 
 @app.get("/health")
+@app.head("/health")
 def health():
     return {"status": "ok"}
