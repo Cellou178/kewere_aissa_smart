@@ -96,13 +96,13 @@ def register(data: RegisterSchema, db: Session = Depends(get_db)):
         "ferme_id": ferme_id
     }
 
-@router.post("/login", response_model=TokenSchema)
+@router.post("/login")
 def login(
     form: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
     result = db.execute(text("""
-        SELECT u.id, u.email, u.mot_de_passe, u.actif,
+        SELECT u.id, u.nom, u.email, u.mot_de_passe, u.actif,
                r.nom as role_nom,
                u.entreprise_id, u.ferme_id
         FROM utilisateurs u
@@ -128,7 +128,15 @@ def login(
         "ferme_id": str(result.ferme_id)
     })
 
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "role": result.role_nom,
+        "nom": result.nom,
+        "email": result.email,
+        "entreprise_id": str(result.entreprise_id),
+        "ferme_id": str(result.ferme_id),
+    }
 
 @router.get("/activer/{email}")
 def activer_compte(email: str, db: Session = Depends(get_db)):
