@@ -14,6 +14,7 @@ from app.routes.permissions import router as permissions_router
 from app.routes.abonnements import router as abonnements_router
 from app.routes.marche import router as marche_router
 from app.routes.admin import router as admin_router
+from app.routes.analytics import router as analytics_router
 import traceback
 import asyncio
 import httpx
@@ -78,6 +79,7 @@ app.include_router(auth_router)
 app.include_router(abonnements_router)
 app.include_router(marche_router)
 app.include_router(admin_router)
+app.include_router(analytics_router)
 app.include_router(fermes_router)
 app.include_router(employes_router)
 app.include_router(cycles_router)
