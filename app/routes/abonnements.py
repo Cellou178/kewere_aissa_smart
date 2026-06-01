@@ -90,11 +90,11 @@ class RenouvelerSchema(BaseModel):
     duree_mois: int = 1
 
 @router.post("/renouveler")
-def renouveler(data: RenouvelerSchema, db: Session = Depends(get_db)):
+def renouveler(data: RenouvelerSchema, current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     if data.plan not in PRIX:
         raise HTTPException(status_code=400, detail="Plan invalide")
     prix = PRIX[data.plan] * data.duree_mois
-    date_fin = datetime.now() + timedelta(days=30 * data.duree_mois)
+    date_fin = None if data.plan == 'gratuit' else datetime.now() + timedelta(days=30 * data.duree_mois)
     db.execute(text("""
         UPDATE abonnements SET statut = 'expire'
         WHERE entreprise_id = :eid AND statut = 'actif'
@@ -104,6 +104,26 @@ def renouveler(data: RenouvelerSchema, db: Session = Depends(get_db)):
         VALUES (:eid, :plan, NOW(), :df, 'actif', :prix)
     """), {"eid": data.entreprise_id, "plan": data.plan, "df": date_fin, "prix": prix})
     db.commit()
+    msg = f"Plan {data.plan} activé" + (f" jusqu'au {date_fin.strftime('%d/%m/%Y')}" if date_fin else " (sans expiration)")
     return {"success": True, "plan": data.plan,
-            "date_fin": date_fin.strftime('%d/%m/%Y'),
-            "message": f"Abonnement {data.plan} activé jusqu'au {date_fin.strftime('%d/%m/%Y')}"}
+            "date_fin": date_fin.strftime('%d/%m/%Y') if date_fin else None,
+            "message": msg}
+
+@router.get("/tous")
+def tous_abonnements(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.role.nom.lower() != 'admin':
+        raise HTTPException(status_code=403, detail="Accès admin requis")
+    rows = db.execute(text("""
+        SELECT e.id as entreprise_id, e.nom as entreprise_nom, e.email,
+               a.plan, a.statut, a.date_debut, a.date_fin, a.prix,
+               (SELECT COUNT(*) FROM utilisateurs u WHERE u.entreprise_id = e.id AND u.actif = true) as nb_users
+        FROM entreprises e
+        LEFT JOIN abonnements a ON a.entreprise_id = e.id
+            AND a.created_at = (SELECT MAX(a2.created_at) FROM abonnements a2 WHERE a2.entreprise_id = e.id)
+        ORDER BY e.nom
+    """)).fetchall()
+    return [{"entreprise_id": str(r.entreprise_id), "entreprise_nom": r.entreprise_nom,
+             "email": r.email, "plan": r.plan or 'gratuit', "statut": r.statut or 'actif',
+             "date_fin": r.date_fin.isoformat() if r.date_fin else None,
+             "prix": r.prix or 0, "nb_users": r.nb_users or 0}
+            for r in rows]

@@ -81,7 +81,7 @@ def create_employe(
     data: EmployeSchema,
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(
-        require_role("admin", "manager")
+        require_role("admin", "manager", "proprietaire")
     )
 ):
 
@@ -164,7 +164,7 @@ def update_employe(
     data: EmployeSchema,
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(
-        require_role("admin", "manager")
+        require_role("admin", "manager", "proprietaire")
     )
 ):
 
@@ -229,7 +229,7 @@ def delete_employe(
     employe_id: str,
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(
-        require_role("admin")
+        require_role("admin", "proprietaire")
     )
 ):
 
