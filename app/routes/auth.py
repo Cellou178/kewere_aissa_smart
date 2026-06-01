@@ -86,6 +86,11 @@ def register(data: RegisterSchema, db: Session = Depends(get_db)):
         "fid": ferme_id,
     })
 
+    db.execute(text("""
+        INSERT INTO abonnements (entreprise_id, plan, statut, prix)
+        VALUES (:eid, 'gratuit', 'actif', 0)
+    """), {"eid": entreprise_id})
+
     db.commit()
 
     return {
