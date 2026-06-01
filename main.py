@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 from app.routes.auth import router as auth_router
 from app.routes.fermes import router as fermes_router
 from app.routes.employes import router as employes_router
@@ -76,11 +78,12 @@ app.include_router(donnees_router)
 app.include_router(dashboard_router)
 app.include_router(permissions_router)
 
-@app.get("/")
-def root():
-    return {"message": "Bienvenue sur Kewere Aissa Smart API 🐔"}
-
 @app.get("/health")
 @app.head("/health")
 def health():
     return {"status": "ok"}
+
+# Servir l'app Flutter web
+WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
+if os.path.exists(WEB_DIR):
+    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
