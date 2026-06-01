@@ -13,6 +13,7 @@ from app.routes.dashboard import router as dashboard_router
 from app.routes.permissions import router as permissions_router
 from app.routes.abonnements import router as abonnements_router
 from app.routes.marche import router as marche_router
+from app.routes.admin import router as admin_router
 import traceback
 import asyncio
 import httpx
@@ -76,6 +77,7 @@ async def catch_exceptions(request: Request, call_next):
 app.include_router(auth_router)
 app.include_router(abonnements_router)
 app.include_router(marche_router)
+app.include_router(admin_router)
 app.include_router(fermes_router)
 app.include_router(employes_router)
 app.include_router(cycles_router)
