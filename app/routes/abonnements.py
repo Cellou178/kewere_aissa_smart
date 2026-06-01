@@ -5,16 +5,18 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from datetime import datetime, timedelta
 from pydantic import BaseModel
+from typing import Optional
 
 router = APIRouter(prefix="/abonnements", tags=["Abonnements"])
 
-LIMITES = {
-    'gratuit':    {'fermes': 1,  'cycles': 2,  'utilisateurs': 1},
-    'pro':        {'fermes': 5,  'cycles': -1, 'utilisateurs': 3},
-    'enterprise': {'fermes': -1, 'cycles': -1, 'utilisateurs': -1},
-}
-
-PRIX = {'gratuit': 0, 'pro': 15000, 'enterprise': 35000}
+def _get_plans(db: Session):
+    rows = db.execute(text("SELECT * FROM plans WHERE actif = true ORDER BY prix_mensuel")).fetchall()
+    return {r.id: {
+        'nom': r.nom,
+        'prix_mensuel': r.prix_mensuel,
+        'prix_annuel': r.prix_annuel,
+        'limites': {'fermes': r.max_fermes, 'cycles': r.max_cycles, 'utilisateurs': r.max_utilisateurs}
+    } for r in rows}
 
 def _get_or_create(eid: str, db: Session):
     db.execute(text("""
@@ -47,10 +49,17 @@ def _get_or_create(eid: str, db: Session):
 
     return row
 
+@router.get("/plans")
+def liste_plans(db: Session = Depends(get_db)):
+    plans = _get_plans(db)
+    return [{"id": k, **v} for k, v in plans.items()]
+
 @router.get("/mon-abonnement")
 def mon_abonnement(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     eid = str(current_user.entreprise_id)
     row = _get_or_create(eid, db)
+    plans = _get_plans(db)
+    limites = plans.get(row.plan, {}).get('limites', {'fermes': 1, 'cycles': 2, 'utilisateurs': 1})
 
     nb = db.execute(text("""
         SELECT
@@ -69,7 +78,7 @@ def mon_abonnement(current_user=Depends(get_current_user), db: Session = Depends
         "nb_fermes": nb.fermes or 0,
         "nb_cycles": nb.cycles or 0,
         "nb_utilisateurs": nb.utilisateurs or 0,
-        "limites": LIMITES.get(row.plan, LIMITES['gratuit']),
+        "limites": limites,
     }
 
 @router.get("/historique")
@@ -91,9 +100,10 @@ class RenouvelerSchema(BaseModel):
 
 @router.post("/renouveler")
 def renouveler(data: RenouvelerSchema, current_user=Depends(get_current_user), db: Session = Depends(get_db)):
-    if data.plan not in PRIX:
+    plans = _get_plans(db)
+    if data.plan not in plans:
         raise HTTPException(status_code=400, detail="Plan invalide")
-    prix = PRIX[data.plan] * data.duree_mois
+    prix = plans[data.plan]['prix_mensuel'] * data.duree_mois
     date_fin = None if data.plan == 'gratuit' else datetime.now() + timedelta(days=30 * data.duree_mois)
     db.execute(text("""
         UPDATE abonnements SET statut = 'expire'
@@ -127,3 +137,24 @@ def tous_abonnements(current_user=Depends(get_current_user), db: Session = Depen
              "date_fin": r.date_fin.isoformat() if r.date_fin else None,
              "prix": r.prix or 0, "nb_users": r.nb_users or 0}
             for r in rows]
+
+class UpdatePlanSchema(BaseModel):
+    prix_mensuel: Optional[int] = None
+    prix_annuel: Optional[int] = None
+    max_fermes: Optional[int] = None
+    max_cycles: Optional[int] = None
+    max_utilisateurs: Optional[int] = None
+
+@router.put("/plans/{plan_id}")
+def modifier_plan(plan_id: str, data: UpdatePlanSchema,
+                  current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.role.nom.lower() != 'admin':
+        raise HTTPException(status_code=403, detail="Accès admin requis")
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="Aucune donnée à modifier")
+    set_clause = ', '.join([f"{k} = :{k}" for k in updates])
+    updates['plan_id'] = plan_id
+    db.execute(text(f"UPDATE plans SET {set_clause} WHERE id = :plan_id"), updates)
+    db.commit()
+    return {"success": True, "message": f"Plan {plan_id} mis à jour"}
