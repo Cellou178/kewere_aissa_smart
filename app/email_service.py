@@ -1,37 +1,46 @@
-import smtplib
 import os
 import random
 import string
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import httpx
 
-SMTP_EMAIL = os.getenv("SMTP_EMAIL", "")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+SMTP_EMAIL = os.getenv("SMTP_EMAIL", "celloudiallo286@gmail.com")
 
 def generer_code(longueur=6) -> str:
     return ''.join(random.choices(string.digits, k=longueur))
 
 def envoyer_email(destinataire: str, sujet: str, corps_html: str) -> bool:
-    print(f"📧 Tentative envoi email → {destinataire} | sujet: {sujet}")
-    if not SMTP_EMAIL or not SMTP_PASSWORD:
-        print("❌ SMTP non configuré (SMTP_EMAIL ou SMTP_PASSWORD manquant)")
+    print(f"📧 Envoi email → {destinataire} | {sujet}")
+
+    if not RESEND_API_KEY:
+        print("❌ RESEND_API_KEY non configuré sur Render")
         return False
-    print(f"📧 SMTP_EMAIL configuré: {SMTP_EMAIL}")
+
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = sujet
-        msg["From"] = f"Kewere Aissa Smart <{SMTP_EMAIL}>"
-        msg["To"] = destinataire
-        msg.attach(MIMEText(corps_html, "html"))
-        print("📧 Connexion SMTP Gmail (port 465)...")
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.sendmail(SMTP_EMAIL, destinataire, msg.as_string())
-        print(f"✅ Email envoyé avec succès à {destinataire}")
-        return True
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": "Kewere Aissa Smart <onboarding@resend.dev>",
+                "to": [destinataire],
+                "subject": sujet,
+                "html": corps_html,
+            },
+            timeout=15.0,
+        )
+        if resp.status_code in (200, 201):
+            print(f"✅ Email envoyé avec succès à {destinataire}")
+            return True
+        else:
+            print(f"❌ Resend erreur {resp.status_code}: {resp.text}")
+            return False
     except Exception as e:
-        print(f"❌ Erreur email: {type(e).__name__}: {e}")
+        print(f"❌ Erreur envoi email: {type(e).__name__}: {e}")
         return False
+
 
 def email_code_inscription(destinataire: str, nom: str, code: str) -> bool:
     html = f"""
@@ -56,6 +65,7 @@ def email_code_inscription(destinataire: str, nom: str, code: str) -> bool:
     </div>
     """
     return envoyer_email(destinataire, "🐔 Votre code de confirmation Kewere", html)
+
 
 def email_reset_mdp(destinataire: str, nom: str, code: str) -> bool:
     html = f"""
