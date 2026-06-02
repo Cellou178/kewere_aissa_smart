@@ -2,13 +2,10 @@ import os
 import random
 import string
 import httpx
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-BREVO_LOGIN    = os.getenv("BREVO_LOGIN", "")
-BREVO_PASSWORD = os.getenv("BREVO_PASSWORD", "")
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+SENDGRID_FROM    = os.getenv("SENDGRID_FROM", "celloudiallo286@gmail.com")
+RESEND_API_KEY   = os.getenv("RESEND_API_KEY", "")
 
 def generer_code(longueur=6) -> str:
     return ''.join(random.choices(string.digits, k=longueur))
@@ -16,12 +13,38 @@ def generer_code(longueur=6) -> str:
 def envoyer_email(destinataire: str, sujet: str, corps_html: str) -> bool:
     print(f"📧 Envoi email → {destinataire} | {sujet}")
 
-    # Priorité 1 : Resend (si domaine vérifié)
+    # Priorité 1 : SendGrid (HTTP API, pas de port bloqué, expéditeur email vérifié)
+    if SENDGRID_API_KEY:
+        try:
+            resp = httpx.post(
+                "https://api.sendgrid.com/v3/mail/send",
+                headers={
+                    "Authorization": f"Bearer {SENDGRID_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "personalizations": [{"to": [{"email": destinataire}]}],
+                    "from": {"email": SENDGRID_FROM, "name": "Kewere Aissa Smart"},
+                    "subject": sujet,
+                    "content": [{"type": "text/html", "value": corps_html}],
+                },
+                timeout=15.0,
+            )
+            if resp.status_code in (200, 201, 202):
+                print(f"✅ Email envoyé via SendGrid à {destinataire}")
+                return True
+            else:
+                print(f"❌ SendGrid erreur {resp.status_code}: {resp.text}")
+        except Exception as e:
+            print(f"❌ SendGrid exception: {type(e).__name__}: {e}")
+
+    # Fallback : Resend (si domaine vérifié configuré)
     if RESEND_API_KEY:
         try:
             resp = httpx.post(
                 "https://api.resend.com/emails",
-                headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}",
+                         "Content-Type": "application/json"},
                 json={"from": "Kewere Aissa Smart <onboarding@resend.dev>",
                       "to": [destinataire], "subject": sujet, "html": corps_html},
                 timeout=15.0,
@@ -30,50 +53,11 @@ def envoyer_email(destinataire: str, sujet: str, corps_html: str) -> bool:
                 print(f"✅ Email envoyé via Resend à {destinataire}")
                 return True
             else:
-                print(f"⚠️ Resend erreur {resp.status_code}: {resp.text} — tentative Brevo...")
+                print(f"❌ Resend erreur {resp.status_code}: {resp.text}")
         except Exception as e:
-            print(f"⚠️ Resend exception: {e} — tentative Brevo...")
+            print(f"❌ Resend exception: {type(e).__name__}: {e}")
 
-    # Priorité 2 : Brevo SMTP port 587 (pas bloqué par Render)
-    if BREVO_LOGIN and BREVO_PASSWORD:
-        try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = sujet
-            msg["From"] = f"Kewere Aissa Smart <{BREVO_LOGIN}>"
-            msg["To"] = destinataire
-            msg.attach(MIMEText(corps_html, "html"))
-            with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
-                server.ehlo()
-                server.starttls()
-                server.login(BREVO_LOGIN, BREVO_PASSWORD)
-                server.sendmail(BREVO_LOGIN, destinataire, msg.as_string())
-            print(f"✅ Email envoyé via Brevo à {destinataire}")
-            return True
-        except Exception as e:
-            print(f"❌ Brevo erreur: {type(e).__name__}: {e}")
-            return False
-
-    # Priorité 3 : Gmail port 587 STARTTLS (fallback)
-    smtp_email = os.getenv("SMTP_EMAIL", "")
-    smtp_password = os.getenv("SMTP_PASSWORD", "")
-    if smtp_email and smtp_password:
-        try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = sujet
-            msg["From"] = f"Kewere Aissa Smart <{smtp_email}>"
-            msg["To"] = destinataire
-            msg.attach(MIMEText(corps_html, "html"))
-            with smtplib.SMTP("smtp.gmail.com", 587) as server:
-                server.ehlo()
-                server.starttls()
-                server.login(smtp_email, smtp_password)
-                server.sendmail(smtp_email, destinataire, msg.as_string())
-            print(f"✅ Email envoyé via Gmail 587 à {destinataire}")
-            return True
-        except Exception as e:
-            print(f"❌ Gmail 587 erreur: {type(e).__name__}: {e}")
-
-    print("❌ Aucun service email configuré")
+    print("❌ Aucun service email configuré (SENDGRID_API_KEY manquant)")
     return False
 
 
