@@ -16,6 +16,7 @@ from app.routes.marche import router as marche_router
 from app.routes.admin import router as admin_router
 from app.routes.analytics import router as analytics_router
 from app.routes.postes import router as postes_router
+from app.routes.vendeur import router as vendeur_router
 import traceback
 import asyncio
 import httpx
@@ -89,11 +90,12 @@ app.include_router(donnees_router)
 app.include_router(dashboard_router)
 app.include_router(permissions_router)
 app.include_router(postes_router)
+app.include_router(vendeur_router)
 
 @app.middleware("http")
 async def abonnement_check(request: Request, call_next):
     path = request.url.path
-    skip = ['/auth/', '/health', '/abonnement', '/docs', '/openapi', '/redoc']
+    skip = ['/auth/', '/health', '/abonnement', '/docs', '/openapi', '/redoc', '/vendeur/']
     last_seg = path.split('/')[-1]
     if (request.method == 'OPTIONS'
             or any(path.startswith(s) for s in skip)

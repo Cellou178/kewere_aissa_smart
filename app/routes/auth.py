@@ -25,6 +25,8 @@ class RegisterSchema(BaseModel):
         default=None, min_length=8, max_length=20)
     nom_ferme: Optional[str] = Field(
         default="Ma Ferme", min_length=2, max_length=100)
+    role: Optional[str] = Field(
+        default="proprietaire", max_length=50)
 
 class TokenSchema(BaseModel):
     access_token: str
@@ -40,13 +42,29 @@ def register(data: RegisterSchema, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400,
             detail="Email déjà utilisé")
 
+    # Rôles autorisés à l'auto-inscription
+    role_demande = (data.role or "proprietaire").lower()
+    if role_demande not in ("proprietaire", "vendeur", "manager", "employe"):
+        role_demande = "proprietaire"
+
+    # S'assurer que le rôle existe (créer si absent)
     role = db.execute(text("""
-        SELECT id FROM roles WHERE nom = 'proprietaire' LIMIT 1
-    """)).fetchone()
+        SELECT id FROM roles WHERE nom = :nom LIMIT 1
+    """), {"nom": role_demande}).fetchone()
+
+    if not role:
+        # Insérer le rôle manquant
+        db.execute(text("""
+            INSERT INTO roles (nom) VALUES (:nom)
+        """), {"nom": role_demande})
+        db.commit()
+        role = db.execute(text("""
+            SELECT id FROM roles WHERE nom = :nom LIMIT 1
+        """), {"nom": role_demande}).fetchone()
 
     if not role:
         raise HTTPException(status_code=400,
-            detail="Rôle propriétaire introuvable")
+            detail="Impossible de créer le rôle")
 
     entreprise_id = str(uuid.uuid4())
     db.execute(text("""
@@ -58,35 +76,59 @@ def register(data: RegisterSchema, db: Session = Depends(get_db)):
         "email": data.email
     })
 
-    ferme_id = str(uuid.uuid4())
-    db.execute(text("""
-        INSERT INTO fermes (id, nom, entreprise_id)
-        VALUES (:id, :nom, :eid)
-    """), {
-        "id": ferme_id,
-        "nom": data.nom_ferme,
-        "eid": entreprise_id
-    })
+    # Les vendeurs n'ont pas de ferme
+    ferme_id = None
+    if role_demande != "vendeur":
+        ferme_id = str(uuid.uuid4())
+        db.execute(text("""
+            INSERT INTO fermes (id, nom, entreprise_id, localisation, superficie)
+            VALUES (:id, :nom, :eid, '', 0)
+        """), {
+            "id": ferme_id,
+            "nom": data.nom_ferme or "Ma Ferme",
+            "eid": entreprise_id
+        })
 
     user_id = str(uuid.uuid4())
-    db.execute(text("""
-        INSERT INTO utilisateurs (
-            id, nom, email, mot_de_passe,
-            role_id, entreprise_id, ferme_id, actif
-        )
-        VALUES (
-            :id, :nom, :email, :mdp,
-            :role_id, :eid, :fid, true
-        )
-    """), {
-        "id": user_id,
-        "nom": data.nom.strip(),
-        "email": data.email.strip().lower(),
-        "mdp": hash_password(data.mot_de_passe),
-        "role_id": role.id,
-        "eid": entreprise_id,
-        "fid": ferme_id,
-    })
+    if ferme_id:
+        db.execute(text("""
+            INSERT INTO utilisateurs (
+                id, nom, email, mot_de_passe,
+                role_id, entreprise_id, ferme_id, actif, telephone
+            )
+            VALUES (
+                :id, :nom, :email, :mdp,
+                :role_id, :eid, :fid, true, :tel
+            )
+        """), {
+            "id": user_id,
+            "nom": data.nom.strip(),
+            "email": data.email.strip().lower(),
+            "mdp": hash_password(data.mot_de_passe),
+            "role_id": role.id,
+            "eid": entreprise_id,
+            "fid": ferme_id,
+            "tel": data.telephone or "",
+        })
+    else:
+        db.execute(text("""
+            INSERT INTO utilisateurs (
+                id, nom, email, mot_de_passe,
+                role_id, entreprise_id, actif, telephone
+            )
+            VALUES (
+                :id, :nom, :email, :mdp,
+                :role_id, :eid, true, :tel
+            )
+        """), {
+            "id": user_id,
+            "nom": data.nom.strip(),
+            "email": data.email.strip().lower(),
+            "mdp": hash_password(data.mot_de_passe),
+            "role_id": role.id,
+            "eid": entreprise_id,
+            "tel": data.telephone or "",
+        })
 
     db.execute(text("""
         INSERT INTO abonnements (entreprise_id, plan, statut, prix)
@@ -100,7 +142,7 @@ def register(data: RegisterSchema, db: Session = Depends(get_db)):
         "message": "Compte créé avec succès",
         "id": user_id,
         "entreprise_id": entreprise_id,
-        "ferme_id": ferme_id
+        "ferme_id": ferme_id or ""
     }
 
 @router.post("/login")
@@ -141,8 +183,8 @@ def login(
         "role": result.role_nom,
         "nom": result.nom,
         "email": result.email,
-        "entreprise_id": str(result.entreprise_id),
-        "ferme_id": str(result.ferme_id),
+        "entreprise_id": str(result.entreprise_id) if result.entreprise_id else "",
+        "ferme_id": str(result.ferme_id) if result.ferme_id else "",
     }
 
 @router.get("/activer/{email}")
