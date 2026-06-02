@@ -149,15 +149,16 @@ def create_employe(
     emp_id = str(uuid.uuid4())
 
     db.execute(text("""
-        INSERT INTO employes (id, ferme_id, nom, role, telephone, salaire)
-        VALUES (:id, :fid, :nom, :role, :tel, :sal)
+        INSERT INTO employes (id, ferme_id, nom, role, telephone, salaire, email)
+        VALUES (:id, :fid, :nom, :role, :tel, :sal, :email)
     """), {
         "id": emp_id,
         "fid": data.ferme_id,
         "nom": data.nom.strip(),
         "role": data.role.strip(),
         "tel": data.telephone.strip(),
-        "sal": data.salaire
+        "sal": data.salaire,
+        "email": data.email.lower() if data.email else None
     })
 
     # Créer un compte utilisateur si email fourni
@@ -298,13 +299,30 @@ def delete_employe(
     )
 ):
 
+    # Récupérer l'email avant suppression
+    employe = db.execute(text("""
+        SELECT email FROM employes
+        WHERE id = :id
+        AND ferme_id IN (SELECT id FROM fermes WHERE entreprise_id = :eid)
+        LIMIT 1
+    """), {"id": employe_id, "eid": current_user.entreprise_id}).fetchone()
+
+    # Supprimer le compte utilisateur associé
+    if employe and employe.email:
+        db.execute(text("""
+            DELETE FROM utilisateurs
+            WHERE email = :email AND entreprise_id = :eid
+            AND role_id IN (
+                SELECT id FROM roles WHERE nom NOT IN ('admin', 'proprietaire')
+            )
+        """), {"email": employe.email, "eid": current_user.entreprise_id})
+
+    # Supprimer l'employé
     result = db.execute(text("""
         DELETE FROM employes
         WHERE id = :id
         AND ferme_id IN (
-            SELECT id
-            FROM fermes
-            WHERE entreprise_id = :eid
+            SELECT id FROM fermes WHERE entreprise_id = :eid
         )
     """), {
         "id": employe_id,
