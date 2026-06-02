@@ -164,22 +164,30 @@ def create_employe(
     compte_cree = False
     mdp_temp = None
     if data.email:
+        print(f"👤 Email fourni: {data.email} — tentative création compte...")
         existing_email = db.execute(text("""
             SELECT id FROM utilisateurs WHERE email = :email LIMIT 1
         """), {"email": data.email.lower()}).fetchone()
 
-        if not existing_email:
+        if existing_email:
+            print(f"⚠️ Email {data.email} déjà utilisé — pas de nouveau compte")
+        else:
+            # Chercher le rôle correspondant, sinon prendre n'importe quel rôle non-admin
             role_nom = data.role if data.role in ('manager', 'comptable') else 'employe'
             role_row = db.execute(text("""
                 SELECT id FROM roles WHERE nom = :nom LIMIT 1
             """), {"nom": role_nom}).fetchone()
 
             if not role_row:
+                print(f"⚠️ Rôle '{role_nom}' introuvable, recherche fallback...")
                 role_row = db.execute(text("""
-                    SELECT id FROM roles WHERE nom = 'employe' LIMIT 1
+                    SELECT id FROM roles WHERE nom NOT IN ('admin') ORDER BY id LIMIT 1
                 """)).fetchone()
 
-            if role_row:
+            if not role_row:
+                print("❌ Aucun rôle trouvé dans la table roles — impossible de créer le compte")
+            else:
+                print(f"✅ Rôle trouvé: id={role_row.id}")
                 mdp_temp = _generer_mdp_temp()
                 user_id = str(uuid.uuid4())
                 db.execute(text("""
@@ -195,6 +203,7 @@ def create_employe(
                     "fid": data.ferme_id
                 })
                 compte_cree = True
+                print(f"✅ Compte créé pour {data.email}, envoi email en arrière-plan...")
                 background_tasks.add_task(
                     _envoyer_credentials, data.email, data.nom.strip(), mdp_temp, ferme.nom
                 )
