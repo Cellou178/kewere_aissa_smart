@@ -167,5 +167,33 @@ def health():
 
 # Servir l'app Flutter web
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
+
+NO_CACHE = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+
+# Ces fichiers doivent toujours etre recus frais pour que les MAJ s'appliquent
 if os.path.exists(WEB_DIR):
+    @app.get("/")
+    def root():
+        return FileResponse(os.path.join(WEB_DIR, "index.html"), headers=NO_CACHE)
+
+    @app.get("/index.html")
+    def index():
+        return FileResponse(os.path.join(WEB_DIR, "index.html"), headers=NO_CACHE)
+
+    @app.get("/flutter_bootstrap.js")
+    def flutter_bootstrap():
+        return FileResponse(os.path.join(WEB_DIR, "flutter_bootstrap.js"), headers=NO_CACHE)
+
+    @app.get("/flutter_service_worker.js")
+    def flutter_service_worker():
+        return FileResponse(os.path.join(WEB_DIR, "flutter_service_worker.js"), headers=NO_CACHE)
+
+    @app.get("/main.dart.js")
+    def main_dart():
+        return FileResponse(os.path.join(WEB_DIR, "main.dart.js"), headers=NO_CACHE)
+
     app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
