@@ -113,7 +113,28 @@ async def abonnement_check(request: Request, call_next):
         return await call_next(request)
 
     db = SessionLocal()
+    cors = {"Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"}
     try:
+        # Vérifier statut entreprise (suspension / résiliation)
+        ent = db.execute(text("""
+            SELECT statut, motif_sanction FROM entreprises WHERE id = :eid
+        """), {"eid": eid}).fetchone()
+
+        if ent and ent.statut in ('suspendu', 'resilie'):
+            cle_titre = "msg_suspension_titre" if ent.statut == 'suspendu' else "msg_resiliation_titre"
+            cle_corps = "msg_suspension_corps" if ent.statut == 'suspendu' else "msg_resiliation_corps"
+            titre_row = db.execute(text("SELECT valeur FROM parametres WHERE cle = :c"), {"c": cle_titre}).fetchone()
+            corps_row = db.execute(text("SELECT valeur FROM parametres WHERE cle = :c"), {"c": cle_corps}).fetchone()
+            return JSONResponse(status_code=403, headers=cors, content={
+                "detail": "ENTREPRISE_SANCTIONNEE",
+                "statut": ent.statut,
+                "titre": titre_row.valeur if titre_row else "Accès refusé",
+                "message": corps_row.valeur if corps_row else "Votre compte est suspendu.",
+                "motif": ent.motif_sanction or ""
+            })
+
+        # Vérifier abonnement expiré
         db.execute(text("""
             UPDATE abonnements SET statut = 'expire'
             WHERE entreprise_id = :eid
@@ -127,8 +148,6 @@ async def abonnement_check(request: Request, call_next):
             ORDER BY created_at DESC LIMIT 1
         """), {"eid": eid}).fetchone()
         if row and row.statut == 'expire':
-            cors = {"Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"}
             return JSONResponse(status_code=402,
                 content={"detail": "ABONNEMENT_EXPIRE"}, headers=cors)
     except Exception:

@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.email_service import envoyer_email
+from pydantic import BaseModel
+from typing import Optional
 
 router = APIRouter(prefix="/admin", tags=["Super Admin"])
 
@@ -74,6 +77,124 @@ def liste_entreprises(current_user=Depends(get_current_user), db: Session = Depe
         "nb_cycles_actifs": r.nb_cycles_actifs or 0,
         "derniere_activite": r.derniere_activite.isoformat() if r.derniere_activite else None,
     } for r in rows]
+
+class SanctionSchema(BaseModel):
+    motif: str
+    message_custom: Optional[str] = None  # remplace le message par défaut si fourni
+
+class ParametreSchema(BaseModel):
+    valeur: str
+
+
+def _get_parametre(cle: str, db: Session, defaut: str = "") -> str:
+    row = db.execute(text("SELECT valeur FROM parametres WHERE cle = :cle"), {"cle": cle}).fetchone()
+    return row.valeur if row else defaut
+
+
+def _envoyer_email_sanction(destinataire: str, nom: str, titre: str, corps: str, motif: str):
+    html = f"""
+    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#f8fafc;padding:20px;border-radius:12px">
+      <div style="background:linear-gradient(135deg,#7F1D1D,#1B3A6B);padding:20px;border-radius:10px;text-align:center">
+        <h1 style="color:white;margin:0;font-size:22px">⚠️ {titre}</h1>
+        <p style="color:rgba(255,255,255,0.8);margin:5px 0 0">Kewere Aissa Smart</p>
+      </div>
+      <div style="background:white;padding:24px;border-radius:10px;margin-top:12px">
+        <p style="color:#475569">Bonjour <strong>{nom}</strong>,</p>
+        <p style="color:#475569">{corps}</p>
+        <div style="background:#fef2f2;border-left:4px solid #DC2626;padding:12px;border-radius:6px;margin:16px 0">
+          <p style="margin:0;color:#DC2626;font-weight:700">Motif : {motif}</p>
+        </div>
+        <p style="color:#94a3b8;font-size:13px">Pour toute question, contactez-nous à support@kewere.sn</p>
+      </div>
+    </div>
+    """
+    envoyer_email(destinataire, f"⚠️ {titre} - Kewere Aissa Smart", html)
+
+
+@router.get("/parametres")
+def get_parametres(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    _check_admin(current_user)
+    rows = db.execute(text("SELECT cle, valeur, description FROM parametres ORDER BY cle")).fetchall()
+    return [{"cle": r.cle, "valeur": r.valeur, "description": r.description} for r in rows]
+
+
+@router.put("/parametres/{cle}")
+def update_parametre(cle: str, data: ParametreSchema,
+                     current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    _check_admin(current_user)
+    db.execute(text("""
+        INSERT INTO parametres (cle, valeur) VALUES (:cle, :val)
+        ON CONFLICT (cle) DO UPDATE SET valeur = :val, updated_at = NOW()
+    """), {"cle": cle, "val": data.valeur})
+    db.commit()
+    return {"success": True, "message": f"Paramètre '{cle}' mis à jour"}
+
+
+@router.post("/entreprises/{eid}/suspendre")
+def suspendre_entreprise(eid: str, data: SanctionSchema, background_tasks: BackgroundTasks,
+                         current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    _check_admin(current_user)
+    entreprise = db.execute(text("""
+        SELECT nom, email FROM entreprises WHERE id = :id
+    """), {"id": eid}).fetchone()
+    if not entreprise:
+        raise HTTPException(status_code=404, detail="Entreprise introuvable")
+
+    db.execute(text("""
+        UPDATE entreprises SET statut = 'suspendu', motif_sanction = :motif, date_sanction = NOW()
+        WHERE id = :id
+    """), {"id": eid, "motif": data.motif})
+    db.commit()
+
+    titre = _get_parametre("msg_suspension_titre", db, "Compte Suspendu")
+    corps = data.message_custom or _get_parametre(
+        "msg_suspension_corps", db,
+        "Votre compte a été temporairement suspendu. Contactez le support."
+    )
+    background_tasks.add_task(_envoyer_email_sanction, entreprise.email, entreprise.nom, titre, corps, data.motif)
+
+    return {"success": True, "message": f"Entreprise '{entreprise.nom}' suspendue"}
+
+
+@router.post("/entreprises/{eid}/resilier")
+def resilier_entreprise(eid: str, data: SanctionSchema, background_tasks: BackgroundTasks,
+                        current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    _check_admin(current_user)
+    entreprise = db.execute(text("""
+        SELECT nom, email FROM entreprises WHERE id = :id
+    """), {"id": eid}).fetchone()
+    if not entreprise:
+        raise HTTPException(status_code=404, detail="Entreprise introuvable")
+
+    db.execute(text("""
+        UPDATE entreprises SET statut = 'resilie', motif_sanction = :motif, date_sanction = NOW()
+        WHERE id = :id
+    """), {"id": eid, "motif": data.motif})
+    db.execute(text("""
+        UPDATE abonnements SET statut = 'expire' WHERE entreprise_id = :id AND statut = 'actif'
+    """), {"id": eid})
+    db.commit()
+
+    titre = _get_parametre("msg_resiliation_titre", db, "Compte Résilié")
+    corps = data.message_custom or _get_parametre(
+        "msg_resiliation_corps", db,
+        "Votre compte a été résilié suite au non-respect de nos conditions d'utilisation."
+    )
+    background_tasks.add_task(_envoyer_email_sanction, entreprise.email, entreprise.nom, titre, corps, data.motif)
+
+    return {"success": True, "message": f"Entreprise '{entreprise.nom}' résiliée"}
+
+
+@router.post("/entreprises/{eid}/reactiver")
+def reactiver_entreprise(eid: str, current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    _check_admin(current_user)
+    db.execute(text("""
+        UPDATE entreprises SET statut = 'actif', motif_sanction = NULL, date_sanction = NULL
+        WHERE id = :id
+    """), {"id": eid})
+    db.commit()
+    return {"success": True, "message": "Entreprise réactivée"}
+
 
 @router.get("/entreprises/{eid}")
 def detail_entreprise(eid: str, current_user=Depends(get_current_user), db: Session = Depends(get_db)):
