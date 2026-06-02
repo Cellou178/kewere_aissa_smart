@@ -53,7 +53,27 @@ def envoyer_email(destinataire: str, sujet: str, corps_html: str) -> bool:
             print(f"❌ Brevo erreur: {type(e).__name__}: {e}")
             return False
 
-    print("❌ Aucun service email configuré (RESEND_API_KEY ou BREVO_LOGIN/PASSWORD manquants)")
+    # Priorité 3 : Gmail port 587 STARTTLS (fallback)
+    smtp_email = os.getenv("SMTP_EMAIL", "")
+    smtp_password = os.getenv("SMTP_PASSWORD", "")
+    if smtp_email and smtp_password:
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = sujet
+            msg["From"] = f"Kewere Aissa Smart <{smtp_email}>"
+            msg["To"] = destinataire
+            msg.attach(MIMEText(corps_html, "html"))
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.ehlo()
+                server.starttls()
+                server.login(smtp_email, smtp_password)
+                server.sendmail(smtp_email, destinataire, msg.as_string())
+            print(f"✅ Email envoyé via Gmail 587 à {destinataire}")
+            return True
+        except Exception as e:
+            print(f"❌ Gmail 587 erreur: {type(e).__name__}: {e}")
+
+    print("❌ Aucun service email configuré")
     return False
 
 
