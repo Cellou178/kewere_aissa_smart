@@ -15,6 +15,7 @@ from app.routes.abonnements import router as abonnements_router
 from app.routes.marche import router as marche_router
 from app.routes.admin import router as admin_router
 from app.routes.analytics import router as analytics_router
+from app.routes.postes import router as postes_router
 import traceback
 import asyncio
 import httpx
@@ -87,6 +88,7 @@ app.include_router(stocks_router)
 app.include_router(donnees_router)
 app.include_router(dashboard_router)
 app.include_router(permissions_router)
+app.include_router(postes_router)
 
 @app.middleware("http")
 async def abonnement_check(request: Request, call_next):
