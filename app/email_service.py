@@ -2,9 +2,13 @@ import os
 import random
 import string
 import httpx
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-SMTP_EMAIL = os.getenv("SMTP_EMAIL", "celloudiallo286@gmail.com")
+BREVO_LOGIN    = os.getenv("BREVO_LOGIN", "")
+BREVO_PASSWORD = os.getenv("BREVO_PASSWORD", "")
 
 def generer_code(longueur=6) -> str:
     return ''.join(random.choices(string.digits, k=longueur))
@@ -12,34 +16,45 @@ def generer_code(longueur=6) -> str:
 def envoyer_email(destinataire: str, sujet: str, corps_html: str) -> bool:
     print(f"📧 Envoi email → {destinataire} | {sujet}")
 
-    if not RESEND_API_KEY:
-        print("❌ RESEND_API_KEY non configuré sur Render")
-        return False
+    # Priorité 1 : Resend (si domaine vérifié)
+    if RESEND_API_KEY:
+        try:
+            resp = httpx.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+                json={"from": "Kewere Aissa Smart <onboarding@resend.dev>",
+                      "to": [destinataire], "subject": sujet, "html": corps_html},
+                timeout=15.0,
+            )
+            if resp.status_code in (200, 201):
+                print(f"✅ Email envoyé via Resend à {destinataire}")
+                return True
+            else:
+                print(f"⚠️ Resend erreur {resp.status_code}: {resp.text} — tentative Brevo...")
+        except Exception as e:
+            print(f"⚠️ Resend exception: {e} — tentative Brevo...")
 
-    try:
-        resp = httpx.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "from": "Kewere Aissa Smart <onboarding@resend.dev>",
-                "to": [destinataire],
-                "subject": sujet,
-                "html": corps_html,
-            },
-            timeout=15.0,
-        )
-        if resp.status_code in (200, 201):
-            print(f"✅ Email envoyé avec succès à {destinataire}")
+    # Priorité 2 : Brevo SMTP port 587 (pas bloqué par Render)
+    if BREVO_LOGIN and BREVO_PASSWORD:
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = sujet
+            msg["From"] = f"Kewere Aissa Smart <{BREVO_LOGIN}>"
+            msg["To"] = destinataire
+            msg.attach(MIMEText(corps_html, "html"))
+            with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+                server.ehlo()
+                server.starttls()
+                server.login(BREVO_LOGIN, BREVO_PASSWORD)
+                server.sendmail(BREVO_LOGIN, destinataire, msg.as_string())
+            print(f"✅ Email envoyé via Brevo à {destinataire}")
             return True
-        else:
-            print(f"❌ Resend erreur {resp.status_code}: {resp.text}")
+        except Exception as e:
+            print(f"❌ Brevo erreur: {type(e).__name__}: {e}")
             return False
-    except Exception as e:
-        print(f"❌ Erreur envoi email: {type(e).__name__}: {e}")
-        return False
+
+    print("❌ Aucun service email configuré (RESEND_API_KEY ou BREVO_LOGIN/PASSWORD manquants)")
+    return False
 
 
 def email_code_inscription(destinataire: str, nom: str, code: str) -> bool:
