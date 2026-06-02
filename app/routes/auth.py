@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -198,7 +198,7 @@ def _verifier_code_db(email: str, code: str, type_code: str, db: Session) -> boo
     return False
 
 @router.post("/envoyer-code")
-def envoyer_code(data: EnvoyerCodeSchema, db: Session = Depends(get_db)):
+def envoyer_code(data: EnvoyerCodeSchema, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     if data.type == "reset_mdp":
         user = db.execute(text("""
             SELECT nom FROM utilisateurs WHERE email = :email LIMIT 1
@@ -206,12 +206,10 @@ def envoyer_code(data: EnvoyerCodeSchema, db: Session = Depends(get_db)):
         if not user:
             raise HTTPException(status_code=404, detail="Email introuvable")
         code = _sauvegarder_code(data.email.lower(), "reset_mdp", db)
-        ok = email_reset_mdp(data.email, user.nom, code)
+        background_tasks.add_task(email_reset_mdp, data.email, user.nom, code)
     else:
         code = _sauvegarder_code(data.email.lower(), "inscription", db)
-        ok = email_code_inscription(data.email, "Utilisateur", code)
-    if not ok:
-        raise HTTPException(status_code=500, detail="Erreur envoi email")
+        background_tasks.add_task(email_code_inscription, data.email, "Utilisateur", code)
     return {"success": True, "message": f"Code envoyé à {data.email}"}
 
 @router.post("/verifier-code")
