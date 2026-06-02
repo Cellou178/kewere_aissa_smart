@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db
@@ -7,7 +7,7 @@ from app.models import Utilisateur
 from pydantic import BaseModel, Field
 from typing import Optional
 from uuid import UUID
-import uuid
+import uuid, os, json as json_lib, re, httpx
 
 router = APIRouter(
     prefix="/donnees",
@@ -262,6 +262,92 @@ def delete_donnee(
         )
 
     return {"success": True, "message": "Données supprimées"}
+
+
+@router.post("/analyser-image")
+async def analyser_image(
+    request: Request,
+    cycle_id: str,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)
+):
+    body = await request.json()
+    image_base64 = body.get("image", "")
+    media_type = body.get("media_type", "image/jpeg")
+
+    if not image_base64:
+        raise HTTPException(status_code=400, detail="Image manquante")
+
+    cycle = db.execute(text("""
+        SELECT c.nombre_sujets, c.date_debut, c.type_cycle
+        FROM cycles c JOIN fermes f ON f.id = c.ferme_id
+        WHERE c.id = :cid AND f.entreprise_id = :eid
+    """), {"cid": cycle_id, "eid": current_user.entreprise_id}).fetchone()
+
+    if not cycle:
+        raise HTTPException(status_code=404, detail="Cycle introuvable")
+
+    api_key = os.getenv("NTHROPIC_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Clé API IA non configurée")
+
+    prompt = f"""Tu es un expert vétérinaire en aviculture au Sénégal. Analyse cette photo de poulailler.
+Cycle: {cycle.nombre_sujets} sujets, type: {cycle.type_cycle or 'poulet de chair'}, démarré le {cycle.date_debut}.
+
+Retourne UNIQUEMENT un JSON valide avec ces champs:
+{{
+  "sujets_visibles": <entier estimé>,
+  "sujets_morts_visibles": <entier, 0 si aucun>,
+  "temperature_estimee": <décimal °C si visible, sinon null>,
+  "humidite_estimee": <décimal % si estimable, sinon null>,
+  "etat_sante": "<bon | moyen | alarmant>",
+  "observations": "<état général en 1-2 phrases en français>",
+  "alerte": "<message d'alerte si urgent, sinon null>"
+}}"""
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": "claude-haiku-4-5-20251001",
+                    "max_tokens": 500,
+                    "messages": [{
+                        "role": "user",
+                        "content": [
+                            {"type": "image", "source": {
+                                "type": "base64",
+                                "media_type": media_type,
+                                "data": image_base64
+                            }},
+                            {"type": "text", "text": prompt}
+                        ]
+                    }]
+                }
+            )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Erreur API IA: {resp.status_code}")
+
+        content = resp.json()["content"][0]["text"]
+        try:
+            result = json_lib.loads(content)
+        except json_lib.JSONDecodeError:
+            match = re.search(r'\{.*\}', content, re.DOTALL)
+            result = json_lib.loads(match.group()) if match else {
+                "observations": content[:300], "etat_sante": "moyen",
+                "sujets_morts_visibles": 0, "sujets_visibles": None,
+                "temperature_estimee": None, "humidite_estimee": None, "alerte": None
+            }
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur analyse: {str(e)}")
 
 
 @router.get("/{donnee_id}")
