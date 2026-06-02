@@ -12,21 +12,25 @@ def generer_code(longueur=6) -> str:
     return ''.join(random.choices(string.digits, k=longueur))
 
 def envoyer_email(destinataire: str, sujet: str, corps_html: str) -> bool:
+    print(f"📧 Tentative envoi email → {destinataire} | sujet: {sujet}")
     if not SMTP_EMAIL or not SMTP_PASSWORD:
-        print("SMTP non configuré")
+        print("❌ SMTP non configuré (SMTP_EMAIL ou SMTP_PASSWORD manquant)")
         return False
+    print(f"📧 SMTP_EMAIL configuré: {SMTP_EMAIL}")
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = sujet
         msg["From"] = f"Kewere Aissa Smart <{SMTP_EMAIL}>"
         msg["To"] = destinataire
         msg.attach(MIMEText(corps_html, "html"))
+        print("📧 Connexion SMTP Gmail (port 465)...")
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(SMTP_EMAIL, SMTP_PASSWORD)
             server.sendmail(SMTP_EMAIL, destinataire, msg.as_string())
+        print(f"✅ Email envoyé avec succès à {destinataire}")
         return True
     except Exception as e:
-        print(f"Erreur email: {e}")
+        print(f"❌ Erreur email: {type(e).__name__}: {e}")
         return False
 
 def email_code_inscription(destinataire: str, nom: str, code: str) -> bool:
