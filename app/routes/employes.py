@@ -215,7 +215,8 @@ def create_employe(
         "message": "Employé créé avec succès",
         "id": emp_id,
         "compte_cree": compte_cree,
-        "email_envoye": compte_cree and data.email is not None
+        "email_envoye": compte_cree and data.email is not None,
+        "credentials": {"email": data.email, "mot_de_passe": mdp_temp} if compte_cree and mdp_temp else None
     }
 
 
