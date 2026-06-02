@@ -6,8 +6,10 @@ from app.database import get_db
 from app.models import Utilisateur, Role
 from app.auth import hash_password, verify_password, create_access_token
 from app.dependencies import get_current_user
+from app.email_service import generer_code, email_code_inscription, email_reset_mdp
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
+from datetime import datetime, timedelta
 import uuid
 
 router = APIRouter(
@@ -150,6 +152,85 @@ def activer_compte(email: str, db: Session = Depends(get_db)):
     """), {"email": email.lower()})
     db.commit()
     return {"success": True, "message": f"Compte {email} activé"}
+
+class EnvoyerCodeSchema(BaseModel):
+    email: EmailStr
+    type: str = "inscription"
+
+class VerifierCodeSchema(BaseModel):
+    email: EmailStr
+    code: str
+    type: str = "inscription"
+
+class ResetMdpSchema(BaseModel):
+    email: EmailStr
+    code: str
+    nouveau_mdp: str = Field(min_length=6, max_length=100)
+
+def _sauvegarder_code(email: str, type_code: str, db: Session) -> str:
+    code = generer_code()
+    duree = 15 if type_code == "inscription" else 10
+    expire = datetime.now() + timedelta(minutes=duree)
+    db.execute(text("""
+        UPDATE codes_verification SET utilise = true
+        WHERE email = :email AND type = :type AND utilise = false
+    """), {"email": email, "type": type_code})
+    db.execute(text("""
+        INSERT INTO codes_verification (email, code, type, expire_le)
+        VALUES (:email, :code, :type, :expire)
+    """), {"email": email, "code": code, "type": type_code, "expire": expire})
+    db.commit()
+    return code
+
+def _verifier_code_db(email: str, code: str, type_code: str, db: Session) -> bool:
+    result = db.execute(text("""
+        SELECT id FROM codes_verification
+        WHERE email = :email AND code = :code AND type = :type
+          AND utilise = false AND expire_le > NOW()
+        LIMIT 1
+    """), {"email": email, "code": code, "type": type_code}).fetchone()
+    if result:
+        db.execute(text("""
+            UPDATE codes_verification SET utilise = true WHERE id = :id
+        """), {"id": result.id})
+        db.commit()
+        return True
+    return False
+
+@router.post("/envoyer-code")
+def envoyer_code(data: EnvoyerCodeSchema, db: Session = Depends(get_db)):
+    if data.type == "reset_mdp":
+        user = db.execute(text("""
+            SELECT nom FROM utilisateurs WHERE email = :email LIMIT 1
+        """), {"email": data.email.lower()}).fetchone()
+        if not user:
+            raise HTTPException(status_code=404, detail="Email introuvable")
+        code = _sauvegarder_code(data.email.lower(), "reset_mdp", db)
+        ok = email_reset_mdp(data.email, user.nom, code)
+    else:
+        code = _sauvegarder_code(data.email.lower(), "inscription", db)
+        ok = email_code_inscription(data.email, "Utilisateur", code)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Erreur envoi email")
+    return {"success": True, "message": f"Code envoyé à {data.email}"}
+
+@router.post("/verifier-code")
+def verifier_code(data: VerifierCodeSchema, db: Session = Depends(get_db)):
+    ok = _verifier_code_db(data.email.lower(), data.code, data.type, db)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Code invalide ou expiré")
+    return {"success": True, "message": "Code vérifié"}
+
+@router.post("/reset-mdp")
+def reset_mdp(data: ResetMdpSchema, db: Session = Depends(get_db)):
+    ok = _verifier_code_db(data.email.lower(), data.code, "reset_mdp", db)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Code invalide ou expiré")
+    db.execute(text("""
+        UPDATE utilisateurs SET mot_de_passe = :mdp WHERE email = :email
+    """), {"mdp": hash_password(data.nouveau_mdp), "email": data.email.lower()})
+    db.commit()
+    return {"success": True, "message": "Mot de passe modifié avec succès"}
 
 @router.get("/me")
 def me(current_user = Depends(get_current_user)):
