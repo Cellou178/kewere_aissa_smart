@@ -1,228 +1,87 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db
-from app.dependencies import get_current_user, require_role
+from app.dependencies import get_current_user
 from app.models import Utilisateur
-from pydantic import BaseModel, Field
-from uuid import UUID
+from pydantic import BaseModel
+from typing import Optional
 import uuid
 
-router = APIRouter(
-    prefix="/finances",
-    tags=["Finances"]
-)
+router = APIRouter(prefix="/finances", tags=["Finances"])
 
-# ==========================================
-# SCHEMA
-# ==========================================
-class FinanceSchema(BaseModel):
+class TransactionSchema(BaseModel):
+    libelle: str
+    montant: float
+    type: str
+    categorie: str
+    note: Optional[str] = None
+    cycle_id: Optional[str] = None
+    ferme_id: Optional[str] = None
 
-    ferme_id: str
-
-    type_operation: str = Field(
-        min_length=2,
-        max_length=50
-    )
-    # depense / revenu
-
-    description: str = Field(
-        min_length=2,
-        max_length=255
-    )
-
-    montant: float = Field(
-        gt=0
-    )
-
-    date_operation: str
-
-
-# ==========================================
-# LISTE FINANCES
-# ==========================================
 @router.get("/")
-def get_finances(
+def get_transactions(
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(
-        get_current_user
-    )
+    current_user: Utilisateur = Depends(get_current_user)
 ):
+    rows = db.execute(text("""
+        SELECT t.* FROM transactions t
+        WHERE t.entreprise_id = :eid
+        ORDER BY t.created_at DESC
+    """), {"eid": current_user.entreprise_id}).fetchall()
+    return {"total": len(rows), "items": [dict(r._mapping) for r in rows]}
 
-    result = db.execute(text("""
-        SELECT fi.*
-        FROM finances fi
-        JOIN fermes f
-            ON f.id = fi.ferme_id
-        WHERE f.entreprise_id = :eid
-        ORDER BY fi.date_operation DESC
-    """), {
-        "eid": current_user.entreprise_id
-    })
-
-    finances = [
-        dict(row._mapping)
-        for row in result
-    ]
-
-    return {
-        "total": len(finances),
-        "items": finances
-    }
-
-
-# ==========================================
-# CRÉER OPÉRATION
-# ==========================================
-@router.post("/", status_code=status.HTTP_201_CREATED)
-def create_finance(
-    data: FinanceSchema,
+@router.post("/", status_code=201)
+def create_transaction(
+    data: TransactionSchema,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(
-        require_role("admin", "manager")
-    )
+    current_user: Utilisateur = Depends(get_current_user)
 ):
-
-    # Vérifier ferme entreprise
-    ferme = db.execute(text("""
-        SELECT id
-        FROM fermes
-        WHERE id = :fid
-        AND entreprise_id = :eid
-    """), {
-        "fid": data.ferme_id,
-        "eid": current_user.entreprise_id
-    }).fetchone()
-
-    if not ferme:
-
-        raise HTTPException(
-            status_code=403,
-            detail="Accès interdit à cette ferme"
-        )
-
-    finance_id = str(uuid.uuid4())
-
+    tid = str(uuid.uuid4())
     db.execute(text("""
-        INSERT INTO finances (
-            id,
-            ferme_id,
-            type_operation,
-            description,
-            montant,
-            date_operation
-        )
-        VALUES (
-            :id,
-            :fid,
-            :type,
-            :desc,
-            :montant,
-            :date
-        )
+        INSERT INTO transactions
+            (id, entreprise_id, ferme_id, cycle_id, libelle, montant, type, categorie, note)
+        VALUES
+            (:id, :eid, :fid, :cid, :lib, :montant, :type, :cat, :note)
     """), {
-        "id": finance_id,
-        "fid": data.ferme_id,
-        "type": data.type_operation.strip(),
-        "desc": data.description.strip(),
-        "montant": data.montant,
-        "date": data.date_operation
+        "id": tid, "eid": current_user.entreprise_id,
+        "fid": data.ferme_id, "cid": data.cycle_id,
+        "lib": data.libelle, "montant": data.montant,
+        "type": data.type, "cat": data.categorie, "note": data.note,
     })
-
     db.commit()
+    return {"message": "Transaction créée", "id": tid}
 
-    return {
-        "success": True,
-        "message": "Opération enregistrée",
-        "id": finance_id
-    }
-
-
-# ==========================================
-# MODIFIER OPÉRATION
-# ==========================================
-@router.put("/{finance_id}")
-def update_finance(
-    finance_id: UUID,
-    data: FinanceSchema,
+@router.put("/{tid}")
+def update_transaction(
+    tid: str,
+    data: TransactionSchema,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(
-        require_role("admin", "manager")
-    )
+    current_user: Utilisateur = Depends(get_current_user)
 ):
-
     result = db.execute(text("""
-        UPDATE finances
-        SET
-            type_operation = :type,
-            description = :desc,
-            montant = :montant,
-            date_operation = :date
-        WHERE id = :id
-        AND ferme_id IN (
-            SELECT id
-            FROM fermes
-            WHERE entreprise_id = :eid
-        )
+        UPDATE transactions
+        SET libelle=:lib, montant=:montant, type=:type,
+            categorie=:cat, note=:note, cycle_id=:cid
+        WHERE id=:id AND entreprise_id=:eid
     """), {
-        "type": data.type_operation.strip(),
-        "desc": data.description.strip(),
-        "montant": data.montant,
-        "date": data.date_operation,
-        "id": str(finance_id),
-        "eid": current_user.entreprise_id
+        "lib": data.libelle, "montant": data.montant, "type": data.type,
+        "cat": data.categorie, "note": data.note, "cid": data.cycle_id,
+        "id": tid, "eid": current_user.entreprise_id,
     })
-
     db.commit()
-
     if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Transaction introuvable")
+    return {"message": "Transaction mise à jour"}
 
-        raise HTTPException(
-            status_code=404,
-            detail="Opération introuvable ou accès interdit"
-        )
-
-    return {
-        "success": True,
-        "message": "Opération mise à jour"
-    }
-
-
-# ==========================================
-# SUPPRIMER OPÉRATION
-# ==========================================
-@router.delete("/{finance_id}")
-def delete_finance(
-    finance_id: UUID,
+@router.delete("/{tid}")
+def delete_transaction(
+    tid: str,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(
-        require_role("admin")
-    )
+    current_user: Utilisateur = Depends(get_current_user)
 ):
-
-    result = db.execute(text("""
-        DELETE FROM finances
-        WHERE id = :id
-        AND ferme_id IN (
-            SELECT id
-            FROM fermes
-            WHERE entreprise_id = :eid
-        )
-    """), {
-        "id": str(finance_id),
-        "eid": current_user.entreprise_id
-    })
-
+    db.execute(text(
+        "DELETE FROM transactions WHERE id=:id AND entreprise_id=:eid"
+    ), {"id": tid, "eid": current_user.entreprise_id})
     db.commit()
-
-    if result.rowcount == 0:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Opération introuvable ou accès interdit"
-        )
-
-    return {
-        "success": True,
-        "message": "Opération supprimée"
-    }
+    return {"message": "Transaction supprimée"}

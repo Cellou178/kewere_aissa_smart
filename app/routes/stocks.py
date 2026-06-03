@@ -5,6 +5,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, require_role
 from app.models import Utilisateur
 from pydantic import BaseModel, Field
+from typing import Optional
 from uuid import UUID
 import uuid
 
@@ -17,21 +18,14 @@ router = APIRouter(
 # SCHEMA VALIDATION
 # ==========================================
 class StockSchema(BaseModel):
-
     ferme_id: str
-
-    produit: str = Field(
-        min_length=2,
-        max_length=100
-    )
-
-    quantite: float = Field(
-        ge=0
-    )
-
-    seuil_alerte: float = Field(
-        ge=0
-    )
+    produit: str = Field(min_length=2, max_length=100)
+    quantite: float = Field(ge=0)
+    seuil_alerte: float = Field(ge=0)
+    prix_unitaire: Optional[float] = Field(default=0, ge=0)
+    unite: Optional[str] = 'kg'
+    categorie: Optional[str] = 'aliment'
+    description: Optional[str] = None
 
 
 # ==========================================
@@ -101,25 +95,23 @@ def create_stock(
 
     db.execute(text("""
         INSERT INTO stocks (
-            id,
-            ferme_id,
-            produit,
-            quantite,
-            seuil_alerte
+            id, ferme_id, produit, quantite, seuil_alerte,
+            prix_unitaire, unite, categorie, description
         )
         VALUES (
-            :id,
-            :fid,
-            :produit,
-            :quantite,
-            :seuil
+            :id, :fid, :produit, :quantite, :seuil,
+            :prix, :unite, :categorie, :description
         )
     """), {
         "id": stock_id,
         "fid": data.ferme_id,
         "produit": data.produit.strip(),
         "quantite": data.quantite,
-        "seuil": data.seuil_alerte
+        "seuil": data.seuil_alerte,
+        "prix": data.prix_unitaire or 0,
+        "unite": data.unite or 'kg',
+        "categorie": data.categorie or 'aliment',
+        "description": data.description,
     })
 
     db.commit()
@@ -146,20 +138,19 @@ def update_stock(
 
     result = db.execute(text("""
         UPDATE stocks
-        SET
-            produit = :produit,
-            quantite = :quantite,
-            seuil_alerte = :seuil
-        WHERE id = :id
-        AND ferme_id IN (
-            SELECT id
-            FROM fermes
-            WHERE entreprise_id = :eid
-        )
+        SET produit=:produit, quantite=:quantite, seuil_alerte=:seuil,
+            prix_unitaire=:prix, unite=:unite, categorie=:categorie,
+            description=:description
+        WHERE id=:id
+        AND ferme_id IN (SELECT id FROM fermes WHERE entreprise_id=:eid)
     """), {
         "produit": data.produit.strip(),
         "quantite": data.quantite,
         "seuil": data.seuil_alerte,
+        "prix": data.prix_unitaire or 0,
+        "unite": data.unite or 'kg',
+        "categorie": data.categorie or 'aliment',
+        "description": data.description,
         "id": str(stock_id),
         "eid": current_user.entreprise_id
     })
