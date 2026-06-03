@@ -21,6 +21,8 @@ from app.routes.chat import router as chat_router
 from app.routes.finances import router as finances_router
 from app.routes.meteo import router as meteo_router
 from app.routes.sante import router as sante_router
+from app.routes.taches import router as taches_router
+from app.routes.batiments import router as batiments_router
 import traceback
 import asyncio
 import httpx
@@ -99,6 +101,8 @@ app.include_router(chat_router)
 app.include_router(finances_router)
 app.include_router(meteo_router)
 app.include_router(sante_router)
+app.include_router(taches_router)
+app.include_router(batiments_router)
 
 @app.middleware("http")
 async def abonnement_check(request: Request, call_next):
