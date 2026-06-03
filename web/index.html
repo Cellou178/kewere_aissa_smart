@@ -1,46 +1,213 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="/">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Kewere Aissa Smart - Gestion avicole intelligente">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- iOS meta tags & icons -->
+  <!-- iOS -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="KAS">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon KAS -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%230F172A'/%3E%3Crect x='4' y='4' width='92' height='92' rx='14' fill='%231E3A5F'/%3E%3Ctext x='50' y='66' font-family='Arial Black,Arial,sans-serif' font-size='38' font-weight='900' fill='%23D97706' text-anchor='middle'%3EKAS%3C/text%3E%3C/svg%3E"/>
+  <!-- Favicon KAS + coq -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230F172A'/%3E%3Ctext x='50' y='52' font-family='Apple Color Emoji%2CSegoe UI Emoji%2CNoto Color Emoji%2Csans-serif' font-size='44' text-anchor='middle'%3E%F0%9F%90%94%3C/text%3E%3Ctext x='50' y='88' font-family='Arial Black%2CArial%2Csans-serif' font-size='22' font-weight='900' fill='%23D97706' text-anchor='middle'%3EKAS%3C/text%3E%3C/svg%3E"/>
 
   <title>KAS - Kewere Aissa Smart</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    #kas-splash {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(ellipse at center,
+        #1E3A5F 0%, #0F172A 60%, #050D1A 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      font-family: 'Arial Black', Arial, sans-serif;
+    }
+
+    /* Anneau lumineux derriere le coq */
+    .kas-ring {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .kas-ring::before {
+      content: '';
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 3px solid #D97706;
+      box-shadow:
+        0 0 20px rgba(217,119,6,0.6),
+        0 0 50px rgba(217,119,6,0.3),
+        inset 0 0 30px rgba(217,119,6,0.1);
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    .kas-ring::after {
+      content: '';
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 1px solid rgba(217,119,6,0.3);
+      animation: glow 2s ease-in-out infinite reverse;
+    }
+
+    .kas-coq {
+      font-size: 80px;
+      animation: float 3s ease-in-out infinite;
+      position: relative;
+      z-index: 2;
+      line-height: 1;
+    }
+
+    /* Badge KAS en arc sous le coq */
+    .kas-badge {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .kas-letters {
+      display: flex;
+      gap: 6px;
+    }
+
+    .kas-letter {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #D97706, #B45309);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 22px;
+      font-weight: 900;
+      box-shadow: 0 4px 15px rgba(217,119,6,0.5);
+      letter-spacing: 0;
+    }
+
+    .kas-letter:nth-child(1) { animation: pop 0.6s 0.1s both; }
+    .kas-letter:nth-child(2) { animation: pop 0.6s 0.25s both; }
+    .kas-letter:nth-child(3) { animation: pop 0.6s 0.4s both; }
+
+    .kas-fullname {
+      color: #64748B;
+      font-size: 11px;
+      font-weight: 400;
+      font-family: Arial, sans-serif;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Points de chargement */
+    .kas-dots {
+      display: flex;
+      gap: 8px;
+      margin-top: 36px;
+    }
+
+    .kas-dot {
+      width: 8px;
+      height: 8px;
+      background: #D97706;
+      border-radius: 50%;
+      opacity: 0.3;
+    }
+
+    .kas-dot:nth-child(1) { animation: blink 1.2s 0s infinite; }
+    .kas-dot:nth-child(2) { animation: blink 1.2s 0.2s infinite; }
+    .kas-dot:nth-child(3) { animation: blink 1.2s 0.4s infinite; }
+
+    @keyframes glow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.04); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes pop {
+      from { opacity: 0; transform: scale(0.5) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.3); }
+    }
+
+    /* Fade out quand Flutter charge */
+    #kas-splash.hiding {
+      animation: fadeOut 0.5s ease-out forwards;
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to   { opacity: 0; pointer-events: none; }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <!-- ── Ecran de chargement KAS ── -->
+  <div id="kas-splash">
+    <div class="kas-ring">
+      <span class="kas-coq">🐔</span>
+    </div>
+
+    <div class="kas-badge">
+      <div class="kas-letters">
+        <div class="kas-letter">K</div>
+        <div class="kas-letter">A</div>
+        <div class="kas-letter">S</div>
+      </div>
+      <span class="kas-fullname">Kewere Aissa Smart</span>
+    </div>
+
+    <div class="kas-dots">
+      <div class="kas-dot"></div>
+      <div class="kas-dot"></div>
+      <div class="kas-dot"></div>
+    </div>
+  </div>
+
+  <script>
+    // Masquer le splash quand Flutter est pret
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.getElementById('kas-splash');
+      if (splash) {
+        splash.classList.add('hiding');
+        setTimeout(function () {
+          splash.style.display = 'none';
+        }, 500);
+      }
+    });
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
