@@ -106,3 +106,4 @@ def get_ferme(
     if not row:
         raise HTTPException(status_code=404, detail="Ferme non trouvée")
     return dict(row._mapping)
+
