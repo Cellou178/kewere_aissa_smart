@@ -5,6 +5,7 @@ from app.dependencies import get_current_user, require_role
 from app.models import Utilisateur
 from pydantic import BaseModel
 from sqlalchemy import text
+from typing import Optional
 import uuid
 
 router = APIRouter(prefix="/fermes", tags=["Fermes"])
@@ -12,7 +13,7 @@ router = APIRouter(prefix="/fermes", tags=["Fermes"])
 class FermeSchema(BaseModel):
     nom: str
     localisation: str
-    superficie: float
+    superficie: Optional[float] = None
 
 # ========== LISTE DES FERMES ==========
 @router.get("/")
