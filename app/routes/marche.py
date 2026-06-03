@@ -67,6 +67,9 @@ def simulateur(cycle_id: str,
     if not cycle:
         raise HTTPException(status_code=404, detail="Cycle introuvable")
 
+    if cycle.entreprise_id != current_user.entreprise_id:
+        raise HTTPException(status_code=403, detail="Accès interdit")
+
     # Dernière donnée journalière
     derniere = db.execute(text("""
         SELECT date_releve, poids_moyen_global, mortalite, aliment_consomme,

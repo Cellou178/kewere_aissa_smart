@@ -27,11 +27,10 @@ def get_cycles(
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(get_current_user)
 ):
-    if current_user.role.nom == "admin":
+    if current_user.role.nom == "superadmin":
+        # superadmin voit tout
         if ferme_id:
-            result = db.execute(text(
-                "SELECT * FROM cycles WHERE ferme_id = :fid"
-            ), {"fid": ferme_id})
+            result = db.execute(text("SELECT * FROM cycles WHERE ferme_id = :fid"), {"fid": ferme_id})
         else:
             result = db.execute(text("SELECT * FROM cycles"))
     else:
