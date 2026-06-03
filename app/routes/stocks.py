@@ -208,3 +208,77 @@ def delete_stock(
         "success": True,
         "message": "Stock supprimé avec succès"
     }
+
+
+# ==========================================
+# ENREGISTRER UN MOUVEMENT (ENTRÉE / SORTIE)
+# ==========================================
+class MouvementSchema(BaseModel):
+    type: str                          # 'entree' | 'sortie'
+    quantite: float = Field(gt=0)
+    cycle_id: Optional[str] = None
+    motif: Optional[str] = None
+
+@router.post("/{stock_id}/mouvement", status_code=201)
+def ajouter_mouvement(
+    stock_id: UUID,
+    data: MouvementSchema,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)
+):
+    stock = db.execute(text("""
+        SELECT s.id, s.quantite, s.produit, f.entreprise_id
+        FROM stocks s JOIN fermes f ON f.id = s.ferme_id
+        WHERE s.id = :id
+    """), {"id": str(stock_id)}).fetchone()
+
+    if not stock or stock.entreprise_id != current_user.entreprise_id:
+        raise HTTPException(status_code=404, detail="Stock introuvable")
+
+    nouvelle_qte = stock.quantite + data.quantite if data.type == 'entree' \
+                   else stock.quantite - data.quantite
+
+    if nouvelle_qte < 0:
+        raise HTTPException(status_code=400,
+            detail=f"Stock insuffisant (disponible: {stock.quantite})")
+
+    mid = str(uuid.uuid4())
+    db.execute(text("""
+        INSERT INTO stock_mouvements
+            (id, stock_id, type, quantite, quantite_avant, quantite_apres,
+             cycle_id, motif, utilisateur_id)
+        VALUES (:id, :sid, :type, :qte, :avant, :apres, :cid, :motif, :uid)
+    """), {
+        "id": mid, "sid": str(stock_id),
+        "type": data.type, "qte": data.quantite,
+        "avant": stock.quantite, "apres": nouvelle_qte,
+        "cid": data.cycle_id, "motif": data.motif,
+        "uid": current_user.id,
+    })
+    db.execute(text("UPDATE stocks SET quantite=:q WHERE id=:id"),
+               {"q": nouvelle_qte, "id": str(stock_id)})
+    db.commit()
+    return {"message": "Mouvement enregistré", "nouvelle_quantite": nouvelle_qte}
+
+
+# ==========================================
+# HISTORIQUE DES MOUVEMENTS
+# ==========================================
+@router.get("/{stock_id}/mouvements")
+def get_mouvements(
+    stock_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)
+):
+    rows = db.execute(text("""
+        SELECT m.*, u.nom as utilisateur_nom, c.nom as cycle_nom
+        FROM stock_mouvements m
+        LEFT JOIN utilisateurs u ON u.id = m.utilisateur_id
+        LEFT JOIN cycles c ON c.id = m.cycle_id
+        JOIN stocks s ON s.id = m.stock_id
+        JOIN fermes f ON f.id = s.ferme_id
+        WHERE m.stock_id = :sid AND f.entreprise_id = :eid
+        ORDER BY m.created_at DESC
+        LIMIT 100
+    """), {"sid": str(stock_id), "eid": current_user.entreprise_id}).fetchall()
+    return [dict(r._mapping) for r in rows]

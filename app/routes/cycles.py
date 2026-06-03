@@ -127,6 +127,38 @@ def delete_cycle(
     db.commit()
     return {"message": "Cycle supprimé avec succès"}
 
+@router.post("/{cycle_id}/clone", status_code=201)
+def clone_cycle(
+    cycle_id: str,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)
+):
+    src = db.execute(text("""
+        SELECT c.* FROM cycles c
+        JOIN fermes f ON f.id = c.ferme_id
+        WHERE c.id = :id AND f.entreprise_id = :eid
+    """), {"id": cycle_id, "eid": current_user.entreprise_id}).fetchone()
+
+    if not src:
+        raise HTTPException(status_code=404, detail="Cycle introuvable")
+
+    new_id = str(uuid.uuid4())
+    new_nom = f"{src.nom} (copie)"
+    db.execute(text("""
+        INSERT INTO cycles
+            (id, ferme_id, type_cycle, statut, nom, nombre_sujets, batiment, souche)
+        VALUES
+            (:id, :fid, :type, 'actif', :nom, :sujets, :bat, :souche)
+    """), {
+        "id": new_id, "fid": src.ferme_id,
+        "type": src.type_cycle, "nom": new_nom,
+        "sujets": src.nombre_sujets, "bat": src.batiment,
+        "souche": src.souche,
+    })
+    db.commit()
+    return {"message": "Cycle cloné avec succès", "id": new_id, "nom": new_nom}
+
+
 @router.get("/{cycle_id}")
 def get_cycle(
     cycle_id: str,
