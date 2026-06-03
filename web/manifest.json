@@ -4,7 +4,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0F172A",
-    "theme_color": "#D97706",
+    "theme_color": "#16A34A",
     "description": "Plateforme intelligente de gestion avicole en Afrique de l'Ouest",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
