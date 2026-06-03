@@ -23,6 +23,7 @@ from app.routes.meteo import router as meteo_router
 from app.routes.sante import router as sante_router
 from app.routes.taches import router as taches_router
 from app.routes.batiments import router as batiments_router
+from app.routes.conges import router as conges_router
 import traceback
 import asyncio
 import httpx
@@ -103,6 +104,7 @@ app.include_router(meteo_router)
 app.include_router(sante_router)
 app.include_router(taches_router)
 app.include_router(batiments_router)
+app.include_router(conges_router)
 
 @app.middleware("http")
 async def abonnement_check(request: Request, call_next):
