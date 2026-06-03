@@ -1,5 +1,13 @@
 .env
 
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
 # Flutter/Dart
 .dart_tool/
 .flutter-plugins
