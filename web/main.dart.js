@@ -113117,7 +113117,7 @@ o=A.z(o,B.q,B.n,B.m,0,p)
 n=q.zH(q.z)
 s=A.m(10)
 r=t.p
-s=A.a([A.u(p,A.z(A.a([A.a4(A.e("Module",p,p,p,p,p,B.mg,p,p,p),1),A.ba(A.e("\ud83d\udc41\ufe0f Lire",p,p,p,p,p,B.xz,B.bx,p,p),p,56),A.ba(A.e("\xe2\u0153\x8f\ufe0f \xc9crire",p,p,p,p,p,B.xz,B.bx,p,p),p,56),A.ba(A.e("\ud83d\uddd1\ufe0f Suppr.",p,p,p,p,p,B.xz,B.bx,p,p),p,56)],r),B.q,B.n,B.m,0,p),B.u,p,p,new A.t(n,p,p,s,p,p,B.w),p,p,p,p,B.dc,p,p,p),B.aa],r)
+s=A.a([A.u(p,A.z(A.a([A.a4(A.e("Module",p,p,p,p,p,B.mg,p,p,p),1),A.ba(A.e("\ud83d\udc41\ufe0f Lire",p,p,p,p,p,B.xz,B.bx,p,p),p,56),A.ba(A.e("\u270f\ufe0f \xc9crire",p,p,p,p,p,B.xz,B.bx,p,p),p,56),A.ba(A.e("\ud83d\uddd1\ufe0f Suppr.",p,p,p,p,p,B.xz,B.bx,p,p),p,56)],r),B.q,B.n,B.m,0,p),B.u,p,p,new A.t(n,p,p,s,p,p,B.w),p,p,p,p,B.dc,p,p,p),B.aa],r)
 if(!q.x)s.push(B.Yc)
 else{n=q.w.h(0,q.z)
 if(n==null)n=A.a([],t.c)
@@ -115163,7 +115163,7 @@ Y1(a,b,c){this.u(new A.aLE(this,b,c,a))
 A.jW(B.c1,new A.aLF(this),t.P)},
 uy(a,b){return this.Y1(!1,a,b)},
 anx(){var s=this,r=J.dh(s.w,new A.aLG()),q=A.a_(r,r.$ti.i("w.E")),p=J.eg(s.w,0,new A.aLH()),o=J.eg(s.x,0,new A.aLI()),n=p>0?B.o.H(o/p*100,1):"0",m=J.eh(s.x)?0:B.o.H(J.eg(s.x,0,new A.aLJ())/J.bp(s.x),1),l=J.dh(s.y,new A.aLK()).gv(0)
-return"CONTEXTE FERME DE "+$.h8.toUpperCase()+":\n- R\xf4le: "+$.e3.toLowerCase()+"\n- Total cycles: "+J.bp(s.w)+" ("+q.length+" actifs)\n- Poulets total: "+A.i(p)+"\n- Mortalit\xe9 totale: "+A.i(o)+" ("+n+"%)\n- Temp\xe9rature moyenne: "+A.i(m)+"\xc2\xb0C\n- Relev\xe9s enregistr\xe9s: "+J.bp(s.x)+"\n- Stocks en alerte: "+l+"/"+J.bp(s.y)+"\n- Cycles actifs: "+new A.R(q,new A.aLL(),A.T(q).i("R<1,j>")).bs(0,", ")},
+return"CONTEXTE FERME DE "+$.h8.toUpperCase()+":\n- R\xf4le: "+$.e3.toLowerCase()+"\n- Total cycles: "+J.bp(s.w)+" ("+q.length+" actifs)\n- Poulets total: "+A.i(p)+"\n- Mortalit\xe9 totale: "+A.i(o)+" ("+n+"%)\n- Temp\xe9rature moyenne: "+A.i(m)+"\xb0C\n- Relev\xe9s enregistr\xe9s: "+J.bp(s.x)+"\n- Stocks en alerte: "+l+"/"+J.bp(s.y)+"\n- Cycles actifs: "+new A.R(q,new A.aLL(),A.T(q).i("R<1,j>")).bs(0,", ")},
 yX(a){return this.arC(a)},
 a07(){return this.yX(null)},
 arC(a2){var s=0,r=A.P(t.H),q,p=2,o=[],n=this,m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1
@@ -118849,10 +118849,10 @@ s+=p>0?" Tendance \xe0 la hausse: renforcer surveillance.":" Tendance stable."
 s=(q>15?s+(" Pic critique de "+B.o.H(q,0)+"/j d\xe9tect\xe9."):s)+"\n\n\ud83d\udcda R\xe9f: FAO (2014) Good Practices for Biosecurity in the Poultry Sector; CNPO S\xe9n\xe9gal: cible <3% du cheptel."
 return s.charCodeAt(0)==0?s:s
 case"temperature":A.an(b.h(0,"min"))
-if(r>=25&&r<=32)s="\u2705 Temp\xe9rature optimale ("+B.o.H(r,1)+"\xc2\xb0C). Plage id\xe9ale 25-32\xc2\xb0C respect\xe9e."
-else if(r<25)s="\xe2\x9d\u201e\ufe0f Temp\xe9rature basse ("+B.o.H(r,1)+"\xc2\xb0C). Risque stress froid. Chauffage recommand\xe9."
-else s=r<=35?"\ud83c\udf21\ufe0f Temp\xe9rature \xe9lev\xe9e ("+B.o.H(r,1)+"\xc2\xb0C). >32\xc2\xb0C: consommation eau +20%, croissance r\xe9duite.":"\ud83d\udd34 CHALEUR CRITIQUE ("+B.o.H(r,1)+"\xc2\xb0C). >35\xc2\xb0C: risque mort thermique. Ventilation urgente!"
-s=(q>38?s+(" Pic dangereux de "+B.o.H(q,1)+"\xc2\xb0C enregistr\xe9."):s)+"\n\n\ud83d\udcda R\xe9f: Lohmann (2019) Broiler Management Guide; Ciss\xe9 M. (2021) Aviculture S\xe9n\xe9gal: T\xc2\xb0 optimale 25-32\xc2\xb0C."
+if(r>=25&&r<=32)s="\u2705 Temp\xe9rature optimale ("+B.o.H(r,1)+"\xb0C). Plage id\xe9ale 25-32\xb0C respect\xe9e."
+else if(r<25)s="\u2744\ufe0f Temp\xe9rature basse ("+B.o.H(r,1)+"\xb0C). Risque stress froid. Chauffage recommand\xe9."
+else s=r<=35?"\ud83c\udf21\ufe0f Temp\xe9rature \xe9lev\xe9e ("+B.o.H(r,1)+"\xb0C). >32\xb0C: consommation eau +20%, croissance r\xe9duite.":"\ud83d\udd34 CHALEUR CRITIQUE ("+B.o.H(r,1)+"\xb0C). >35\xb0C: risque mort thermique. Ventilation urgente!"
+s=(q>38?s+(" Pic dangereux de "+B.o.H(q,1)+"\xb0C enregistr\xe9."):s)+"\n\n\ud83d\udcda R\xe9f: Lohmann (2019) Broiler Management Guide; Ciss\xe9 M. (2021) Aviculture S\xe9n\xe9gal: T\xb0 optimale 25-32\xb0C."
 return s.charCodeAt(0)==0?s:s
 case"humidite":if(r>=50&&r<=70)s="\u2705 Humidit\xe9 id\xe9ale ("+B.o.H(r,1)+"%). Liti\xe8re saine, pas de risque respiratoire."
 else if(r<50)s="\ud83d\udca8 Humidit\xe9 insuffisante ("+B.o.H(r,1)+"%). <50%: poussi\xe8res et probl\xe8mes respiratoires."
@@ -118885,11 +118885,11 @@ n=B.o.H(f,1)
 m=f>=25&&f<=32?i:"\u26a0\ufe0f hors norme"
 l=B.o.H(e,1)
 k=e>=50&&e<=70?i:"\u26a0\ufe0f \xe0 corriger"
-k=q+("\ud83d\udcca R\xe9sum\xe9 ("+h+" relev\xe9s):\n")+("\u2022 Mortalit\xe9 totale: "+A.i(g)+" ("+o+")\n")+("\u2022 T\xc2\xb0 moyenne: "+n+"\xc2\xb0C ("+m+")\n")+("\u2022 Humidit\xe9 moy: "+l+"% ("+k+")\n")+("\u2022 Production totale: "+A.i(d)+"\n\n")+"\ud83d\udca1 Recommandations:\n"
+k=q+("\ud83d\udcca R\xe9sum\xe9 ("+h+" relev\xe9s):\n")+("\u2022 Mortalit\xe9 totale: "+A.i(g)+" ("+o+")\n")+("\u2022 T\xb0 moyenne: "+n+"\xb0C ("+m+")\n")+("\u2022 Humidit\xe9 moy: "+l+"% ("+k+")\n")+("\u2022 Production totale: "+A.i(d)+"\n\n")+"\ud83d\udca1 Recommandations:\n"
 h=f>32
-q=h?k+"\u2022 Am\xe9liorer ventilation (T\xc2\xb0 > 32\xc2\xb0C)\n":k
+q=h?k+"\u2022 Am\xe9liorer ventilation (T\xb0 > 32\xb0C)\n":k
 j=!h
-if(r){h=q+"\u2022 Augmenter chauffage (T\xc2\xb0 < 25\xc2\xb0C)\n"
+if(r){h=q+"\u2022 Augmenter chauffage (T\xb0 < 25\xb0C)\n"
 j=!1}else h=q
 if(e>70){h+="\u2022 R\xe9duire densit\xe9, am\xe9liorer liti\xe8re\n"
 j=!1}if(p){h+="\u2022 Consulter v\xe9t\xe9rinaire (mortalit\xe9 \xe9lev\xe9e)\n"
@@ -119068,7 +119068,7 @@ anr(a,b){var s,r,q,p,o,n,m,l=this,k=null,j=J.Z(b)
 if(j.gai(b))return l.a_Z("Aucune donn\xe9e")
 s=t.N
 r=A.V(["mortalite",B.R,"temperature",B.W,"humidite",B.fl,"production",B.D],s,t.G)
-q=A.V(["mortalite","","temperature","\xc2\xb0","humidite","%","production",""],s,s)
+q=A.V(["mortalite","","temperature","\xb0","humidite","%","production",""],s,s)
 p=r.h(0,a)
 if(p==null)p=B.A
 o=q.h(0,a)
@@ -120471,7 +120471,7 @@ if(f==null)d=null
 else{f=J.k(f,0)
 f=f==null?null:J.k(f,"description")
 d=f}j=d==null?"":d
-i="Tu es un expert en aviculture au S\xe9n\xe9gal.\nAnalyse ces conditions m\xe9t\xe9o et donne des conseils d'\xe9levage.\n\nM\xc9T\xc9O \xc0 "+n.y+":\n- Temp\xe9rature: "+A.i(m)+"\xc2\xb0C\n- Humidit\xe9: "+A.i(l)+"%\n- Vent: "+A.i(k)+"m/s\n- Conditions: "+A.i(j)+"\n\nDonne 3-4 conseils pratiques pour:\n1. Adapter la ventilation des b\xe2timents\n2. G\xe9rer l'alimentation et l'hydratation\n3. Pr\xe9venir les risques sanitaires\n4. Optimiser le bien-\xeatre des poulets\n\nSois concis et pratique. En fran\xe7ais."
+i="Tu es un expert en aviculture au S\xe9n\xe9gal.\nAnalyse ces conditions m\xe9t\xe9o et donne des conseils d'\xe9levage.\n\nM\xc9T\xc9O \xc0 "+n.y+":\n- Temp\xe9rature: "+A.i(m)+"\xb0C\n- Humidit\xe9: "+A.i(l)+"%\n- Vent: "+A.i(k)+"m/s\n- Conditions: "+A.i(j)+"\n\nDonne 3-4 conseils pratiques pour:\n1. Adapter la ventilation des b\xe2timents\n2. G\xe9rer l'alimentation et l'hydratation\n3. Pr\xe9venir les risques sanitaires\n4. Optimiser le bien-\xeatre des poulets\n\nSois concis et pratique. En fran\xe7ais."
 f=A.cn("https://api.anthropic.com/v1/messages")
 c=t.N
 b=A.V(["Content-Type","application/json"],c,c)
@@ -120547,11 +120547,11 @@ n=A.a_(new A.R(n,new A.aWt(),m),m.i("am.E"))
 p.push(A.hW(o,B.bi,k,n,new A.aWu(l),B.qF,j,t.N))
 return A.r(p,B.q,B.n,B.m)},
 anp(){var s,r,q=this,p=q.OZ(""+q.f.a,"Villes",B.A),o=q.f,n=A.v(o).i("bW<2>"),m=t.i
-n=q.OZ(B.o.H(A.iv(new A.bW(o,n),new A.aWh(),n.i("w.E"),m).ee(0,new A.aWi()),0)+"\xc2\xb0","Max",B.R)
+n=q.OZ(B.o.H(A.iv(new A.bW(o,n),new A.aWh(),n.i("w.E"),m).ee(0,new A.aWi()),0)+"\xb0","Max",B.R)
 o=q.f
 s=A.v(o).i("bW<2>")
 r=t.p
-r=A.a([A.z(A.a([p,B.Y,n,B.Y,q.OZ(B.o.H(A.iv(new A.bW(o,s),new A.aWj(),s.i("w.E"),m).ee(0,new A.aWk()),0)+"\xc2\xb0","Min",B.D)],r),B.q,B.n,B.m,0,null),B.a2],r)
+r=A.a([A.z(A.a([p,B.Y,n,B.Y,q.OZ(B.o.H(A.iv(new A.bW(o,s),new A.aWj(),s.i("w.E"),m).ee(0,new A.aWk()),0)+"\xb0","Min",B.D)],r),B.q,B.n,B.m,0,null),B.a2],r)
 m=q.f
 s=A.v(m).i("f_<1,2>")
 B.i.G(r,A.iv(new A.f_(m,s),new A.aWl(q),s.i("w.E"),t.l))
@@ -120590,7 +120590,7 @@ h=t.p
 f=A.a([A.e(a1,b,b,b,b,b,B.ai,b,b,b)],h)
 if(k){i=A.p(i,m.j()>>>16&255,m.j()>>>8&255,m.j()&255)
 e=A.m(6)
-B.i.G(f,A.a([B.aV,A.u(b,A.e("S\xe9lectionn\xe9e",b,b,b,b,b,A.ad(b,b,m,b,b,b,b,b,b,b,b,8,b,b,B.a6,b,b,!0,b,b,b,b,b,b,b,b),b,b,b),B.u,b,b,new A.t(i,b,b,e,b,b,B.w),b,b,b,b,B.dT,b,b,b)],h))}return A.c5(b,A.u(b,A.z(A.a([g,B.be,A.a4(A.r(A.a([A.z(f,B.q,B.n,B.m,0,b),A.e(q,b,b,b,b,b,A.ad(b,b,B.j1,b,b,b,b,b,b,b,b,11,b,b,b,b,b,!0,b,b,b,b,b,b,b,b),b,b,b),B.bf,A.z(A.a([d.OV("\ud83d\udca7 "+r+"%",B.fl),B.dg,d.OV("\ud83d\udca8 "+p+"m/s",B.a5),B.dg,d.OV("\xe2\u2020\u2022 "+n+"-"+o+"\xc2\xb0",B.W)],h),B.q,B.n,B.m,0,b)],h),B.I,B.n,B.m),1),A.r(A.a([A.e(B.o.H(s,1)+"\xc2\xb0C",b,b,b,b,b,A.ad(b,b,m,b,b,b,b,b,b,b,b,20,b,b,B.ak,b,b,!0,b,b,b,b,b,b,b,b),b,b,b),d.amF(s,r)],h),B.cA,B.n,B.m)],h),B.q,B.n,B.m,0,b),B.u,b,b,new A.t(B.r,b,a0,a,j,b,B.w),b,b,b,B.bD,B.aI,b,b,b),B.T,!1,b,b,b,b,b,b,b,b,b,b,b,b,b,b,b,new A.aWy(d,a1,a2),b,b,b,b,b,b)},
+B.i.G(f,A.a([B.aV,A.u(b,A.e("S\xe9lectionn\xe9e",b,b,b,b,b,A.ad(b,b,m,b,b,b,b,b,b,b,b,8,b,b,B.a6,b,b,!0,b,b,b,b,b,b,b,b),b,b,b),B.u,b,b,new A.t(i,b,b,e,b,b,B.w),b,b,b,b,B.dT,b,b,b)],h))}return A.c5(b,A.u(b,A.z(A.a([g,B.be,A.a4(A.r(A.a([A.z(f,B.q,B.n,B.m,0,b),A.e(q,b,b,b,b,b,A.ad(b,b,B.j1,b,b,b,b,b,b,b,b,11,b,b,b,b,b,!0,b,b,b,b,b,b,b,b),b,b,b),B.bf,A.z(A.a([d.OV("\ud83d\udca7 "+r+"%",B.fl),B.dg,d.OV("\ud83d\udca8 "+p+"m/s",B.a5),B.dg,d.OV("\xe2\u2020\u2022 "+n+"-"+o+"\xb0",B.W)],h),B.q,B.n,B.m,0,b)],h),B.I,B.n,B.m),1),A.r(A.a([A.e(B.o.H(s,1)+"\xb0C",b,b,b,b,b,A.ad(b,b,m,b,b,b,b,b,b,b,b,20,b,b,B.ak,b,b,!0,b,b,b,b,b,b,b,b),b,b,b),d.amF(s,r)],h),B.cA,B.n,B.m)],h),B.q,B.n,B.m,0,b),B.u,b,b,new A.t(B.r,b,a0,a,j,b,B.w),b,b,b,B.bD,B.aI,b,b,b),B.T,!1,b,b,b,b,b,b,b,b,b,b,b,b,b,b,b,new A.aWy(d,a1,a2),b,b,b,b,b,b)},
 amF(a,b){var s=null
 if(a>33||b>80)return A.u(s,B.bhm,B.u,s,s,new A.t(A.p(B.o.U(25.5),B.R.j()>>>16&255,B.R.j()>>>8&255,B.R.j()&255),s,s,A.m(6),s,s,B.w),s,s,s,s,B.dT,s,s,s)
 return B.m6},
@@ -120632,18 +120632,18 @@ s=A.a([h,A.p(B.o.U(178.5),h.j()>>>16&255,h.j()>>>8&255,h.j()&255)],t.O)
 g=A.m(20)
 f=A.a([new A.ao(0,B.X,A.p(B.o.U(76.5),h.j()>>>16&255,h.j()>>>8&255,h.j()&255),B.hm,16)],t.V)
 e=t.p
-s=A.u(a4,A.z(A.a([A.e(a2.a5F(r,p),a4,a4,a4,a4,a4,B.xr,a4,a4,a4),B.jV,A.a4(A.r(A.a([A.e(a2.y,a4,a4,a4,a4,a4,B.T4,a4,a4,a4),A.e(B.o.H(r,1)+"\xc2\xb0C",a4,a4,a4,a4,a4,B.T2,a4,a4,a4),A.e(i,a4,a4,a4,a4,a4,B.T4,a4,a4,a4),A.e("Ressenti: "+B.o.H(q,1)+"\xc2\xb0C",a4,a4,a4,a4,a4,B.ch,a4,a4,a4)],e),B.I,B.n,B.m),1)],e),B.q,B.n,B.m,0,a4),B.u,a4,a4,new A.t(a4,a4,a4,g,f,new A.cL(B.bn,B.bK,B.aZ,s,a4,a4),B.w),a4,a4,a4,a4,B.aL,a4,a4,a4)
+s=A.u(a4,A.z(A.a([A.e(a2.a5F(r,p),a4,a4,a4,a4,a4,B.xr,a4,a4,a4),B.jV,A.a4(A.r(A.a([A.e(a2.y,a4,a4,a4,a4,a4,B.T4,a4,a4,a4),A.e(B.o.H(r,1)+"\xb0C",a4,a4,a4,a4,a4,B.T2,a4,a4,a4),A.e(i,a4,a4,a4,a4,a4,B.T4,a4,a4,a4),A.e("Ressenti: "+B.o.H(q,1)+"\xb0C",a4,a4,a4,a4,a4,B.ch,a4,a4,a4)],e),B.I,B.n,B.m),1)],e),B.q,B.n,B.m,0,a4),B.u,a4,a4,new A.t(a4,a4,a4,g,f,new A.cL(B.bn,B.bK,B.aZ,s,a4,a4),B.w),a4,a4,a4,a4,B.aL,a4,a4,a4)
 g=p>75
 f=g?"\u26a0\ufe0f \xc9lev\xe9e":"\u2705 Normale"
 f=a2.uR(B.jr,"Humidit\xe9",""+p+"%",B.fl,f)
-d=a2.uR(B.nM,"Vent",B.o.H(o,1)+" m/s",B.a5,"Direction: "+n+"\xc2\xb0")
+d=a2.uR(B.nM,"Vent",B.o.H(o,1)+" m/s",B.a5,"Direction: "+n+"\xb0")
 c=a2.uR(B.a8I,"Pression",""+m+" hPa",B.aN,"Normal: 1013 hPa")
 b=B.o.H(l/1000,1)
 a=l>5000?"\u2705 Bonne":"\u26a0\ufe0f R\xe9duite"
 a=a2.uR(B.nY,"Visibilit\xe9",b+" km",B.A,a)
 b=B.o.H(k,1)
 a0=k>35?"\ud83d\udd25 Critique":"Normal"
-a0=A.Xs(2.2,A.a([f,d,c,a,a2.uR(B.jq,"Temp. Max",b+"\xc2\xb0C",B.R,a0),a2.uR(B.a8t,"Temp. Min",B.o.H(j,1)+"\xc2\xb0C",B.D,"Nuit")],e),2,10,10,B.lL,!0)
+a0=A.Xs(2.2,A.a([f,d,c,a,a2.uR(B.jq,"Temp. Max",b+"\xb0C",B.R,a0),a2.uR(B.a8t,"Temp. Min",B.o.H(j,1)+"\xb0C",B.D,"Nuit")],e),2,10,10,B.lL,!0)
 f=r>33
 d=f?"\ud83d\udd34 Maximale requise":a5
 d=a2.zf("Ventilation",d,f?B.R:B.D)
@@ -121210,7 +121210,7 @@ n=n==null?k:J.k(n,"ic")
 r=A.z(A.a([r,q,l.nW("IC",p,J.bpY(n==null?0:n,2)?B.D:B.W)],m),B.q,B.n,B.m,0,k)
 q=J.k(l.z,j)
 q=q==null?k:J.k(q,"temp_moyenne")
-q=l.nW("Temp moy",A.i(q==null?0:q)+"\xc2\xb0C",B.W)
+q=l.nW("Temp moy",A.i(q==null?0:q)+"\xb0C",B.W)
 p=J.k(l.z,j)
 p=p==null?k:J.k(p,"hum_moyenne")
 p=l.nW("Humidit\xe9",A.i(p==null?0:p)+"%",B.A)
@@ -121566,14 +121566,14 @@ g=h>0?l/h*100:0
 f=""
 switch(a2){case"hebdomadaire":c=$.h8
 b=J.k(m,"nom")
-f="Tu es un expert en aviculture. \nG\xe9n\xe8re un rapport hebdomadaire professionnel pour une ferme avicole au S\xe9n\xe9gal.\n\nDONN\xc9ES:\n- \xc9leveur: "+c+"\n- Cycle: "+A.i(b==null?"N/A":b)+"\n- Sujets: "+A.i(h)+" poulets\n- P\xe9riode: Cette semaine\n- Relev\xe9s: "+J.bp(n)+"\n- Mortalit\xe9 totale: "+A.i(l)+" ("+J.f8(g,1)+"%)\n- Temp\xe9rature moyenne: "+J.f8(k,1)+"\xc2\xb0C\n- Humidit\xe9 moyenne: "+J.f8(j,1)+"%\n- Production totale: "+A.i(i)+"\n\nG\xe9n\xe8re un rapport structur\xe9 avec:\n1. R\xc9SUM\xc9 EX\xc9CUTIF\n2. INDICATEURS CL\xc9S DE PERFORMANCE\n3. ANALYSE DE LA MORTALIT\xc9\n4. CONDITIONS D'\xc9LEVAGE\n5. PRODUCTION\n6. POINTS D'ATTENTION\n7. RECOMMANDATIONS POUR LA SEMAINE PROCHAINE\n\nSois professionnel, pr\xe9cis et pratique. En fran\xe7ais."
+f="Tu es un expert en aviculture. \nG\xe9n\xe8re un rapport hebdomadaire professionnel pour une ferme avicole au S\xe9n\xe9gal.\n\nDONN\xc9ES:\n- \xc9leveur: "+c+"\n- Cycle: "+A.i(b==null?"N/A":b)+"\n- Sujets: "+A.i(h)+" poulets\n- P\xe9riode: Cette semaine\n- Relev\xe9s: "+J.bp(n)+"\n- Mortalit\xe9 totale: "+A.i(l)+" ("+J.f8(g,1)+"%)\n- Temp\xe9rature moyenne: "+J.f8(k,1)+"\xb0C\n- Humidit\xe9 moyenne: "+J.f8(j,1)+"%\n- Production totale: "+A.i(i)+"\n\nG\xe9n\xe8re un rapport structur\xe9 avec:\n1. R\xc9SUM\xc9 EX\xc9CUTIF\n2. INDICATEURS CL\xc9S DE PERFORMANCE\n3. ANALYSE DE LA MORTALIT\xc9\n4. CONDITIONS D'\xc9LEVAGE\n5. PRODUCTION\n6. POINTS D'ATTENTION\n7. RECOMMANDATIONS POUR LA SEMAINE PROCHAINE\n\nSois professionnel, pr\xe9cis et pratique. En fran\xe7ais."
 break
 case"mensuel":c=$.h8
 b=J.k(m,"nom")
-f="Tu es un expert en aviculture.\nG\xe9n\xe8re un rapport mensuel complet pour une ferme avicole au S\xe9n\xe9gal.\n\nDONN\xc9ES:\n- \xc9leveur: "+c+"\n- Cycle: "+A.i(b==null?"N/A":b)+"\n- Sujets: "+A.i(h)+" poulets\n- Relev\xe9s: "+J.bp(n)+"\n- Mortalit\xe9 totale: "+A.i(l)+" ("+J.f8(g,1)+"%)\n- Temp\xe9rature moyenne: "+J.f8(k,1)+"\xc2\xb0C\n- Humidit\xe9 moyenne: "+J.f8(j,1)+"%\n- Production totale: "+A.i(i)+"\n\nG\xe9n\xe8re un rapport mensuel avec:\n1. BILAN DU MOIS\n2. PERFORMANCE ZOOTECHNIQUE\n3. SANT\xc9 ET BIEN-\xcaTRE ANIMAL\n4. CONDITIONS ENVIRONNEMENTALES\n5. ANALYSE FINANCI\xc8RE ESTIM\xc9E\n6. COMPARAISON AVEC LES NORMES\n7. OBJECTIFS DU MOIS PROCHAIN\n8. CONCLUSIONS\n\nSois tr\xe8s professionnel. En fran\xe7ais."
+f="Tu es un expert en aviculture.\nG\xe9n\xe8re un rapport mensuel complet pour une ferme avicole au S\xe9n\xe9gal.\n\nDONN\xc9ES:\n- \xc9leveur: "+c+"\n- Cycle: "+A.i(b==null?"N/A":b)+"\n- Sujets: "+A.i(h)+" poulets\n- Relev\xe9s: "+J.bp(n)+"\n- Mortalit\xe9 totale: "+A.i(l)+" ("+J.f8(g,1)+"%)\n- Temp\xe9rature moyenne: "+J.f8(k,1)+"\xb0C\n- Humidit\xe9 moyenne: "+J.f8(j,1)+"%\n- Production totale: "+A.i(i)+"\n\nG\xe9n\xe8re un rapport mensuel avec:\n1. BILAN DU MOIS\n2. PERFORMANCE ZOOTECHNIQUE\n3. SANT\xc9 ET BIEN-\xcaTRE ANIMAL\n4. CONDITIONS ENVIRONNEMENTALES\n5. ANALYSE FINANCI\xc8RE ESTIM\xc9E\n6. COMPARAISON AVEC LES NORMES\n7. OBJECTIFS DU MOIS PROCHAIN\n8. CONCLUSIONS\n\nSois tr\xe8s professionnel. En fran\xe7ais."
 break
 case"sanitaire":c=J.k(m,"nom")
-f="Tu es un v\xe9t\xe9rinaire expert en aviculture au S\xe9n\xe9gal.\nG\xe9n\xe8re un rapport sanitaire d\xe9taill\xe9.\n\nDONN\xc9ES:\n- Cycle: "+A.i(c==null?"N/A":c)+"\n- Sujets: "+A.i(h)+" poulets\n- Mortalit\xe9: "+A.i(l)+" ("+J.f8(g,1)+"%)\n- Temp\xe9rature moyenne: "+J.f8(k,1)+"\xc2\xb0C\n- Humidit\xe9 moyenne: "+J.f8(j,1)+"%\n- Nombre de relev\xe9s: "+J.bp(n)+"\n\nG\xe9n\xe8re un rapport sanitaire avec:\n1. \xc9TAT SANITAIRE G\xc9N\xc9RAL\n2. ANALYSE DE LA MORTALIT\xc9\n3. FACTEURS DE RISQUE IDENTIFI\xc9S\n4. CONDITIONS ENVIRONNEMENTALES ET IMPACT\n5. PROTOCOLE SANITAIRE RECOMMAND\xc9\n6. VACCINATIONS ET TRAITEMENTS\n7. MESURES PR\xc9VENTIVES\n8. ALERTES V\xc9T\xc9RINAIRES\n\nSois pr\xe9cis et professionnel. En fran\xe7ais."
+f="Tu es un v\xe9t\xe9rinaire expert en aviculture au S\xe9n\xe9gal.\nG\xe9n\xe8re un rapport sanitaire d\xe9taill\xe9.\n\nDONN\xc9ES:\n- Cycle: "+A.i(c==null?"N/A":c)+"\n- Sujets: "+A.i(h)+" poulets\n- Mortalit\xe9: "+A.i(l)+" ("+J.f8(g,1)+"%)\n- Temp\xe9rature moyenne: "+J.f8(k,1)+"\xb0C\n- Humidit\xe9 moyenne: "+J.f8(j,1)+"%\n- Nombre de relev\xe9s: "+J.bp(n)+"\n\nG\xe9n\xe8re un rapport sanitaire avec:\n1. \xc9TAT SANITAIRE G\xc9N\xc9RAL\n2. ANALYSE DE LA MORTALIT\xc9\n3. FACTEURS DE RISQUE IDENTIFI\xc9S\n4. CONDITIONS ENVIRONNEMENTALES ET IMPACT\n5. PROTOCOLE SANITAIRE RECOMMAND\xc9\n6. VACCINATIONS ET TRAITEMENTS\n7. MESURES PR\xc9VENTIVES\n8. ALERTES V\xc9T\xc9RINAIRES\n\nSois pr\xe9cis et professionnel. En fran\xe7ais."
 break}c=A.cn("https://api.anthropic.com/v1/messages")
 b=t.N
 a=A.V(["Content-Type","application/json"],b,b)
@@ -121752,7 +121752,7 @@ s=q.mw(B.i0,"Email",s.length!==0?s:"-",B.aN)
 r=$.e3
 return A.db(A.a([o,B.a2,q.jX("Informations Personnelles",A.a([n,s,q.mw(B.Bj,"R\xf4le",r.toLowerCase().length!==0?r.toLowerCase():"-",B.D)],m)),B.a2,q.jX("S\xe9curit\xe9",A.a([q.uv(B.Bt,"Changer le mot de passe","Mettre \xe0 jour",B.A,new A.b26(q)),q.uv(B.a9r,"Authentification 2FA","D\xe9sactiv\xe9e",B.W,new A.b27(q)),q.uv(B.a8Z,"Historique des connexions","Voir",B.aN,new A.b28(q))],m)),B.a2,q.jX("Session",A.a([q.mw(B.a9x,"Expiration session","30 minutes d'inactivit\xe9",B.A),q.mw(B.a8O,"Appareil","Flutter Web",B.a5)],m)),B.dh,A.ba(A.dA(B.BS,B.xD,new A.b29(q),A.c9(p,p,B.eg,p,p,p,0,p,p,B.eF,p,p,B.e4,p,new A.aT(A.m(14),B.M),new A.aG(B.eE,1,B.a7,-1),p,p,p,p)),p,1/0)],m),B.ab,p,B.a0,!1)},
 anh(){var s=this,r=null,q=A.p(20,B.A.j()>>>16&255,B.A.j()>>>8&255,B.A.j()&255),p=A.m(12),o=t.p
-return A.db(A.a([A.u(r,B.b2_,B.u,r,r,new A.t(q,r,A.bq(A.p(51,B.A.j()>>>16&255,B.A.j()>>>8&255,B.A.j()&255),1),p,r,r,B.w),r,r,r,r,B.aS,r,r,r),B.a2,s.jX("Alertes Sanitaires",A.a([s.pJ("\ud83d\udc14 Mortalit\xe9 \xe9lev\xe9e",s.f,"Alerte si > 5 morts/jour",new A.b1I(s)),s.pJ("\ud83c\udf21\ufe0f Temp\xe9rature critique",s.x,"Alerte si > 33\xc2\xb0C ou < 25\xc2\xb0C",new A.b1J(s)),s.pJ("\ud83d\udca7 Humidit\xe9 anormale",s.y,"Alerte si > 75% ou < 40%",new A.b1K(s))],o)),B.a2,s.jX("Alertes Stock",A.a([s.pJ("\ud83d\udce6 Stock bas",s.e,"Alerte si quantit\xe9 \xe2\u2030\xa4 seuil",new A.b1L(s))],o)),B.a2,s.jX("Rapports Automatiques",A.a([s.pJ("\ud83d\udcc5 Rapport hebdomadaire",s.r,"Envoy\xe9 chaque lundi",new A.b1M(s)),s.pJ("\ud83d\udcc6 Rapport mensuel",s.w,"Envoy\xe9 le 1er du mois",new A.b1N(s))],o)),B.a2,A.ba(A.dA(B.uK,B.qL,new A.b1O(s),A.c9(r,r,B.A,r,r,r,0,r,r,B.r,r,r,B.e4,r,new A.aT(A.m(14),B.M),r,r,r,r,r)),r,1/0)],o),B.ab,r,B.a0,!1)},
+return A.db(A.a([A.u(r,B.b2_,B.u,r,r,new A.t(q,r,A.bq(A.p(51,B.A.j()>>>16&255,B.A.j()>>>8&255,B.A.j()&255),1),p,r,r,B.w),r,r,r,r,B.aS,r,r,r),B.a2,s.jX("Alertes Sanitaires",A.a([s.pJ("\ud83d\udc14 Mortalit\xe9 \xe9lev\xe9e",s.f,"Alerte si > 5 morts/jour",new A.b1I(s)),s.pJ("\ud83c\udf21\ufe0f Temp\xe9rature critique",s.x,"Alerte si > 33\xb0C ou < 25\xb0C",new A.b1J(s)),s.pJ("\ud83d\udca7 Humidit\xe9 anormale",s.y,"Alerte si > 75% ou < 40%",new A.b1K(s))],o)),B.a2,s.jX("Alertes Stock",A.a([s.pJ("\ud83d\udce6 Stock bas",s.e,"Alerte si quantit\xe9 \xe2\u2030\xa4 seuil",new A.b1L(s))],o)),B.a2,s.jX("Rapports Automatiques",A.a([s.pJ("\ud83d\udcc5 Rapport hebdomadaire",s.r,"Envoy\xe9 chaque lundi",new A.b1M(s)),s.pJ("\ud83d\udcc6 Rapport mensuel",s.w,"Envoy\xe9 le 1er du mois",new A.b1N(s))],o)),B.a2,A.ba(A.dA(B.uK,B.qL,new A.b1O(s),A.c9(r,r,B.A,r,r,r,0,r,r,B.r,r,r,B.e4,r,new A.aT(A.m(14),B.M),r,r,r,r,r)),r,1/0)],o),B.ab,r,B.a0,!1)},
 anF(){var s,r,q,p,o,n=this,m=null,l=A.p(20,B.D.j()>>>16&255,B.D.j()>>>8&255,B.D.j()&255),k=A.m(12)
 k=A.u(m,B.b20,B.u,m,m,new A.t(l,m,A.bq(A.p(51,B.D.j()>>>16&255,B.D.j()>>>8&255,B.D.j()&255),1),k,m,m,B.w),m,m,m,m,B.aS,m,m,m)
 l=t.p
@@ -122230,7 +122230,7 @@ l=q.v8("\ud83d\udd04 Cycles",""+J.bp(q.e),B.D)
 s=q.v8("\ud83d\udc14 Poulets",""+q.gvL(),B.W)
 i=B.o.H(q.gvG(),1)
 r=q.gvG()>5?B.R:B.D
-n=A.fQ(A.a([A.dp(A.r(A.a([m,B.a2,A.Xs(1.8,A.a([k,l,s,q.v8("\ud83d\udc80 Mortalit\xe9",i+"%",r),q.v8("\ud83c\udf21\ufe0f Temp. moy.",B.o.H(q.gYG(),1)+"\xc2\xb0C",B.W),q.v8("\ud83d\udc65 Employ\xe9s",""+J.bp(q.w),B.aN)],o),2,10,10,B.lL,!0)],o),B.q,B.n,B.m),p,B.T,B.ab,p,B.a0),q.ao9(),q.aEX()],o),n)}return A.cV(p,B.ba,A.r(A.a([j,A.a4(n,1)],o),B.q,B.n,B.m),p,p,p,p)},
+n=A.fQ(A.a([A.dp(A.r(A.a([m,B.a2,A.Xs(1.8,A.a([k,l,s,q.v8("\ud83d\udc80 Mortalit\xe9",i+"%",r),q.v8("\ud83c\udf21\ufe0f Temp. moy.",B.o.H(q.gYG(),1)+"\xb0C",B.W),q.v8("\ud83d\udc65 Employ\xe9s",""+J.bp(q.w),B.aN)],o),2,10,10,B.lL,!0)],o),B.q,B.n,B.m),p,B.T,B.ab,p,B.a0),q.ao9(),q.aEX()],o),n)}return A.cV(p,B.ba,A.r(A.a([j,A.a4(n,1)],o),B.q,B.n,B.m),p,p,p,p)},
 ao9(){var s=this,r=null,q=t.p,p=A.z(A.a([s.G6("\ud83d\udce6 Production",""+s.gaFM(),B.D),B.aX,s.G6("\ud83d\udc80 Morts",""+s.gQq(),B.R)],q),B.q,B.n,B.m,0,r),o=A.z(A.a([s.G6("\ud83d\udcca Relev\xe9s",""+J.bp(s.f),B.A),B.aX,s.G6("\ud83d\udce6 Stocks alerte",""+s.gQc(),B.W)],q),B.q,B.n,B.m,0,r),n=A.a([B.bgu,B.N],q),m=J.yN(s.e)
 B.i.dg(m,new A.b3a())
 m=A.eO(m,0,A.ig(5,"count",t.S),A.T(m).c)
@@ -122598,7 +122598,7 @@ n=J.eg(o.e,0,new A.b4l())
 m=J.eg(o.f,0,new A.b4m())
 l=J.eh(o.f)?0:J.eg(o.f,0,new A.b4n())/J.bp(o.f)
 h=o.z
-k="Tu es un expert en gestion de fermes avicoles au S\xe9n\xe9gal.\nAnalyse l'\xe9tat du terrain et des b\xe2timents et donne des recommandations.\n\nDONN\xc9ES TERRAIN:\n- Nombre de b\xe2timents: "+h.length+"\n- B\xe2timent A: "+A.i(h[0].h(0,"occupe"))+"/"+A.i(h[0].h(0,"capacite"))+" sujets, Temp: "+A.i(h[0].h(0,"temperature"))+"\xc2\xb0C, Humidit\xe9: "+A.i(h[0].h(0,"humidite"))+"%\n- B\xe2timent B: "+A.i(h[1].h(0,"occupe"))+"/"+A.i(h[1].h(0,"capacite"))+" sujets (vide)\n- B\xe2timent C: "+A.i(h[2].h(0,"occupe"))+"/"+A.i(h[2].h(0,"capacite"))+" sujets, Temp: "+A.i(h[2].h(0,"temperature"))+"\xc2\xb0C\n\nDONN\xc9ES CYCLES:\n- Total sujets: "+A.i(n)+"\n- Mortalit\xe9 totale: "+A.i(m)+"\n- Temp\xe9rature moyenne: "+J.f8(l,1)+"\xc2\xb0C\n\nDonne une analyse en 4-5 phrases incluant:\n1. \xc9tat g\xe9n\xe9ral des b\xe2timents\n2. Risques identifi\xe9s\n3. Recommandations d'optimisation\n4. Actions prioritaires\nEn fran\xe7ais, sois pr\xe9cis et pratique."
+k="Tu es un expert en gestion de fermes avicoles au S\xe9n\xe9gal.\nAnalyse l'\xe9tat du terrain et des b\xe2timents et donne des recommandations.\n\nDONN\xc9ES TERRAIN:\n- Nombre de b\xe2timents: "+h.length+"\n- B\xe2timent A: "+A.i(h[0].h(0,"occupe"))+"/"+A.i(h[0].h(0,"capacite"))+" sujets, Temp: "+A.i(h[0].h(0,"temperature"))+"\xb0C, Humidit\xe9: "+A.i(h[0].h(0,"humidite"))+"%\n- B\xe2timent B: "+A.i(h[1].h(0,"occupe"))+"/"+A.i(h[1].h(0,"capacite"))+" sujets (vide)\n- B\xe2timent C: "+A.i(h[2].h(0,"occupe"))+"/"+A.i(h[2].h(0,"capacite"))+" sujets, Temp: "+A.i(h[2].h(0,"temperature"))+"\xb0C\n\nDONN\xc9ES CYCLES:\n- Total sujets: "+A.i(n)+"\n- Mortalit\xe9 totale: "+A.i(m)+"\n- Temp\xe9rature moyenne: "+J.f8(l,1)+"\xb0C\n\nDonne une analyse en 4-5 phrases incluant:\n1. \xc9tat g\xe9n\xe9ral des b\xe2timents\n2. Risques identifi\xe9s\n3. Recommandations d'optimisation\n4. Actions prioritaires\nEn fran\xe7ais, sois pr\xe9cis et pratique."
 h=A.cn("https://api.anthropic.com/v1/messages")
 g=t.N
 f=A.V(["Content-Type","application/json"],g,g)
@@ -122658,7 +122658,7 @@ g=A.m(4)
 if(a>0.9)m=B.R
 else m=a>0.7?B.W:B.D
 m=A.iL(g,A.kG(B.bR,6,a,new A.fZ(m,t.Jn)),B.cm)
-g=i.ZO(B.jq,B.o.H(c,1)+"\xc2\xb0C",r)
+g=i.ZO(B.jq,B.o.H(c,1)+"\xb0C",r)
 k=B.o.H(b,0)
 j=b>70?B.W:B.A
 return A.u(h,A.r(A.a([l,B.N,o,B.es,m,B.N,A.z(A.a([g,B.Y,i.ZO(B.jr,k+"%",j),B.cf,A.cK(h,h,B.abQ,h,h,new A.b4r(i,a0),h,h,h),A.cK(h,h,B.aa9,h,h,new A.b4s(i,a0),h,h,h)],n),B.q,B.n,B.m,0,h)],n),B.I,B.n,B.m),B.u,h,h,new A.t(B.r,h,h,q,p,h,B.w),h,h,h,B.db,B.aI,h,h,h)},
@@ -122678,7 +122678,7 @@ for(s=l.z,r=s.length,q=0;q<s.length;s.length===r||(0,A.H)(s),++q){p=s[q]
 o=A.cD(p.h(0,"temperature"))
 n=A.cD(p.h(0,"humidite"))
 m=A.cb(p.h(0,"occupe"))/A.cb(p.h(0,"capacite"))
-if(o>33)k.push(l.M3("\ud83c\udf21\ufe0f "+A.i(p.h(0,"nom"))+": Temp\xe9rature \xe9lev\xe9e ("+B.o.H(o,1)+"\xc2\xb0C)",B.R))
+if(o>33)k.push(l.M3("\ud83c\udf21\ufe0f "+A.i(p.h(0,"nom"))+": Temp\xe9rature \xe9lev\xe9e ("+B.o.H(o,1)+"\xb0C)",B.R))
 if(n>75)k.push(l.M3("\ud83d\udca7 "+A.i(p.h(0,"nom"))+": Humidit\xe9 \xe9lev\xe9e ("+B.o.H(n,0)+"%)",B.W))
 if(m>0.95)k.push(l.M3("\ud83d\udce6 "+A.i(p.h(0,"nom"))+": Surpeuplement ("+B.o.H(m*100,0)+"%)",B.R))}if(k.length===0)k.push(B.acN)
 return k},
@@ -122778,7 +122778,7 @@ $0(){return this.a.aEm(this.b)},
 $S:0}
 A.b4w.prototype={
 $1(a){var s=null,r=J.Z(a),q=this.a,p=t.p
-return new A.al(B.db,A.r(A.a([A.e(A.aq(r.h(a,"nom")),s,s,s,s,s,B.eW,s,s,s),B.es,A.z(A.a([A.a4(q.a2J("\ud83c\udf21\ufe0f Temp\xe9rature",A.cD(r.h(a,"temperature")),15,45,25,32,"\xc2\xb0C"),1)],p),B.q,B.n,B.m,0,s),B.bf,A.z(A.a([A.a4(q.a2J("\ud83d\udca7 Humidit\xe9",A.cD(r.h(a,"humidite")),0,100,50,70,"%"),1)],p),B.q,B.n,B.m,0,s)],p),B.I,B.n,B.m),s)},
+return new A.al(B.db,A.r(A.a([A.e(A.aq(r.h(a,"nom")),s,s,s,s,s,B.eW,s,s,s),B.es,A.z(A.a([A.a4(q.a2J("\ud83c\udf21\ufe0f Temp\xe9rature",A.cD(r.h(a,"temperature")),15,45,25,32,"\xb0C"),1)],p),B.q,B.n,B.m,0,s),B.bf,A.z(A.a([A.a4(q.a2J("\ud83d\udca7 Humidit\xe9",A.cD(r.h(a,"humidite")),0,100,50,70,"%"),1)],p),B.q,B.n,B.m,0,s)],p),B.I,B.n,B.m),s)},
 $S:168}
 A.b4x.prototype={
 $1(a){var s=null,r=J.Z(a),q=A.e(A.aq(r.h(a,"nom")),s,s,s,s,s,B.eV,s,s,s)
@@ -122818,7 +122818,7 @@ s=o.b
 r=o.c
 q=o.d
 p=t.p
-return new A.al(new A.af(20,24,20,A.bb(l,n,t.w).w.f.d+20),A.r(A.a([A.e("Mettre \xe0 jour "+A.i(J.k(s,"nom")),n,n,n,n,n,B.xn,n,n,n),B.a2,A.z(A.a([A.a4(A.d2(n,B.b3,!1,n,!0,B.Z,n,A.d6(),r,n,n,n,n,n,2,A.cd(n,new A.b7(4,A.m(12),B.b9),n,n,n,n,n,n,!0,n,n,n,n,n,n,B.aQ,!0,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,"Temp\xe9rature (\xc2\xb0C)",!0,!0,!1,n,B.abe,n,n,n,n,n,n,n,n,n,n,n,n),B.T,!0,n,!0,n,!1,n,B.b_,n,n,n,n,B.ma,n,n,n,1,n,n,!1,"\u2022",n,n,n,n,n,!1,n,n,!1,n,!0,n,B.aL,n,n,n,n,n,n,n,n,n,n,n,n,!0,B.aJ,n,B.bg,n,n,n,n),1),B.be,A.a4(A.d2(n,B.b3,!1,n,!0,B.Z,n,A.d6(),q,n,n,n,n,n,2,A.cd(n,new A.b7(4,A.m(12),B.b9),n,n,n,n,n,n,!0,n,n,n,n,n,n,B.aQ,!0,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,"Humidit\xe9 (%)",!0,!0,!1,n,B.ab2,n,n,n,n,n,n,n,n,n,n,n,n),B.T,!0,n,!0,n,!1,n,B.b_,n,n,n,n,B.ma,n,n,n,1,n,n,!1,"\u2022",n,n,n,n,n,!1,n,n,!1,n,!0,n,B.aL,n,n,n,n,n,n,n,n,n,n,n,n,!0,B.aJ,n,B.bg,n,n,n,n),1)],p),B.q,B.n,B.m,0,n),B.a2,A.ba(A.h2(B.bgh,new A.b4E(m,s,r,q),A.c9(n,n,B.A,n,n,n,0,n,n,B.r,n,n,n,n,new A.aT(A.m(12),B.M),n,n,n,n,n)),48,1/0)],p),B.q,B.n,B.av),n)},
+return new A.al(new A.af(20,24,20,A.bb(l,n,t.w).w.f.d+20),A.r(A.a([A.e("Mettre \xe0 jour "+A.i(J.k(s,"nom")),n,n,n,n,n,B.xn,n,n,n),B.a2,A.z(A.a([A.a4(A.d2(n,B.b3,!1,n,!0,B.Z,n,A.d6(),r,n,n,n,n,n,2,A.cd(n,new A.b7(4,A.m(12),B.b9),n,n,n,n,n,n,!0,n,n,n,n,n,n,B.aQ,!0,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,"Temp\xe9rature (\xb0C)",!0,!0,!1,n,B.abe,n,n,n,n,n,n,n,n,n,n,n,n),B.T,!0,n,!0,n,!1,n,B.b_,n,n,n,n,B.ma,n,n,n,1,n,n,!1,"\u2022",n,n,n,n,n,!1,n,n,!1,n,!0,n,B.aL,n,n,n,n,n,n,n,n,n,n,n,n,!0,B.aJ,n,B.bg,n,n,n,n),1),B.be,A.a4(A.d2(n,B.b3,!1,n,!0,B.Z,n,A.d6(),q,n,n,n,n,n,2,A.cd(n,new A.b7(4,A.m(12),B.b9),n,n,n,n,n,n,!0,n,n,n,n,n,n,B.aQ,!0,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,"Humidit\xe9 (%)",!0,!0,!1,n,B.ab2,n,n,n,n,n,n,n,n,n,n,n,n),B.T,!0,n,!0,n,!1,n,B.b_,n,n,n,n,B.ma,n,n,n,1,n,n,!1,"\u2022",n,n,n,n,n,!1,n,n,!1,n,!0,n,B.aL,n,n,n,n,n,n,n,n,n,n,n,n,!0,B.aJ,n,B.bg,n,n,n,n),1)],p),B.q,B.n,B.m,0,n),B.a2,A.ba(A.h2(B.bgh,new A.b4E(m,s,r,q),A.c9(n,n,B.A,n,n,n,0,n,n,B.r,n,n,n,n,new A.aT(A.m(12),B.M),n,n,n,n,n)),48,1/0)],p),B.q,B.n,B.av),n)},
 $S:75}
 A.b4E.prototype={
 $0(){var s=this,r=s.a
@@ -122837,7 +122837,7 @@ s.p(p,q,o==null?s.h(p,q):o)},
 $S:0}
 A.b4H.prototype={
 $1(a){var s,r,q=null,p="temperature",o="humidite",n=this.b,m=J.Z(n),l=A.e(A.aq(m.h(n,"nom")),q,q,q,q,q,q,q,q,q),k=this.a,j=A.i(m.h(n,p)),i=J.agF(m.h(n,p),32)?B.R:B.D
-i=k.Fm("\ud83c\udf21\ufe0f Temp\xe9rature",j+"\xc2\xb0C",i)
+i=k.Fm("\ud83c\udf21\ufe0f Temp\xe9rature",j+"\xb0C",i)
 j=A.i(m.h(n,o))
 s=J.agF(m.h(n,o),70)?B.W:B.A
 r=t.p
