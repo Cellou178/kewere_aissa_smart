@@ -75,7 +75,7 @@ def create_stock(
     data: StockSchema,
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(
-        require_role("admin", "manager")
+        require_role("admin", "manager", "proprietaire")
     )
 ):
 
@@ -140,7 +140,7 @@ def update_stock(
     data: StockSchema,
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(
-        require_role("admin", "manager")
+        require_role("admin", "manager", "proprietaire")
     )
 ):
 
@@ -187,7 +187,7 @@ def delete_stock(
     stock_id: UUID,
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(
-        require_role("admin")
+        require_role("admin", "proprietaire")
     )
 ):
 
