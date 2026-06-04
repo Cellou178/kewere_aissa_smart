@@ -9,6 +9,46 @@ from datetime import datetime
 
 router = APIRouter(prefix="/marche", tags=["Marché"])
 
+class ActualiteSchema(BaseModel):
+    titre: str
+    description: Optional[str] = None
+    categorie: Optional[str] = 'Info'
+    urgent: Optional[bool] = False
+    icon: Optional[str] = '📰'
+
+@router.get("/actualites")
+def get_actualites(db: Session = Depends(get_db),
+                   current_user=Depends(get_current_user)):
+    rows = db.execute(text("""
+        SELECT *, TO_CHAR(created_at, 'DD/MM/YYYY') as date_fmt
+        FROM actualites_marche
+        WHERE actif = true
+        ORDER BY urgent DESC, created_at DESC
+        LIMIT 20
+    """)).fetchall()
+    return [dict(r._mapping) for r in rows]
+
+@router.post("/actualites", status_code=201)
+def create_actualite(data: ActualiteSchema,
+                     db: Session = Depends(get_db),
+                     current_user=Depends(get_current_user)):
+    import uuid
+    aid = str(uuid.uuid4())
+    db.execute(text("""
+        INSERT INTO actualites_marche (id, titre, description, categorie, urgent, icon)
+        VALUES (:id, :titre, :desc, :cat, :urgent, :icon)
+    """), {"id": aid, "titre": data.titre, "desc": data.description,
+           "cat": data.categorie, "urgent": data.urgent, "icon": data.icon})
+    db.commit()
+    return {"message": "Actualité ajoutée", "id": aid}
+
+@router.delete("/actualites/{aid}")
+def delete_actualite(aid: str, db: Session = Depends(get_db),
+                     current_user=Depends(get_current_user)):
+    db.execute(text("UPDATE actualites_marche SET actif=false WHERE id=:id"), {"id": aid})
+    db.commit()
+    return {"message": "Actualité supprimée"}
+
 @router.get("/prix")
 def get_prix(categorie: Optional[str] = None,
              current_user=Depends(get_current_user),
