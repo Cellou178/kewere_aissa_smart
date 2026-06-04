@@ -4,12 +4,13 @@ import os, httpx
 
 router = APIRouter(prefix="/meteo", tags=["Météo"])
 
-WEATHER_KEY = os.getenv("WEATHER_KEY")
-if not WEATHER_KEY:
-    raise RuntimeError("Variable WEATHER_KEY manquante dans les variables d'environnement Render.")
+WEATHER_KEY = os.getenv("WEATHER_KEY", "")
 
 @router.get("/")
 async def get_meteo(lat: float, lon: float, current_user=Depends(get_current_user)):
+    if not WEATHER_KEY:
+        raise HTTPException(status_code=503,
+            detail="Clé météo non configurée. Ajoutez WEATHER_KEY dans Render > Environment.")
     async with httpx.AsyncClient(timeout=10) as client:
         resp = await client.get(
             "https://api.openweathermap.org/data/2.5/weather",
@@ -22,6 +23,9 @@ async def get_meteo(lat: float, lon: float, current_user=Depends(get_current_use
 
 @router.get("/forecast")
 async def get_forecast(lat: float, lon: float, current_user=Depends(get_current_user)):
+    if not WEATHER_KEY:
+        raise HTTPException(status_code=503,
+            detail="Clé météo non configurée. Ajoutez WEATHER_KEY dans Render > Environment.")
     async with httpx.AsyncClient(timeout=10) as client:
         resp = await client.get(
             "https://api.openweathermap.org/data/2.5/forecast",

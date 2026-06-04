@@ -13,11 +13,16 @@ load_dotenv()
 # ==========================================
 # CONFIG JWT
 # ==========================================
+import secrets as _secrets
+import logging as _logging
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    raise RuntimeError(
-        "Variable SECRET_KEY manquante. "
-        "Définissez-la dans Render > Environment Variables."
+    SECRET_KEY = _secrets.token_hex(32)
+    _logging.warning(
+        "⚠️  SECRET_KEY non définie en variable d'environnement. "
+        "Une clé temporaire est utilisée — les sessions seront perdues "
+        "au redémarrage. Configurez SECRET_KEY dans Render > Environment."
     )
 
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
