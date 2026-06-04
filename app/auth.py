@@ -13,15 +13,14 @@ load_dotenv()
 # ==========================================
 # CONFIG JWT
 # ==========================================
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "CHANGE_THIS_SECRET_KEY_IN_PRODUCTION_2026"
-)
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "Variable SECRET_KEY manquante. "
+        "Définissez-la dans Render > Environment Variables."
+    )
 
-ALGORITHM = os.getenv(
-    "ALGORITHM",
-    "HS256"
-)
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")

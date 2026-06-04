@@ -187,11 +187,20 @@ def login(
         "ferme_id": str(result.ferme_id) if result.ferme_id else "",
     }
 
-@router.get("/activer/{email}")
-def activer_compte(email: str, db: Session = Depends(get_db)):
-    db.execute(text("""
+@router.patch("/activer/{email}")
+def activer_compte(
+    email: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    if not hasattr(current_user, 'role') or current_user.role.nom.lower() != 'admin':
+        raise HTTPException(status_code=403, detail="Réservé aux administrateurs")
+    result = db.execute(text("""
         UPDATE utilisateurs SET actif = true WHERE email = :email
-    """), {"email": email.lower()})
+        RETURNING id
+    """), {"email": email.lower()}).fetchone()
+    if not result:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
     db.commit()
     return {"success": True, "message": f"Compte {email} activé"}
 
