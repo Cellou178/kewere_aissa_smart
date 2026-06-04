@@ -112,18 +112,6 @@ CREATE INDEX IF NOT EXISTS idx_conges_entreprise
 CREATE INDEX IF NOT EXISTS idx_conges_employe
     ON conges (employe_id, date_debut DESC);
 
--- ── role_permissions (Accès & Rôles) ─────────────────────────
-CREATE TABLE IF NOT EXISTS role_permissions (
-    id            SERIAL       PRIMARY KEY,
-    entreprise_id UUID         NOT NULL,
-    role_id       INTEGER      NOT NULL,
-    permission    VARCHAR(100) NOT NULL,
-    valeur        BOOLEAN      DEFAULT true,
-    UNIQUE (entreprise_id, role_id, permission)
-);
-CREATE INDEX IF NOT EXISTS idx_role_permissions_entreprise
-    ON role_permissions (entreprise_id, role_id);
-
 -- ── vue_tableau_bord_fermes (Dashboard) ───────────────────────
 CREATE OR REPLACE VIEW vue_tableau_bord_fermes AS
 SELECT
@@ -178,6 +166,5 @@ SELECT table_name, COUNT(*) AS nb_lignes FROM (
     SELECT 'vaccinations'     AS table_name FROM vaccinations     UNION ALL
     SELECT 'traitements'      AS table_name FROM traitements      UNION ALL
     SELECT 'mortalite_causes' AS table_name FROM mortalite_causes UNION ALL
-    SELECT 'conges'           AS table_name FROM conges           UNION ALL
-    SELECT 'role_permissions' AS table_name FROM role_permissions
+    SELECT 'conges'           AS table_name FROM conges
 ) t GROUP BY table_name ORDER BY table_name;
