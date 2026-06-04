@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="kewere_aissa_smart_app"
+        android:label="Kewere Aissa Smart"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
