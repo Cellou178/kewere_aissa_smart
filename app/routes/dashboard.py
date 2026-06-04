@@ -195,11 +195,9 @@ def get_stats(
     # REVENUS
     revenus = db.execute(text("""
         SELECT COALESCE(SUM(montant), 0) as total
-        FROM finances fi
-        JOIN fermes f
-            ON f.id = fi.ferme_id
-        WHERE f.entreprise_id = :eid
-        AND fi.type_operation = 'revenu'
+        FROM transactions
+        WHERE entreprise_id = :eid
+        AND type = 'revenu'
     """), {
         "eid": current_user.entreprise_id
     }).fetchone()
@@ -207,11 +205,9 @@ def get_stats(
     # DÉPENSES
     depenses = db.execute(text("""
         SELECT COALESCE(SUM(montant), 0) as total
-        FROM finances fi
-        JOIN fermes f
-            ON f.id = fi.ferme_id
-        WHERE f.entreprise_id = :eid
-        AND fi.type_operation = 'depense'
+        FROM transactions
+        WHERE entreprise_id = :eid
+        AND type = 'depense'
     """), {
         "eid": current_user.entreprise_id
     }).fetchone()
