@@ -177,6 +177,11 @@ Sois précis et professionnel. En français.''';
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Column(children: [
             Row(children: [
+              if (Navigator.canPop(context)) IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36)),
               const Icon(Icons.assessment_rounded, color: Colors.white, size: 24),
               const SizedBox(width: 10),
               const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -493,6 +493,25 @@ class ApiService {
   static Future<List> getCommandesVitrine() =>
       _getList('$API_URL/vitrine/commandes', useCache: false);
 
+  // ── ABONNEMENTS ──
+  static Future<List> getAbonnementPlans() =>
+      _getList('$API_URL/abonnements/plans', useCache: true,
+          cacheKey: 'abonnement_plans');
+
+  static Future<Map<String, dynamic>> getMonAbonnement() =>
+      _getMap('$API_URL/abonnements/mon-abonnement', useCache: false);
+
+  static Future<List> getHistoriqueAbonnement() =>
+      _getList('$API_URL/abonnements/historique', useCache: false);
+
+  static Future<Map<String, dynamic>> renouvelerAbonnement(
+      String entrepriseId, String plan, int dureeMois) =>
+      _postReturn('$API_URL/abonnements/renouveler', {
+        'entreprise_id': entrepriseId,
+        'plan': plan,
+        'duree_mois': dureeMois,
+      });
+
   // ── ÉQUIPEMENTS ──
   static Future<List> getEquipements({String? fermeId}) =>
       _getList(fermeId != null

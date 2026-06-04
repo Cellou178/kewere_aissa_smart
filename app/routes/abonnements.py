@@ -11,12 +11,22 @@ router = APIRouter(prefix="/abonnements", tags=["Abonnements"])
 
 def _get_plans(db: Session):
     rows = db.execute(text("SELECT * FROM plans WHERE actif = true ORDER BY prix_mensuel")).fetchall()
-    return {r.id: {
-        'nom': r.nom,
-        'prix_mensuel': r.prix_mensuel,
-        'prix_annuel': r.prix_annuel,
-        'limites': {'fermes': r.max_fermes, 'cycles': r.max_cycles, 'utilisateurs': r.max_utilisateurs}
-    } for r in rows}
+    result = {}
+    for r in rows:
+        m = dict(r._mapping)
+        result[r.nom] = {
+            'id': r.nom,
+            'nom': r.nom,
+            'prix_mensuel': m.get('prix_mensuel', 0) or 0,
+            'prix_annuel': m.get('prix_annuel', 0) or 0,
+            'description': m.get('description', ''),
+            'limites': {
+                'fermes': m.get('max_fermes', m.get('nb_fermes_max', 1)) or 1,
+                'cycles': m.get('max_cycles', 999) or 999,
+                'utilisateurs': m.get('max_utilisateurs', m.get('nb_users_max', 3)) or 3,
+            }
+        }
+    return result
 
 def _get_or_create(eid: str, db: Session):
     db.execute(text("""
@@ -52,7 +62,7 @@ def _get_or_create(eid: str, db: Session):
 @router.get("/plans")
 def liste_plans(db: Session = Depends(get_db)):
     plans = _get_plans(db)
-    return [{"id": k, **v} for k, v in plans.items()]
+    return list(plans.values())
 
 @router.get("/mon-abonnement")
 def mon_abonnement(current_user=Depends(get_current_user), db: Session = Depends(get_db)):

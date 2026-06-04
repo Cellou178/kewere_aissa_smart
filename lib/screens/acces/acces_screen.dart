@@ -158,9 +158,14 @@ class _AccesScreenState extends State<AccesScreen>
             borderRadius: BorderRadius.vertical(
                 bottom: Radius.circular(24)),
           ),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          padding: const EdgeInsets.fromLTRB(4, 16, 16, 0),
           child: Column(children: [
             Row(children: [
+              if (Navigator.canPop(context)) IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36)),
               const Icon(Icons.security_rounded,
                   color: Colors.white, size: 22),
               const SizedBox(width: 8),
