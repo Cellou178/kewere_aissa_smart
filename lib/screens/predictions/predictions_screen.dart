@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants/app_constants.dart';
 import '../../services/api_service.dart';
@@ -114,21 +113,13 @@ Génère UNIQUEMENT ce JSON valide:
 UNIQUEMENT le JSON, rien d\'autre.''';
 
     try {
-      final response = await http.post(
-        Uri.parse('https://api.anthropic.com/v1/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'model': 'claude-sonnet-4-20250514',
-          'max_tokens': 1200,
-          'messages': [{'role': 'user', 'content': prompt}],
-        }),
-      ).timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final text = data['content'][0]['text'] ?? '{}';
-        final clean = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      final text = await ApiService.callIA(prompt,
+          contexte: 'Reponds UNIQUEMENT en JSON valide, sans markdown.');
+      final clean = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      if (clean.isNotEmpty) {
         setState(() { _predictions = jsonDecode(clean); _loadingIA = false; });
+      } else {
+        setState(() => _loadingIA = false);
       }
     } catch (e) {
       setState(() => _loadingIA = false);

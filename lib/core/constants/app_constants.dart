@@ -2,7 +2,7 @@
 
 // ── API ──
 const String API_URL = 'https://kewere-aissa-smart.onrender.com';
-const String WEATHER_KEY = 'cea65cf01b5c5db78e93a83d09cbf66c';
+// WEATHER_KEY supprimé — météo proxifiée par le backend (/meteo/)
 
 // ── COULEURS PRINCIPALES ──
 const Color kBlue = Color(0xFF1B3A6B);

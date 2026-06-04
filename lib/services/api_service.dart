@@ -371,19 +371,35 @@ class ApiService {
       if (!entry.isExpired) return entry.data as Map<String, dynamic>;
     }
     try {
-      final r = await http.get(Uri.parse(
-          'https://api.openweathermap.org/data/2.5/weather'
-              '?q=$ville,SN&appid=$WEATHER_KEY&units=metric&lang=fr'))
-          .timeout(_timeout);
+      // Météo proxifiée par le backend — clé API stockée côté serveur
+      final coords = _villeCoords[ville];
+      if (coords == null) return {};
+      final r = await http.get(
+        Uri.parse('$API_URL/meteo/?lat=${coords[0]}&lon=${coords[1]}'),
+        headers: SessionManager.headers,
+      ).timeout(_timeout);
       if (r.statusCode == 200) {
-        final data = jsonDecode(r.body) as Map<String, dynamic>;
-        _cache[cacheKey] = _CacheEntry(data,
-            duration: const Duration(minutes: 30));
+        final data = jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
+        _cache[cacheKey] = _CacheEntry(data, duration: const Duration(minutes: 30));
         return data;
       }
     } catch (e) { _log('getMeteo $ville: $e'); }
     return {};
   }
+
+  // Coordonnées GPS des villes supportées
+  static const Map<String, List<double>> _villeCoords = {
+    'Mbour':        [14.37, -16.97],
+    'Dakar':        [14.71, -17.47],
+    'Thies':        [14.80, -16.93],
+    'Rufisque':     [14.72, -17.28],
+    'Kaolack':      [14.15, -16.07],
+    'Saint-Louis':  [16.02, -16.49],
+    'Ziguinchor':   [12.56, -16.27],
+    'Tambacounda':  [13.77, -13.67],
+    'Touba':        [14.85, -15.88],
+    'Diourbel':     [14.65, -16.23],
+  };
 
   // ── RAPPORTS ──
   static Future<List> getRapports() =>
@@ -397,6 +413,56 @@ class ApiService {
           .timeout(const Duration(seconds: 5));
       return r.statusCode == 200;
     } catch (_) { return false; }
+  }
+
+  // ── Chat IA avec historique (endpoint /chat/) ──
+  static Future<String> callChat(
+    String message, {
+    List<Map<String, String>> history = const [],
+    String contexte = '',
+  }) async {
+    try {
+      final r = await http.post(
+        Uri.parse('$API_URL/chat/'),
+        headers: SessionManager.headers,
+        body: jsonEncode({
+          'message': message,
+          'history': history,
+          'contexte': contexte,
+        }),
+      ).timeout(const Duration(seconds: 35));
+      _log('Chat ${r.statusCode}');
+      if (r.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(r.bodyBytes));
+        return data['reponse'] as String? ?? '';
+      }
+      if (r.statusCode == 503) return 'Service IA non configure.';
+      return 'IA temporairement indisponible (${r.statusCode}).';
+    } catch (e) {
+      _log('Erreur callChat: $e');
+      return 'Impossible de joindre le service IA.';
+    }
+  }
+
+  // ── Appel IA via proxy backend sécurisé ──
+  static Future<String> callIA(String prompt, {String contexte = ''}) async {
+    try {
+      final r = await http.post(
+        Uri.parse('$API_URL/ia/analyser'),
+        headers: SessionManager.headers,
+        body: jsonEncode({'prompt': prompt, 'contexte': contexte}),
+      ).timeout(const Duration(seconds: 35));
+      _log('IA ${r.statusCode}');
+      if (r.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(r.bodyBytes));
+        return data['reponse'] as String? ?? '';
+      }
+      if (r.statusCode == 503) return 'Service IA non configure.';
+      return 'IA temporairement indisponible (${r.statusCode}).';
+    } catch (e) {
+      _log('Erreur callIA: $e');
+      return 'Impossible de joindre le service IA.';
+    }
   }
 
   static Map<String, dynamic> getCacheStats() => {

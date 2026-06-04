@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../../core/constants/app_constants.dart';
 import '../../services/api_service.dart';
 
@@ -80,20 +78,9 @@ Donne 3-4 conseils pratiques pour:
 
 Sois concis et pratique. En français.''';
 
-      final response = await http.post(
-        Uri.parse('https://api.anthropic.com/v1/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'model': 'claude-sonnet-4-20250514',
-          'max_tokens': 400,
-          'messages': [{'role': 'user', 'content': prompt}],
-        }),
-      ).timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() => _conseilIA = data['content'][0]['text'] ?? '');
-      }
+      final reponse = await ApiService.callIA(prompt,
+          contexte: 'Expert aviculture Sénégal, conseils météo élevage.');
+      setState(() => _conseilIA = reponse.isEmpty ? 'Conseil indisponible.' : reponse);
     } catch (e) {
       setState(() => _conseilIA = 'Conseil indisponible.');
     }

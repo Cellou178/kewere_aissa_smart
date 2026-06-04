@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:math';
 import '../../core/constants/app_constants.dart';
 import '../../services/api_service.dart';
@@ -121,20 +119,9 @@ Donne une analyse incluant:
 
 En français, pratique et chiffré.''';
 
-      final response = await http.post(
-        Uri.parse('https://api.anthropic.com/v1/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'model': 'claude-sonnet-4-20250514',
-          'max_tokens': 800,
-          'messages': [{'role': 'user', 'content': prompt}],
-        }),
-      ).timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() => _analyseIA = data['content'][0]['text'] ?? '');
-      }
+      final reponse = await ApiService.callIA(prompt,
+          contexte: 'Expert rentabilité avicole Sénégal. Analyse chiffrée et recommandations.');
+      setState(() => _analyseIA = reponse.isEmpty ? 'Analyse indisponible.' : reponse);
     } catch (e) {
       setState(() => _analyseIA = 'Analyse indisponible.');
     }

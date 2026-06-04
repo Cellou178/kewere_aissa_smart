@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../../core/constants/app_constants.dart';
 import '../../services/api_service.dart';
 import '../../managers/session_manager.dart';
@@ -152,20 +150,10 @@ Sois précis et professionnel. En français.''';
           break;
       }
 
-      final response = await http.post(
-        Uri.parse('https://api.anthropic.com/v1/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'model': 'claude-sonnet-4-20250514',
-          'max_tokens': 2000,
-          'messages': [{'role': 'user', 'content': prompt}],
-        }),
-      ).timeout(const Duration(seconds: 60));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() => _rapportGenere = data['content'][0]['text'] ?? '');
-      }
+      final reponse = await ApiService.callIA(prompt,
+          contexte: 'Expert aviculture Sénégal. Génère un rapport professionnel détaillé.');
+      setState(() => _rapportGenere = reponse.isEmpty
+          ? 'Erreur lors de la génération du rapport.' : reponse);
     } catch (e) {
       setState(() => _rapportGenere = 'Erreur lors de la génération du rapport.');
     }

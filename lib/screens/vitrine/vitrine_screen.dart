@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../../core/constants/app_constants.dart';
 import '../../managers/session_manager.dart';
 import '../../services/api_service.dart';
@@ -151,20 +149,9 @@ Génère:
 
 En français, style commercial professionnel, adapté au marché sénégalais.''';
 
-      final response = await http.post(
-        Uri.parse('https://api.anthropic.com/v1/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'model': 'claude-sonnet-4-20250514',
-          'max_tokens': 400,
-          'messages': [{'role': 'user', 'content': prompt}],
-        }),
-      ).timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() => _descriptionIA = data['content'][0]['text'] ?? '');
-      }
+      final reponse = await ApiService.callIA(prompt,
+          contexte: 'Expert marketing avicole Sénégal. Rédaction commerciale attractive.');
+      setState(() => _descriptionIA = reponse.isEmpty ? 'Génération indisponible.' : reponse);
     } catch (e) {
       setState(() => _descriptionIA = 'Génération indisponible.');
     }

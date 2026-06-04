@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../../core/constants/app_constants.dart';
-import '../../managers/session_manager.dart';
+import '../../services/api_service.dart';
 
 class MaintenanceScreen extends StatefulWidget {
   const MaintenanceScreen({super.key});
@@ -166,20 +164,9 @@ Génère un plan de maintenance sur 30 jours incluant:
 
 En français, pratique et structuré.''';
 
-      final response = await http.post(
-        Uri.parse('https://api.anthropic.com/v1/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'model': 'claude-sonnet-4-20250514',
-          'max_tokens': 600,
-          'messages': [{'role': 'user', 'content': prompt}],
-        }),
-      ).timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() => _planIA = data['content'][0]['text'] ?? '');
-      }
+      final reponse = await ApiService.callIA(prompt,
+          contexte: 'Expert maintenance avicole Sénégal. Plan structuré et budgétisé.');
+      setState(() => _planIA = reponse.isEmpty ? 'Plan indisponible.' : reponse);
     } catch (e) {
       setState(() => _planIA = 'Plan indisponible.');
     }

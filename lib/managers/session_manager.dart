@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/material.dart';
 
 class SessionManager {
@@ -12,8 +13,7 @@ class SessionManager {
   static DateTime? _loginTime;
   static DateTime? _lastActivity;
 
-  // ── Clés SharedPreferences ──
-  static const String _kToken = 'token';
+  // ── Clés SharedPreferences (données non sensibles) ──
   static const String _kRole = 'role';
   static const String _kNom = 'nom';
   static const String _kEmail = 'email';
@@ -21,11 +21,20 @@ class SessionManager {
   static const String _kFermeId = 'ferme_id';
   static const String _kLoginTime = 'login_time';
 
+  // ── Clé SecureStorage (token JWT chiffré) ──
+  static const String _kToken = 'kas_jwt_token';
+  static const _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
+
   // ── Init ──
   static Future<void> init() async {
     try {
+      // Token JWT depuis le stockage chiffré
+      _token = await _secureStorage.read(key: _kToken) ?? '';
+      // Données non sensibles depuis SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      _token = prefs.getString(_kToken) ?? '';
       _role = prefs.getString(_kRole) ?? '';
       _nom = prefs.getString(_kNom) ?? '';
       _email = prefs.getString(_kEmail) ?? '';
@@ -52,10 +61,12 @@ class SessionManager {
     String fermeId = '',
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now();
+      // Token JWT dans le stockage chiffré
+      await _secureStorage.write(key: _kToken, value: token);
+      // Données non sensibles dans SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
       await Future.wait([
-        prefs.setString(_kToken, token),
         prefs.setString(_kRole, role),
         prefs.setString(_kNom, nom),
         prefs.setString(_kEmail, email),
@@ -80,6 +91,7 @@ class SessionManager {
   // ── Effacer ──
   static Future<void> clear() async {
     try {
+      await _secureStorage.delete(key: _kToken);
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
       _token = '';

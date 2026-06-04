@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../../core/constants/app_constants.dart';
 import '../../managers/session_manager.dart';
 import '../../services/api_service.dart';
@@ -133,60 +131,22 @@ Posez-moi n\'importe quelle question sur votre ferme !''');
     _addMessage(role: 'assistant', text: '...', isLoading: true);
 
     try {
-      // Construire l'historique
       final history = _messages
-          .where((m) => !m['isLoading'] && m['text'] != '...')
+          .where((m) => !(m['isLoading'] as bool? ?? false) && m['text'] != '...')
           .take(_messages.length - 1)
           .map((m) => {
-        'role': m['role'] as String,
-        'content': m['text'] as String,
-      }).toList();
+            'role': m['role'] as String,
+            'content': m['text'] as String,
+          }).toList();
 
-      final systemPrompt = '''Tu es Kewere IA, l'assistant avicole intelligent de Kewere Aissa Smart, une plateforme avicole sénégalaise.
-
-Tu es un expert en:
-- Aviculture au Sénégal et en Afrique de l'Ouest
-- Gestion des élevages de poulets de chair et pondeuses
-- Santé animale et prévention des maladies
-- Gestion financière des exploitations avicoles
-- Météo et adaptation des élevages aux conditions climatiques
-
-${_buildContexte()}
-
-INSTRUCTIONS:
-- Réponds toujours en français
-- Sois précis, pratique et actionnable
-- Utilise les données de la ferme pour personnaliser tes réponses
-- Donne des conseils adaptés au contexte sénégalais
-- Utilise des emojis pour rendre la réponse plus lisible
-- Sois concis (max 200 mots sauf si demande détaillée)
-- Si tu donnes des chiffres, base-toi sur les données de la ferme''';
-
-      final response = await http.post(
-        Uri.parse('https://api.anthropic.com/v1/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'model': 'claude-sonnet-4-20250514',
-          'max_tokens': 1000,
-          'system': systemPrompt,
-          'messages': [
-            ...history,
-            {'role': 'user', 'content': texte},
-          ],
-        }),
-      ).timeout(const Duration(seconds: 30));
-
-      // Supprimer le message de chargement
+      final reply = await ApiService.callChat(
+        texte,
+        history: history,
+        contexte: _buildContexte(),
+      );
       setState(() => _messages.removeWhere((m) => m['isLoading'] == true));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final reply = data['content'][0]['text'] ?? '';
-        _addMessage(role: 'assistant', text: reply);
-      } else {
-        _addMessage(role: 'assistant',
-            text: '❌ Erreur de connexion à l\'IA. Réessayez.');
-      }
+      _addMessage(role: 'assistant', text: reply.isEmpty
+          ? '❌ Réponse vide. Réessayez.' : reply);
     } catch (e) {
       setState(() => _messages.removeWhere((m) => m['isLoading'] == true));
       _addMessage(role: 'assistant',
