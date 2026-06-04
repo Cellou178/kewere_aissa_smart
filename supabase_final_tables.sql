@@ -113,7 +113,8 @@ CREATE INDEX IF NOT EXISTS idx_conges_employe
     ON conges (employe_id, date_debut DESC);
 
 -- ── vue_tableau_bord_fermes (Dashboard) ───────────────────────
-CREATE OR REPLACE VIEW vue_tableau_bord_fermes AS
+DROP VIEW IF EXISTS vue_tableau_bord_fermes CASCADE;
+CREATE VIEW vue_tableau_bord_fermes AS
 SELECT
     e.nom                                                       AS entreprise,
     f.id                                                        AS ferme_id,
@@ -132,7 +133,8 @@ LEFT JOIN donnees_journalieres dj ON dj.cycle_id = c.id
 GROUP BY e.nom, f.id, f.nom, f.localisation;
 
 -- ── vue_abonnements_paiements (Dashboard) ─────────────────────
-CREATE OR REPLACE VIEW vue_abonnements_paiements AS
+DROP VIEW IF EXISTS vue_abonnements_paiements CASCADE;
+CREATE VIEW vue_abonnements_paiements AS
 SELECT
     a.id,
     a.entreprise_id,
