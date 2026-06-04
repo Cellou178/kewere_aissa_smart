@@ -35,7 +35,7 @@ CREATE INDEX IF NOT EXISTS idx_alertes_ferme_id
     ON alertes (ferme_id, niveau, date_creation DESC);
 
 -- ── plans (abonnements) ───────────────────────────────────────
--- La table existe déjà — on ajoute les colonnes manquantes et on met à jour
+-- La table existe déjà sans contrainte UNIQUE — on utilise UPDATE + INSERT
 ALTER TABLE plans ADD COLUMN IF NOT EXISTS description    TEXT;
 ALTER TABLE plans ADD COLUMN IF NOT EXISTS prix_annuel    DECIMAL(10,2) DEFAULT 0;
 ALTER TABLE plans ADD COLUMN IF NOT EXISTS nb_fermes_max  INTEGER DEFAULT 1;
@@ -43,16 +43,22 @@ ALTER TABLE plans ADD COLUMN IF NOT EXISTS nb_users_max   INTEGER DEFAULT 3;
 ALTER TABLE plans ADD COLUMN IF NOT EXISTS fonctionnalites TEXT[];
 ALTER TABLE plans ADD COLUMN IF NOT EXISTS created_at     TIMESTAMP DEFAULT NOW();
 
-INSERT INTO plans (nom, description, prix_mensuel, prix_annuel, nb_fermes_max, nb_users_max, actif) VALUES
-  ('gratuit',    'Plan gratuit — 1 ferme, 3 utilisateurs', 0,      0,      1,  3,  true),
-  ('pro',        'Plan Pro — 5 fermes, 10 utilisateurs',   15000,  150000, 5,  10, true),
-  ('enterprise', 'Plan Entreprise — illimité',             50000,  500000, 99, 99, true)
-ON CONFLICT (nom) DO UPDATE SET
-    description   = EXCLUDED.description,
-    prix_mensuel  = EXCLUDED.prix_mensuel,
-    prix_annuel   = EXCLUDED.prix_annuel,
-    nb_fermes_max = EXCLUDED.nb_fermes_max,
-    nb_users_max  = EXCLUDED.nb_users_max;
+UPDATE plans SET description='Plan gratuit — 1 ferme, 3 utilisateurs',
+    prix_mensuel=0, nb_fermes_max=1, nb_users_max=3 WHERE nom='gratuit';
+UPDATE plans SET description='Plan Pro — 5 fermes, 10 utilisateurs',
+    prix_mensuel=15000, nb_fermes_max=5, nb_users_max=10 WHERE nom='pro';
+UPDATE plans SET description='Plan Entreprise — illimité',
+    prix_mensuel=50000, nb_fermes_max=99, nb_users_max=99 WHERE nom='enterprise';
+
+INSERT INTO plans (nom, description, prix_mensuel, nb_fermes_max, nb_users_max, actif)
+    SELECT 'gratuit','Plan gratuit — 1 ferme, 3 utilisateurs',0,1,3,true
+    WHERE NOT EXISTS (SELECT 1 FROM plans WHERE nom='gratuit');
+INSERT INTO plans (nom, description, prix_mensuel, nb_fermes_max, nb_users_max, actif)
+    SELECT 'pro','Plan Pro — 5 fermes, 10 utilisateurs',15000,5,10,true
+    WHERE NOT EXISTS (SELECT 1 FROM plans WHERE nom='pro');
+INSERT INTO plans (nom, description, prix_mensuel, nb_fermes_max, nb_users_max, actif)
+    SELECT 'enterprise','Plan Entreprise — illimité',50000,99,99,true
+    WHERE NOT EXISTS (SELECT 1 FROM plans WHERE nom='enterprise');
 
 -- ── vaccinations (santé) ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS vaccinations (
