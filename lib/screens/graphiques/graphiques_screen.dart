@@ -1,9 +1,10 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/api_service.dart';
 import '../../core/utils/app_transitions.dart';
+import '../../core/utils/back_button_widget.dart';
 
 class GraphiquesScreen extends StatefulWidget {
   const GraphiquesScreen({super.key});
@@ -23,6 +24,16 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
   Map<String, String> _interpretations = {};
   Map<String, bool> _loadingIA = {};
 
+  String _selectedRace = 'Cobb 500';
+
+  static const Map<String, Map<String, double>> _raceParams = {
+    'Cobb 500':    {'A': 2200.0, 'b': 3.5,  'k': 0.085},
+    'Ross 308':    {'A': 2350.0, 'b': 3.2,  'k': 0.090},
+    'Hubbard':     {'A': 2100.0, 'b': 3.6,  'k': 0.082},
+    'Arbor Acres': {'A': 2150.0, 'b': 3.4,  'k': 0.083},
+    'Autre':       {'A': 1900.0, 'b': 3.7,  'k': 0.075},
+  };
+
   @override
   void initState() {
     super.initState();
@@ -38,10 +49,12 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
     final cycles = await ApiService.getCycles();
     final donnees = await ApiService.getDonnees();
     setState(() {
-      _cycles = cycles is List ? cycles : [];
-      _donnees = donnees is List ? donnees : [];
+      _cycles = cycles;
+      _donnees = donnees;
       if (_cycles.isNotEmpty && _selectedCycleId == null) {
         _selectedCycleId = _cycles.first['id']?.toString();
+        final souche = _cycles.first['souche']?.toString() ?? '';
+        if (_raceParams.containsKey(souche)) _selectedRace = souche;
       }
       _loading = false;
     });
@@ -259,6 +272,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Column(children: [
             Row(children: [
+              backAndMenuBtns(context),
               const Icon(Icons.bar_chart_rounded,
                   color: Colors.white, size: 22),
               const SizedBox(width: 8),
@@ -291,7 +305,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
                         borderSide: const BorderSide(
                             color: Colors.white30)),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.05),
+                    fillColor: Colors.white.withValues(alpha: 0.05),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 8)),
                 items: _cycles.map((c) => DropdownMenuItem<String>(
@@ -303,6 +317,12 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
                   setState(() {
                     _selectedCycleId = v;
                     _interpretations.clear();
+                    final cycle = _cycles.firstWhere(
+                      (c) => c['id']?.toString() == v,
+                      orElse: () => <String, dynamic>{},
+                    );
+                    final souche = cycle['souche']?.toString() ?? '';
+                    if (_raceParams.containsKey(souche)) _selectedRace = souche;
                   });
                   _analyserTout();
                 }),
@@ -330,7 +350,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
                       decoration: BoxDecoration(
                           color: _periode == p
                               ? kBlueLight
-                              : Colors.white.withOpacity(0.1),
+                              : Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20)),
                       child: Text(p, style: TextStyle(
                           color: _periode == p
@@ -425,7 +445,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10)]),
               child: _buildChart(type, data)),
         ),
@@ -460,7 +480,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8)]),
       child: Row(children: [
         Icon(isHausse ? Icons.trending_up_rounded
@@ -482,7 +502,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
             padding: const EdgeInsets.symmetric(
                 horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-                color: (isMauvais ? kRed : kGreen).withOpacity(0.1),
+                color: (isMauvais ? kRed : kGreen).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20)),
             child: Text(isMauvais ? '⚠️ Attention' : '✅ Bon',
                 style: TextStyle(
@@ -685,20 +705,56 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
   // Paramètres Cobb 500 / conditions Sénégal:
   //   A = 2200g (poids asymptotique), b = 3.5, k = 0.085/j
   double _gompertz(double t) {
-    const A = 2200.0, b = 3.5, k = 0.085;
-    return A * exp(-b * exp(-k * t));
+    final p = _raceParams[_selectedRace] ?? _raceParams['Cobb 500']!;
+    return p['A']! * exp(-p['b']! * exp(-p['k']! * t));
   }
 
   Widget _buildGompertz(List data) {
-    const A = 2200.0, b = 3.5, k = 0.085;
-    final inflexion = log(3.5) / k;
-    final spots = List.generate(46, (i) =>
+    final cycle = _cycles.firstWhere(
+      (c) => c['id']?.toString() == _selectedCycleId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    int cycleAge = 0;
+    int cycleDuration = 42;
+    try {
+      final dateDebut = DateTime.parse(cycle['date_debut'] ?? '');
+      cycleAge = DateTime.now().difference(dateDebut).inDays;
+      if (cycle['duree_prevue'] != null) {
+        cycleDuration = (cycle['duree_prevue'] as num).toInt();
+      } else {
+        cycleDuration = max(42, cycleAge + 7);
+      }
+    } catch (_) {}
+
+    final p = _raceParams[_selectedRace] ?? _raceParams['Cobb 500']!;
+    final A = p['A']!;
+    final b = p['b']!;
+    final k = p['k']!;
+    final inflexion = log(b) / k;
+    final numDays = max(cycleDuration, 42);
+    final maxY = A / 1000 * 1.08;
+    final hasCurrentAge = cycleAge > 0 && cycleAge <= numDays;
+    final currentWeight = hasCurrentAge ? _gompertz(cycleAge.toDouble()) / 1000 : 0.0;
+
+    final spots = List.generate(numDays + 1, (i) =>
         FlSpot(i.toDouble(), _gompertz(i.toDouble()) / 1000));
+
+    final cycleInfo = hasCurrentAge
+        ? 'Ce cycle est actuellement à j$cycleAge avec un poids théorique de ${currentWeight.toStringAsFixed(2)} kg. '
+        : '';
+
+    final tableAges = <int>{7, 14, 21};
+    if (cycleDuration > 28) tableAges.add(35);
+    tableAges.add(cycleDuration);
+    if (hasCurrentAge && !tableAges.contains(cycleAge)) tableAges.add(cycleAge);
+    final sortedRows = tableAges.where((d) => d <= numDays).toList()..sort();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(children: [
-        // Info modèle
+
+        // ── Header + sélecteur race ──
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -719,26 +775,70 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
               const SizedBox(width: 8),
               _paramChip('k = $k', 'Vitesse'),
             ]),
+            const SizedBox(height: 12),
+            const Text('Race / Souche:',
+                style: TextStyle(color: Colors.white54, fontSize: 11)),
+            const SizedBox(height: 6),
+            Wrap(spacing: 6, runSpacing: 6,
+              children: _raceParams.keys.map((race) => GestureDetector(
+                onTap: () => setState(() => _selectedRace = race),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: _selectedRace == race
+                          ? kBlueLight
+                          : Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Text(race, style: TextStyle(
+                      color: _selectedRace == race ? Colors.white : Colors.white54,
+                      fontSize: 11,
+                      fontWeight: _selectedRace == race
+                          ? FontWeight.w700 : FontWeight.w400)),
+                ),
+              )).toList()),
+            if (hasCurrentAge) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                    color: kGreen.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8)),
+                child: Row(children: [
+                  const Icon(Icons.today_rounded, color: kGreen, size: 14),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(
+                    'Aujourd\'hui: j$cycleAge  •  Poids théorique: ${currentWeight.toStringAsFixed(2)} kg',
+                    style: const TextStyle(
+                        color: kGreen, fontSize: 11, fontWeight: FontWeight.w600))),
+                ]),
+              ),
+            ],
           ]),
         ),
         const SizedBox(height: 12),
 
-        // Courbe
+        // ── Courbe ──
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
               color: Colors.white, borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
+              boxShadow: [BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Courbe de croissance théorique (Cobb 500)',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            Text('Courbe de croissance — $_selectedRace',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
             const SizedBox(height: 4),
-            Text('Point d\'inflexion (croissance max): j${inflexion.toStringAsFixed(0)}',
+            Text('Inflexion (croissance max): j${inflexion.toStringAsFixed(0)}',
                 style: const TextStyle(color: kOrange, fontSize: 11)),
+            if (hasCurrentAge)
+              Text('Cycle en cours: j$cycleAge / j$cycleDuration',
+                  style: const TextStyle(color: kGreen, fontSize: 11)),
             const SizedBox(height: 12),
             SizedBox(
               height: 220,
               child: LineChart(LineChartData(
+                minY: 0,
+                maxY: maxY,
                 gridData: FlGridData(
                     show: true,
                     drawVerticalLine: true,
@@ -767,72 +867,101 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
                     barWidth: 2.5,
                     dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
-                        show: true, color: kBlue.withOpacity(0.08)),
+                        show: true, color: kBlue.withValues(alpha: 0.08)),
                   ),
-                  // Ligne inflexion
                   LineChartBarData(
-                    spots: [FlSpot(inflexion, 0), FlSpot(inflexion, 2.2)],
+                    spots: [FlSpot(inflexion, 0), FlSpot(inflexion, maxY)],
                     isCurved: false,
-                    color: kOrange.withOpacity(0.6),
+                    color: kOrange.withValues(alpha: 0.6),
                     barWidth: 1.5,
                     dashArray: [4, 4],
+                    dotData: const FlDotData(show: false),
+                  ),
+                  if (hasCurrentAge) LineChartBarData(
+                    spots: [FlSpot(cycleAge.toDouble(), 0),
+                            FlSpot(cycleAge.toDouble(), maxY)],
+                    isCurved: false,
+                    color: kGreen.withValues(alpha: 0.7),
+                    barWidth: 1.5,
+                    dashArray: [6, 3],
                     dotData: const FlDotData(show: false),
                   ),
                 ],
               )),
             ),
+            const SizedBox(height: 8),
+            Wrap(spacing: 12, children: [
+              _legendDot(kBlue, 'Courbe Gompertz'),
+              _legendDot(kOrange, 'Inflexion (j${inflexion.toStringAsFixed(0)})'),
+              if (hasCurrentAge) _legendDot(kGreen, 'Aujourd\'hui (j$cycleAge)'),
+            ]),
           ]),
         ),
         const SizedBox(height: 12),
 
-        // Tableau valeurs clés
+        // ── Tableau dynamique ──
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
               color: Colors.white, borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+              boxShadow: [BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)]),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('📋 Poids théoriques par âge', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            const Text('📋 Poids théoriques par âge',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
             const SizedBox(height: 10),
             Table(
-              border: TableBorder(horizontalInside: BorderSide(color: Colors.grey.shade100)),
+              border: TableBorder(
+                  horizontalInside: BorderSide(color: Colors.grey.shade100)),
               children: [
                 _tableRow('Âge', 'Poids théorique', 'Stade', isHeader: true),
-                _tableRow('7 j', '${(_gompertz(7)/1000).toStringAsFixed(2)} kg', 'Démarrage', color: kBlue),
-                _tableRow('14 j', '${(_gompertz(14)/1000).toStringAsFixed(2)} kg', 'Croissance rapide', color: kGreen),
-                _tableRow('21 j', '${(_gompertz(21)/1000).toStringAsFixed(2)} kg', 'Mi-cycle', color: kOrange),
-                _tableRow('35 j', '${(_gompertz(35)/1000).toStringAsFixed(2)} kg', 'Finition', color: kPurple),
-                _tableRow('42 j', '${(_gompertz(42)/1000).toStringAsFixed(2)} kg', 'Abattage optimal', color: kRed),
+                ...sortedRows.map((day) {
+                  final isToday = hasCurrentAge && day == cycleAge;
+                  final color = isToday ? kGreen
+                      : day == cycleDuration ? kRed
+                      : day <= 14 ? kBlue
+                      : day <= 28 ? kOrange : kPurple;
+                  return _tableRow(
+                    isToday ? '▶ j$day (auj.)' : 'j$day',
+                    '${(_gompertz(day.toDouble()) / 1000).toStringAsFixed(2)} kg',
+                    _stade(day, cycleDuration),
+                    color: color,
+                    highlight: isToday,
+                  );
+                }),
               ],
             ),
           ]),
         ),
         const SizedBox(height: 12),
 
-        // Interprétation + références
+        // ── Interprétation ──
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-              color: kBlue.withOpacity(0.05), borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: kBlue.withOpacity(0.2))),
+              color: kBlue.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: kBlue.withValues(alpha: 0.2))),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('🔬 Interprétation', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kBlue)),
+            const Text('🔬 Interprétation',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: kBlue)),
             const SizedBox(height: 8),
             Text(
-              'Le modèle de Gompertz décrit la croissance sigmoïde des poulets de chair. '
-              'La phase d\'accélération maximale se produit à j${(log(3.5) / 0.085).toStringAsFixed(0)}, '
+              'Le modèle de Gompertz décrit la croissance sigmoïde des poulets de chair ($_selectedRace). '
+              'La phase d\'accélération maximale se produit à j${inflexion.toStringAsFixed(0)}, '
               'après quoi le gain quotidien ralentit. '
-              'L\'âge optimal d\'abattage (42j) correspond au meilleur ratio gain/consommation alimentaire. '
+              '${cycleInfo}L\'âge optimal d\'abattage (j$cycleDuration) correspond au meilleur ratio gain/consommation alimentaire. '
               'Un poids inférieur au théorique indique un déficit alimentaire ou un stress environnemental.',
-              style: TextStyle(fontSize: 12, height: 1.5, color: Color(0xFF1E293B)),
+              style: const TextStyle(fontSize: 12, height: 1.5, color: Color(0xFF1E293B)),
             ),
             const SizedBox(height: 10),
-            const Text('📚 Références scientifiques:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11)),
+            const Text('📚 Références scientifiques:',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11)),
             const SizedBox(height: 4),
             _refItem('Gompertz B. (1825) On the nature of the function expressive of the law of human mortality. Phil. Trans. R. Soc.'),
-            _refItem('Winsorized Gompertz: Tjørve & Tjørve (2017) PLOS ONE — paramètres poulets de chair'),
+            _refItem('Tjørve & Tjørve (2017) PLOS ONE — paramètres optimisés poulets de chair'),
             _refItem('Cobb-Vantress (2022) Cobb 500 Broiler Performance & Nutrition Supplement'),
-            _refItem('CNPO Sénégal (2023) Guide production poulet de chair: poids cible 1.8-2.2 kg à 42j'),
+            _refItem('CNPO Sénégal (2023) Guide production poulet de chair'),
             _refItem('Diallo A. et al. (2021) Modélisation croissance avicole en zone Sahélienne, Rev. Afric. Sci. Vét.'),
           ]),
         ),
@@ -843,21 +972,47 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
 
   Widget _paramChip(String value, String label) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
     child: Column(children: [
       Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
       Text(label, style: const TextStyle(color: Colors.white54, fontSize: 9)),
     ]),
   );
 
-  TableRow _tableRow(String age, String poids, String stade, {bool isHeader = false, Color? color}) =>
-      TableRow(children: [age, poids, stade].map((t) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-        child: Text(t, style: TextStyle(
-            fontSize: isHeader ? 10 : 12,
-            fontWeight: isHeader ? FontWeight.w700 : FontWeight.w500,
-            color: isHeader ? Colors.grey : (color ?? const Color(0xFF1E293B)))),
-      )).toList());
+  TableRow _tableRow(String age, String poids, String stade,
+      {bool isHeader = false, Color? color, bool highlight = false}) =>
+      TableRow(
+        decoration: highlight
+            ? BoxDecoration(color: kGreen.withValues(alpha: 0.08))
+            : null,
+        children: [age, poids, stade].map((t) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Text(t, style: TextStyle(
+              fontSize: isHeader ? 10 : 12,
+              fontWeight: (isHeader || highlight) ? FontWeight.w700 : FontWeight.w500,
+              color: isHeader ? Colors.grey : (color ?? const Color(0xFF1E293B)))),
+        )).toList());
+
+  Widget _legendDot(Color color, String label) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+          width: 12, height: 3,
+          decoration: BoxDecoration(
+              color: color, borderRadius: BorderRadius.circular(2))),
+      const SizedBox(width: 4),
+      Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey)),
+    ],
+  );
+
+  String _stade(int day, int duration) {
+    if (day == duration) return 'Abattage prevu';
+    if (day <= 7) return 'Demarrage';
+    if (day <= 14) return 'Croissance init.';
+    if (day <= 21) return 'Mi-cycle';
+    if (day <= 35) return 'Finition';
+    return 'Abattage optimal';
+  }
 
   Widget _refItem(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 4),
@@ -919,7 +1074,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
                 Text(interpretation ??
                     'Appuyez sur relancer pour analyser.',
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.87),
+                        color: Colors.white.withValues(alpha: 0.87),
                         fontSize: 13, height: 1.5)),
               const SizedBox(height: 12),
               SizedBox(width: double.infinity,
@@ -988,9 +1143,9 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
+          color: color.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.2))),
+          border: Border.all(color: color.withValues(alpha: 0.2))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start,
           children: [
         Row(children: [
@@ -1021,7 +1176,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
         else
           Text(interpretation ?? 'Appuyez sur actualiser.',
               style: TextStyle(
-                  color: color.withOpacity(0.8),
+                  color: color.withValues(alpha: 0.8),
                   fontSize: 12, height: 1.5)),
       ]),
     );
@@ -1054,7 +1209,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
       return BarChart(BarChartData(
           gridData: FlGridData(show: true,
               getDrawingHorizontalLine: (_) => FlLine(
-                  color: Colors.grey.withOpacity(0.15),
+                  color: Colors.grey.withValues(alpha: 0.15),
                   strokeWidth: 1)),
           titlesData: _titlesData(unit),
           borderData: FlBorderData(show: false),
@@ -1069,7 +1224,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
     return LineChart(LineChartData(
         gridData: FlGridData(show: true,
             getDrawingHorizontalLine: (_) => FlLine(
-                color: Colors.grey.withOpacity(0.15),
+                color: Colors.grey.withValues(alpha: 0.15),
                 strokeWidth: 1)),
         titlesData: _titlesData(unit),
         borderData: FlBorderData(show: false),
@@ -1078,7 +1233,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
             color: color, barWidth: 2.5,
             belowBarData: BarAreaData(
                 show: true,
-                color: color.withOpacity(0.08)),
+                color: color.withValues(alpha: 0.08)),
             dotData: FlDotData(
                 show: spots.length <= 10,
                 getDotPainter: (_, __, ___, ____) =>
@@ -1111,7 +1266,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
       Expanded(child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(10)),
         child: Column(children: [
           Text(value, style: TextStyle(
@@ -1137,7 +1292,7 @@ class _GraphiquesScreenState extends State<GraphiquesScreen>
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8)]),
       child: child);
 }
