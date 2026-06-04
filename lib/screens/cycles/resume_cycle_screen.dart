@@ -212,6 +212,8 @@ class ResumeCycleScreen extends StatelessWidget {
             DataColumn(label: Text('Temp °C'), numeric: true),
             DataColumn(label: Text('Hum %'), numeric: true),
             DataColumn(label: Text('Prod.'), numeric: true),
+            DataColumn(label: Text('Poids (kg)'), numeric: true),
+            DataColumn(label: Text('Homo %'), numeric: true),
           ],
           rows: _donnesTries.asMap().entries.map((e) {
             final i = e.key;
@@ -220,6 +222,11 @@ class ResumeCycleScreen extends StatelessWidget {
             final temp = ((d['temperature'] ?? 0) as num).toDouble();
             final hum = ((d['humidite'] ?? 0) as num).toDouble();
             final prod = ((d['production'] ?? 0) as num).toInt();
+            // poids_moyen_global stocké en grammes → convertir en kg
+            final poidsG = ((d['poids_moyen_global'] ?? 0) as num).toDouble();
+            final poidsKg = poidsG > 0 ? poidsG / 1000 : 0.0;
+            // homogeneite en pourcentage
+            final homo = ((d['homogeneite'] ?? 0) as num).toDouble();
             final date = (d['date_releve'] ?? '').toString();
             final dateStr = date.length >= 10 ? date.substring(0, 10) : date;
 
@@ -239,6 +246,17 @@ class ResumeCycleScreen extends StatelessWidget {
                     color: hum >= 50 && hum <= 70 ? kGreen : kOrange))),
                 DataCell(Text('$prod', style: const TextStyle(
                     color: kPurple, fontWeight: FontWeight.w600))),
+                DataCell(Text(
+                  poidsKg > 0 ? poidsKg.toStringAsFixed(3) : '-',
+                  style: const TextStyle(color: kBlue, fontWeight: FontWeight.w600),
+                )),
+                DataCell(Text(
+                  homo > 0 ? '${homo.toStringAsFixed(1)}%' : '-',
+                  style: TextStyle(
+                    color: homo >= 80 ? kGreen : homo >= 60 ? kOrange : kRed,
+                    fontWeight: FontWeight.w600,
+                  ),
+                )),
               ],
             );
           }).toList(),
@@ -320,6 +338,25 @@ class ResumeCycleScreen extends StatelessWidget {
             _pdfKpi('T° moy.', '${_avgTemp.toStringAsFixed(1)}°C'),
             _pdfKpi('Hum. moy.', '${_avgHum.toStringAsFixed(1)}%'),
           ]),
+          pw.SizedBox(height: 8),
+          pw.Row(children: [
+            _pdfKpi('Poids moy. final', () {
+              final dernierPoids = sorted.isNotEmpty
+                  ? ((sorted.last['poids_moyen_global'] ?? 0) as num).toDouble()
+                  : 0.0;
+              return dernierPoids > 0
+                  ? '${(dernierPoids / 1000).toStringAsFixed(3)} kg'
+                  : 'N/A';
+            }()),
+            _pdfKpi('Homogénéité moy.', () {
+              final vals = sorted.where((d) =>
+                  (d['homogeneite'] ?? 0) as num > 0).toList();
+              if (vals.isEmpty) return 'N/A';
+              final avg = vals.fold<double>(0, (s, d) =>
+                  s + ((d['homogeneite'] ?? 0) as num).toDouble()) / vals.length;
+              return '${avg.toStringAsFixed(1)}%';
+            }()),
+          ]),
           pw.SizedBox(height: 16),
 
           // Tableau
@@ -335,7 +372,8 @@ class ResumeCycleScreen extends StatelessWidget {
                 decoration: const pw.BoxDecoration(
                     color: PdfColors.blueGrey900),
                 children: ['Jour', 'Date', 'Morts',
-                  'Temp (°C)', 'Hum (%)', 'Production']
+                  'Temp (°C)', 'Hum (%)', 'Production',
+                  'Poids (kg)', 'Homo (%)']
                     .map((h) => pw.Padding(
                     padding: const pw.EdgeInsets.all(6),
                     child: pw.Text(h,
@@ -353,6 +391,14 @@ class ResumeCycleScreen extends StatelessWidget {
                     ? date.substring(0, 10) : date;
                 final bg = i.isEven ? PdfColors.white
                     : PdfColors.grey100;
+                // poids en grammes → kg
+                final poidsG = ((d['poids_moyen_global'] ?? 0) as num).toDouble();
+                final poidsStr = poidsG > 0
+                    ? (poidsG / 1000).toStringAsFixed(3)
+                    : '-';
+                // homogeneite en %
+                final homo = ((d['homogeneite'] ?? 0) as num).toDouble();
+                final homoStr = homo > 0 ? '${homo.toStringAsFixed(1)}%' : '-';
                 return pw.TableRow(
                   decoration: pw.BoxDecoration(color: bg),
                   children: [
@@ -362,6 +408,8 @@ class ResumeCycleScreen extends StatelessWidget {
                     '${((d['temperature'] ?? 0) as num).toStringAsFixed(1)}',
                     '${((d['humidite'] ?? 0) as num).toStringAsFixed(1)}',
                     '${(d['production'] ?? 0)}',
+                    poidsStr,
+                    homoStr,
                   ].map((v) => pw.Padding(
                       padding: const pw.EdgeInsets.all(5),
                       child: pw.Text(v,
@@ -414,7 +462,8 @@ class ResumeCycleScreen extends StatelessWidget {
 
       // En-têtes
       final headers = ['Jour', 'Date', 'Mortalité',
-        'Température (°C)', 'Humidité (%)', 'Production'];
+        'Température (°C)', 'Humidité (%)', 'Production',
+        'Poids moyen (kg)', 'Homogénéité (%)'];
       for (var i = 0; i < headers.length; i++) {
         final cell = sheet.cell(
             CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
@@ -432,6 +481,11 @@ class ResumeCycleScreen extends StatelessWidget {
         final d = sorted[i];
         final date = (d['date_releve'] ?? '').toString();
         final dateStr = date.length >= 10 ? date.substring(0, 10) : date;
+        // poids_moyen_global stocké en grammes → convertir en kg
+        final poidsG = ((d['poids_moyen_global'] ?? 0) as num).toDouble();
+        final poidsKg = poidsG > 0 ? (poidsG / 1000).toStringAsFixed(3) : '';
+        final homo = ((d['homogeneite'] ?? 0) as num).toDouble();
+        final homoStr = homo > 0 ? homo.toStringAsFixed(1) : '';
         final rowData = [
           'J${i + 1}',
           dateStr,
@@ -439,6 +493,8 @@ class ResumeCycleScreen extends StatelessWidget {
           ((d['temperature'] ?? 0) as num).toStringAsFixed(1),
           ((d['humidite'] ?? 0) as num).toStringAsFixed(1),
           (d['production'] ?? 0).toString(),
+          poidsKg,
+          homoStr,
         ];
         for (var j = 0; j < rowData.length; j++) {
           sheet.cell(CellIndex.indexByColumnRow(

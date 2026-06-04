@@ -260,7 +260,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
             Row(children: [
               Expanded(child: _field(_poidsMoyenCtrl, 'Poids moyen (g)', '⚖️', isDecimal: true)),
               const SizedBox(width: 12),
-              Expanded(child: _field(_homogeneiteCtrl, 'Homogénéité', '📊', isDecimal: true)),
+              Expanded(child: _field(_homogeneiteCtrl, 'Homogénéité (%)', '📊', isDecimal: true)),
             ]),
             const SizedBox(height: 12),
             Row(children: [
