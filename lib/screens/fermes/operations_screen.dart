@@ -264,12 +264,12 @@ class _OperationsScreenState extends State<OperationsScreen> {
             ]),
             const SizedBox(height: 12),
             Row(children: [
-              Expanded(child: _field(_poidsStdCtrl, 'Poids standard', '📏', isDecimal: true)),
+              Expanded(child: _field(_poidsStdCtrl, 'Poids standard (g)', '📏', isDecimal: true)),
               const SizedBox(width: 12),
-              Expanded(child: _field(_devPlusCtrl, 'Déviation +', '➕', isDecimal: true)),
+              Expanded(child: _field(_devPlusCtrl, 'Déviation + (g)', '➕', isDecimal: true)),
             ]),
             const SizedBox(height: 12),
-            _field(_devMoinsCtrl, 'Déviation -', '➖', isDecimal: true),
+            _field(_devMoinsCtrl, 'Déviation - (g)', '➖', isDecimal: true),
           ])),
           const SizedBox(height: 12),
 
