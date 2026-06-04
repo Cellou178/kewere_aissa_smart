@@ -16,78 +16,10 @@ class _MarcheScreenState extends State<MarcheScreen>
   String? _analyseIA;
   List _cycles = [];
 
-  // Prix du marché Afrique de l'Ouest (données simulées réalistes)
-  final List<Map<String, dynamic>> _prixPoulet = [
-    {'pays': 'Sénégal 🇸🇳', 'ville': 'Dakar', 'prix': 2800, 'tendance': 'hausse', 'variation': 5.2},
-    {'pays': 'Sénégal 🇸🇳', 'ville': 'Thiès', 'prix': 2650, 'tendance': 'stable', 'variation': 0.5},
-    {'pays': 'Sénégal 🇸🇳', 'ville': 'Mbour', 'prix': 2700, 'tendance': 'hausse', 'variation': 3.1},
-    {'pays': 'Côte d\'Ivoire 🇨🇮', 'ville': 'Abidjan', 'prix': 3200, 'tendance': 'baisse', 'variation': -2.3},
-    {'pays': 'Mali 🇲🇱', 'ville': 'Bamako', 'prix': 2400, 'tendance': 'stable', 'variation': 1.0},
-    {'pays': 'Guinée 🇬🇳', 'ville': 'Conakry', 'prix': 2900, 'tendance': 'hausse', 'variation': 4.5},
-    {'pays': 'Gambie 🇬🇲', 'ville': 'Banjul', 'prix': 3100, 'tendance': 'hausse', 'variation': 6.2},
-    {'pays': 'Mauritanie 🇲🇷', 'ville': 'Nouakchott', 'prix': 2600, 'tendance': 'baisse', 'variation': -1.5},
-  ];
-
-  final List<Map<String, dynamic>> _prixAliment = [
-    {'produit': 'Sac aliment démarrage 50kg', 'prix': 18500, 'tendance': 'hausse', 'variation': 8.3},
-    {'produit': 'Sac aliment croissance 50kg', 'prix': 17000, 'tendance': 'hausse', 'variation': 6.1},
-    {'produit': 'Sac aliment finition 50kg', 'prix': 16500, 'tendance': 'stable', 'variation': 0.8},
-    {'produit': 'Poussin d\'un jour (Cobb 500)', 'prix': 650, 'tendance': 'hausse', 'variation': 4.2},
-    {'produit': 'Poussin d\'un jour (Ross 308)', 'prix': 700, 'tendance': 'hausse', 'variation': 3.8},
-    {'produit': 'Maïs grain (kg)', 'prix': 280, 'tendance': 'baisse', 'variation': -2.1},
-    {'produit': 'Soja tourteau (kg)', 'prix': 420, 'tendance': 'hausse', 'variation': 5.5},
-  ];
-
-  final List<Map<String, dynamic>> _prixMedicaments = [
-    {'produit': 'Vaccin Newcastle (100 doses)', 'prix': 3500, 'tendance': 'stable', 'variation': 0.5},
-    {'produit': 'Vaccin Gumboro (100 doses)', 'prix': 4200, 'tendance': 'hausse', 'variation': 2.3},
-    {'produit': 'Antibiotique (Tétracycline 500g)', 'prix': 8500, 'tendance': 'stable', 'variation': 0.0},
-    {'produit': 'Vitamines & Électrolytes (1kg)', 'prix': 6500, 'tendance': 'baisse', 'variation': -1.8},
-    {'produit': 'Désinfectant Virkon (1kg)', 'prix': 12000, 'tendance': 'hausse', 'variation': 3.2},
-  ];
-
-  final List<Map<String, dynamic>> _actualites = [
-    {
-      'titre': 'Hausse des prix des poussins au Sénégal',
-      'description': 'Les couvoirs signalent une augmentation de 4-6% sur le prix des poussins d\'un jour due à une forte demande.',
-      'date': '23/05/2026',
-      'categorie': 'Prix',
-      'urgent': true,
-      'icon': '🐥',
-    },
-    {
-      'titre': 'Nouveau programme de subvention avicole',
-      'description': 'Le gouvernement sénégalais annonce un programme de soutien aux éleveurs avec des intrants subventionnés.',
-      'date': '20/05/2026',
-      'categorie': 'Politique',
-      'urgent': false,
-      'icon': '🏛️',
-    },
-    {
-      'titre': 'Alerte sanitaire: Grippe aviaire au Mali',
-      'description': 'Des cas de grippe aviaire H5N1 détectés dans la région de Kayes. Renforcer les mesures de biosécurité.',
-      'date': '18/05/2026',
-      'categorie': 'Santé',
-      'urgent': true,
-      'icon': '⚠️',
-    },
-    {
-      'titre': 'Foire avicole de Dakar - Juin 2026',
-      'description': 'La grande foire avicole annuelle se tiendra du 15 au 18 juin 2026 à Dakar Arena.',
-      'date': '15/05/2026',
-      'categorie': 'Événement',
-      'urgent': false,
-      'icon': '🎪',
-    },
-    {
-      'titre': 'Prix du maïs en baisse en Afrique de l\'Ouest',
-      'description': 'La bonne saison des pluies 2025 a permis une récolte abondante, faisant baisser le prix du maïs de 2-3%.',
-      'date': '12/05/2026',
-      'categorie': 'Prix',
-      'urgent': false,
-      'icon': '🌽',
-    },
-  ];
+  List<Map<String, dynamic>> _prixPoulet = [];
+  List<Map<String, dynamic>> _prixAliment = [];
+  List<Map<String, dynamic>> _prixMedicaments = [];
+  List<Map<String, dynamic>> _actualites = [];
 
   @override
   void initState() {
@@ -100,32 +32,53 @@ class _MarcheScreenState extends State<MarcheScreen>
   void dispose() { _tabCtrl.dispose(); super.dispose(); }
 
   Future<void> _load() async {
-    final cycles = await ApiService.getCycles();
-    setState(() => _cycles = cycles is List ? cycles : []);
+    setState(() => _loading = true);
+    final results = await Future.wait([
+      ApiService.getCycles(),
+      ApiService.getActualitesMarche(),
+      ApiService.getPrixMarche(categorie: 'poulet'),
+      ApiService.getPrixMarche(categorie: 'aliment'),
+      ApiService.getPrixMarche(categorie: 'medicament'),
+    ]);
+    setState(() {
+      _cycles = results[0];
+      _actualites = results[1].map((e) => Map<String, dynamic>.from(e)).toList();
+      _prixPoulet = results[2].map((e) => Map<String, dynamic>.from(e)).toList();
+      _prixAliment = results[3].map((e) => Map<String, dynamic>.from(e)).toList();
+      _prixMedicaments = results[4].map((e) => Map<String, dynamic>.from(e)).toList();
+      _loading = false;
+    });
   }
 
   Future<void> _analyserMarche() async {
     setState(() { _loadingIA = true; _analyseIA = null; });
     try {
-      final prixMoyenSenegal = _prixPoulet
-          .where((p) => p['pays'].toString().contains('Sénégal'))
-          .fold<double>(0, (s, p) => s + (p['prix'] as int)) / 3;
+      final prixPouletSn = _prixPoulet
+          .where((p) => p['pays']?.toString().contains('Sénégal') == true)
+          .map((p) => (p['prix'] as num).toDouble())
+          .toList();
+      final prixMoyenSenegal = prixPouletSn.isEmpty ? 0.0
+          : prixPouletSn.reduce((a, b) => a + b) / prixPouletSn.length;
+
+      final prixResume = _prixPoulet.take(4)
+          .map((p) => '${p['ville'] ?? p['pays']}: ${p['prix']} FCFA/kg (${p['tendance']})')
+          .join(', ');
+      final alimentResume = _prixAliment.take(3)
+          .map((p) => '${p['produit']}: ${p['prix']} FCFA')
+          .join(', ');
+      final alertesUrgentes = _actualites
+          .where((a) => a['urgent'] == true)
+          .map((a) => a['titre'])
+          .join('; ');
 
       final prompt = '''Tu es un expert en marchés avicoles en Afrique de l\'Ouest.
 Analyse les tendances du marché avicole et donne des recommandations stratégiques.
 
-DONNÉES DU MARCHÉ:
+DONNÉES DU MARCHÉ (temps réel):
 - Prix moyen poulet Sénégal: ${prixMoyenSenegal.toStringAsFixed(0)} FCFA/kg
-- Prix Dakar: 2800 FCFA/kg (+5.2%)
-- Prix Abidjan: 3200 FCFA/kg (-2.3%)
-- Poussin 1 jour: 650-700 FCFA (+4%)
-- Aliment 50kg: 16500-18500 FCFA (+6-8%)
-- Maïs grain: -2.1%
-
-CONTEXTE:
-- Forte demande en période de Tabaski
-- Grippe aviaire détectée au Mali
-- Programme subvention gouvernement sénégalais
+- Prix par ville: $prixResume
+- Intrants: $alimentResume
+- Alertes urgentes: ${alertesUrgentes.isEmpty ? 'Aucune' : alertesUrgentes}
 
 Donne une analyse stratégique incluant:
 1. Opportunités de vente actuelles

@@ -18,95 +18,18 @@ class _VitrineScreenState extends State<VitrineScreen>
   bool _loadingIA = false;
   String? _descriptionIA;
 
-  // Catalogue produits à vendre
-  final List<Map<String, dynamic>> _produits = [
-    {
-      'nom': 'Poulets de chair vivants',
-      'categorie': 'Volaille',
-      'prix': 3500,
-      'unite': 'par tête',
-      'disponible': true,
-      'quantite': 850,
-      'icon': '🐔',
-      'color': kOrange,
-      'description': 'Poulets Cobb 500, 6 semaines, poids moyen 2.2kg',
-    },
-    {
-      'nom': 'Poulets abattus',
-      'categorie': 'Volaille',
-      'prix': 4500,
-      'unite': 'par kg',
-      'disponible': true,
-      'quantite': 200,
-      'icon': '🍗',
-      'color': kRed,
-      'description': 'Poulets nettoyés et préparés, livraison possible',
-    },
-    {
-      'nom': 'Œufs frais',
-      'categorie': 'Œufs',
-      'prix': 150,
-      'unite': 'par unité',
-      'disponible': false,
-      'quantite': 0,
-      'icon': '🥚',
-      'color': const Color(0xFFF59E0B),
-      'description': 'Œufs de poules pondeuses, calibre A',
-    },
-    {
-      'nom': 'Fumier de volaille',
-      'categorie': 'Engrais',
-      'prix': 5000,
-      'unite': 'par sac 50kg',
-      'disponible': true,
-      'quantite': 30,
-      'icon': '🌱',
-      'color': kGreen,
-      'description': 'Engrais organique naturel, idéal pour maraîchage',
-    },
-    {
-      'nom': 'Poussins d\'un jour',
-      'categorie': 'Poussins',
-      'prix': 700,
-      'unite': 'par poussin',
-      'disponible': false,
-      'quantite': 0,
-      'icon': '🐥',
-      'color': const Color(0xFFF59E0B),
-      'description': 'Poussins Ross 308, vaccinés et sexés',
-    },
-  ];
+  List _produits = [];
+  List _commandes = [];
 
-  // Commandes reçues (simulées)
-  final List<Map<String, dynamic>> _commandes = [
-    {
-      'client': 'Modou Diallo',
-      'telephone': '77 123 45 67',
-      'produit': 'Poulets de chair vivants',
-      'quantite': 50,
-      'montant': 175000,
-      'statut': 'confirme',
-      'date': '23/05/2026',
-    },
-    {
-      'client': 'Fatou Sow',
-      'telephone': '70 987 65 43',
-      'produit': 'Poulets abattus',
-      'quantite': 20,
-      'montant': 90000,
-      'statut': 'en_attente',
-      'date': '22/05/2026',
-    },
-    {
-      'client': 'Ibrahima Ndiaye',
-      'telephone': '76 456 78 90',
-      'produit': 'Fumier de volaille',
-      'quantite': 5,
-      'montant': 25000,
-      'statut': 'livre',
-      'date': '20/05/2026',
-    },
-  ];
+  Color _categorieColor(String cat) {
+    switch (cat.toLowerCase()) {
+      case 'volaille': return kOrange;
+      case 'poussins': return kYellow;
+      case 'oeufs': case 'œufs': return kYellow;
+      case 'engrais': return kGreen;
+      default: return kBlue;
+    }
+  }
 
   @override
   void initState() {
@@ -120,11 +43,17 @@ class _VitrineScreenState extends State<VitrineScreen>
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final cycles = await ApiService.getCycles();
-    final stocks = await ApiService.getStocks();
+    final results = await Future.wait([
+      ApiService.getCycles(),
+      ApiService.getStocks(),
+      ApiService.getProduitsVitrine(),
+      ApiService.getCommandesVitrine(),
+    ]);
     setState(() {
-      _cycles = cycles is List ? cycles : [];
-      _stocks = stocks is List ? stocks : [];
+      _cycles = results[0];
+      _stocks = results[1];
+      _produits = results[2];
+      _commandes = results[3];
       _loading = false;
     });
   }
@@ -159,7 +88,7 @@ En français, style commercial professionnel, adapté au marché sénégalais.''
   }
 
   double get _chiffreAffaires => _commandes.fold<double>(0,
-          (s, c) => s + ((c['montant'] as num).toDouble()));
+          (s, c) => s + ((c['montant'] as num? ?? 0).toDouble()));
   int get _commandesEnAttente => _commandes
       .where((c) => c['statut'] == 'en_attente').length;
   int get _produitsDisponibles => _produits
@@ -298,7 +227,7 @@ En français, style commercial professionnel, adapté au marché sénégalais.''
 
   Widget _produitCard(Map p) {
     final disponible = p['disponible'] as bool;
-    final color = disponible ? (p['color'] as Color) : Colors.grey;
+    final color = disponible ? _categorieColor(p['categorie']?.toString() ?? '') : Colors.grey;
 
     return GestureDetector(
       onTap: () => _showDetailProduit(p),
@@ -635,7 +564,7 @@ En français, style commercial professionnel, adapté au marché sénégalais.''
   // ── MODALS ──
   void _showDetailProduit(Map p) {
     final disponible = p['disponible'] as bool;
-    final color = disponible ? (p['color'] as Color) : Colors.grey;
+    final color = disponible ? _categorieColor(p['categorie']?.toString() ?? '') : Colors.grey;
 
     showModalBottomSheet(
       context: context,
@@ -786,23 +715,23 @@ En français, style commercial professionnel, adapté au marché sénégalais.''
           const SizedBox(height: 16),
           SizedBox(width: double.infinity, height: 48,
               child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (nomCtrl.text.isNotEmpty) {
-                      setState(() => _produits.add({
+                      Navigator.pop(context);
+                      await ApiService.createProduitVitrine({
                         'nom': nomCtrl.text,
                         'categorie': 'Autre',
-                        'prix': int.tryParse(prixCtrl.text) ?? 0,
-                        'unite': 'unité',
+                        'prix': double.tryParse(prixCtrl.text) ?? 0,
+                        'unite': 'unite',
                         'disponible': true,
-                        'quantite': int.tryParse(qteCtrl.text) ?? 0,
+                        'quantite': double.tryParse(qteCtrl.text) ?? 0,
                         'icon': '📦',
-                        'color': kBlue,
                         'description': '',
-                      }));
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      });
+                      await _load();
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('✅ Produit ajouté !'),
+                              content: Text('Produit ajouté !'),
                               backgroundColor: kGreen,
                               behavior: SnackBarBehavior.floating));
                     }

@@ -405,6 +405,71 @@ class ApiService {
   static Future<List> getRapports() =>
       _getList('$API_URL/rapports/', useCache: false);
 
+  // ── MARCHÉ ──
+  static Future<List> getActualitesMarche() =>
+      _getList('$API_URL/marche/actualites', useCache: false);
+
+  static Future<List> getPrixMarche({String? categorie}) =>
+      _getList(categorie != null
+          ? '$API_URL/marche/prix?categorie=$categorie'
+          : '$API_URL/marche/prix',
+          useCache: true, cacheKey: 'prix_marche_${categorie ?? "all"}');
+
+  // ── BÂTIMENTS ──
+  static Future<List> getBatiments({String? fermeId}) =>
+      _getList(fermeId != null
+          ? '$API_URL/batiments/?ferme_id=$fermeId'
+          : '$API_URL/batiments/',
+          useCache: false);
+
+  static Future<bool> createBatiment(Map<String, dynamic> data) =>
+      _post('$API_URL/batiments/', data,
+          invalidateCache: ['$API_URL/batiments/']);
+
+  static Future<bool> updateBatiment(String id, Map<String, dynamic> data) =>
+      _put('$API_URL/batiments/$id', data,
+          invalidateCache: ['$API_URL/batiments/']);
+
+  static Future<bool> deleteBatiment(String id) =>
+      _delete('$API_URL/batiments/$id',
+          invalidateCache: ['$API_URL/batiments/']);
+
+  // ── TÂCHES ──
+  static Future<List> getTaches() =>
+      _getList('$API_URL/taches/', useCache: false);
+
+  static Future<bool> createTache(Map<String, dynamic> data) =>
+      _post('$API_URL/taches/', data, invalidateCache: ['$API_URL/taches/']);
+
+  static Future<bool> updateTache(String id, Map<String, dynamic> data) =>
+      _put('$API_URL/taches/$id', data, invalidateCache: ['$API_URL/taches/']);
+
+  static Future<bool> terminerTache(String id) =>
+      _post('$API_URL/taches/$id/terminer', {},
+          invalidateCache: ['$API_URL/taches/']);
+
+  static Future<bool> deleteTache(String id) =>
+      _delete('$API_URL/taches/$id', invalidateCache: ['$API_URL/taches/']);
+
+  // ── VITRINE ──
+  static Future<List> getProduitsVitrine() =>
+      _getList('$API_URL/vitrine/produits', useCache: false);
+
+  static Future<bool> createProduitVitrine(Map<String, dynamic> data) =>
+      _post('$API_URL/vitrine/produits', data,
+          invalidateCache: ['$API_URL/vitrine/produits']);
+
+  static Future<bool> updateProduitVitrine(String id, Map<String, dynamic> data) =>
+      _put('$API_URL/vitrine/produits/$id', data,
+          invalidateCache: ['$API_URL/vitrine/produits']);
+
+  static Future<bool> deleteProduitVitrine(String id) =>
+      _delete('$API_URL/vitrine/produits/$id',
+          invalidateCache: ['$API_URL/vitrine/produits']);
+
+  static Future<List> getCommandesVitrine() =>
+      _getList('$API_URL/vitrine/commandes', useCache: false);
+
   // ── TEST CONNEXION ──
   static Future<bool> testConnection() async {
     try {

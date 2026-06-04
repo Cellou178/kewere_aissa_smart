@@ -11,62 +11,10 @@ class MaintenanceScreen extends StatefulWidget {
 class _MaintenanceScreenState extends State<MaintenanceScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
+  bool _loading = true;
   bool _loadingIA = false;
   String? _planIA;
-
-  // Tâches de maintenance
-  final List<Map<String, dynamic>> _taches = [
-    {
-      'titre': 'Vérification système ventilation',
-      'batiment': 'Bâtiment A',
-      'priorite': 'haute',
-      'type': 'ventilation',
-      'statut': 'en_attente',
-      'date': '25/05/2026',
-      'cout': 15000,
-      'description': 'Contrôler les ventilateurs et courroies',
-    },
-    {
-      'titre': 'Désinfection complète',
-      'batiment': 'Bâtiment B',
-      'priorite': 'critique',
-      'type': 'hygiene',
-      'statut': 'en_cours',
-      'date': '24/05/2026',
-      'cout': 45000,
-      'description': 'Désinfection après fin de cycle',
-    },
-    {
-      'titre': 'Réparation abreuvoirs',
-      'batiment': 'Bâtiment C',
-      'priorite': 'normale',
-      'type': 'equipement',
-      'statut': 'termine',
-      'date': '20/05/2026',
-      'cout': 8000,
-      'description': 'Remplacement joints abreuvoirs automatiques',
-    },
-    {
-      'titre': 'Contrôle éclairage',
-      'batiment': 'Bâtiment A',
-      'priorite': 'normale',
-      'type': 'electricite',
-      'statut': 'en_attente',
-      'date': '28/05/2026',
-      'cout': 12000,
-      'description': 'Vérifier ampoules et minuteries',
-    },
-    {
-      'titre': 'Nettoyage gouttières',
-      'batiment': 'Tous',
-      'priorite': 'faible',
-      'type': 'structure',
-      'statut': 'en_attente',
-      'date': '30/05/2026',
-      'cout': 5000,
-      'description': 'Déboucher et nettoyer les gouttières',
-    },
-  ];
+  List _taches = [];
 
   // Équipements
   final List<Map<String, dynamic>> _equipements = [
@@ -126,31 +74,39 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 3, vsync: this);
+    _load();
   }
 
   @override
   void dispose() { _tabCtrl.dispose(); super.dispose(); }
 
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    final data = await ApiService.getTaches();
+    setState(() {
+      _taches = data;
+      _loading = false;
+    });
+  }
+
   Future<void> _genererPlanMaintenance() async {
     setState(() { _loadingIA = true; _planIA = null; });
     try {
       final tachesEnAttente = _taches
-          .where((t) => t['statut'] == 'en_attente').length;
+          .where((t) => t['statut'] == 'en_attente' || t['statut'] == 'en_cours').length;
       final equipementsCritiques = _equipements
           .where((e) => e['etat'] == 'critique').length;
-      final coutTotal = _taches.fold<int>(0,
-              (s, t) => s + (t['cout'] as int));
 
       final prompt = '''Tu es un expert en maintenance de fermes avicoles au Sénégal.
 Génère un plan de maintenance optimisé pour cette ferme.
 
 ÉTAT ACTUEL:
-- Tâches en attente: $tachesEnAttente
+- Tâches en attente/cours: $tachesEnAttente
 - Équipements critiques: $equipementsCritiques
-- Budget maintenance estimé: $coutTotal FCFA
+- Tâches totales: ${_taches.length}
 
 TÂCHES URGENTES:
-${_taches.where((t) => t['priorite'] == 'critique' || t['priorite'] == 'haute').map((t) => '- ${t['titre']} (${t['batiment']}) - ${t['cout']} FCFA').join('\n')}
+${_taches.where((t) => t['priorite'] == 'critique' || t['priorite'] == 'haute').map((t) => '- ${t['titre']} (${t['description'] ?? ''})').join('\n')}
 
 ÉQUIPEMENTS EN MAUVAIS ÉTAT:
 ${_equipements.where((e) => e['etat'] != 'bon').map((e) => '- ${e['nom']} (${e['etat']})').join('\n')}
@@ -183,11 +139,9 @@ En français, pratique et structuré.''';
       : e == 'attention' ? kOrange : kRed;
 
   int get _tachesEnAttente => _taches
-      .where((t) => t['statut'] == 'en_attente').length;
+      .where((t) => t['statut'] == 'en_attente' || t['statut'] == 'en_cours').length;
   int get _tachesTerminees => _taches
       .where((t) => t['statut'] == 'termine').length;
-  int get _coutTotal => _taches.fold<int>(0,
-          (s, t) => s + (t['cout'] as int));
 
   @override
   Widget build(BuildContext context) {
@@ -245,7 +199,7 @@ En français, pratique et structuré.''';
               _headerStat('$urgentes', 'Critiques',
                   urgentes > 0
                       ? Colors.redAccent : Colors.greenAccent),
-              _headerStat('${(_coutTotal / 1000).toStringAsFixed(0)}K',
+              _headerStat('${(0 / 1000).toStringAsFixed(0)}K',
                   'Budget\n(FCFA)', Colors.amber),
             ]),
             const SizedBox(height: 12),
@@ -299,7 +253,7 @@ En français, pratique et structuré.''';
     final sColor = _statutColor(statut);
 
     return Dismissible(
-      key: Key(t['titre'] as String),
+      key: Key(t['id']?.toString() ?? t['titre']?.toString() ?? UniqueKey().toString()),
       direction: DismissDirection.endToStart,
       background: Container(
           margin: const EdgeInsets.only(bottom: 10),
@@ -309,12 +263,14 @@ En français, pratique et structuré.''';
               child: Padding(padding: EdgeInsets.only(right: 16),
                   child: Icon(Icons.check_rounded,
                       color: Colors.white, size: 24)))),
-      onDismissed: (_) {
-        setState(() => t['statut'] = 'termine');
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('✅ Tâche marquée comme terminée !'),
-            backgroundColor: kGreen,
-            behavior: SnackBarBehavior.floating));
+      onDismissed: (_) async {
+        final id = t['id']?.toString() ?? '';
+        if (id.isNotEmpty) await ApiService.terminerTache(id);
+        await _load();
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tâche terminée !'),
+                backgroundColor: kGreen,
+                behavior: SnackBarBehavior.floating));
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -349,7 +305,7 @@ En français, pratique et structuré.''';
               const SizedBox(width: 6),
               _chip2(statut.replaceAll('_', ' '), sColor),
               const Spacer(),
-              Text('${((t['cout'] as num) / 1000).toStringAsFixed(0)}K FCFA'),
+              Text('${((t['cout'] as num? ?? 0) / 1000).toStringAsFixed(0)}K FCFA'),
             ]),
           ]),
         ),
@@ -530,14 +486,14 @@ En français, pratique et structuré.''';
           child: Row(children: [
             Expanded(child: Text(t['titre'] as String,
                 style: const TextStyle(fontSize: 12))),
-            Text('${((t['cout'] as num) / 1000).toStringAsFixed(0)}K FCFA'),
+            Text('${((t['cout'] as num? ?? 0) / 1000).toStringAsFixed(0)}K FCFA'),
           ]),
         )),
         const Divider(),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           const Text('TOTAL', style: TextStyle(
               fontWeight: FontWeight.w800, fontSize: 13)),
-          Text('${(_coutTotal / 1000).toStringAsFixed(0)}K FCFA',
+          Text('${(0 / 1000).toStringAsFixed(0)}K FCFA',
               style: const TextStyle(color: kOrange,
                   fontWeight: FontWeight.w900, fontSize: 14)),
         ]),
@@ -598,26 +554,22 @@ En français, pratique et structuré.''';
               const SizedBox(height: 16),
               SizedBox(width: double.infinity, height: 48,
                   child: ElevatedButton(
-                      onPressed: () {
-                        if (titreCtrl.text.isNotEmpty) {
-                          setState(() => _taches.add({
-                            'titre': titreCtrl.text,
-                            'batiment': batiment,
-                            'priorite': priorite,
-                            'type': type,
-                            'statut': 'en_attente',
-                            'date': DateTime.now().toString()
-                                .split(' ')[0],
-                            'cout': int.tryParse(coutCtrl.text) ?? 0,
-                            'description': descCtrl.text,
-                          }));
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('✅ Tâche ajoutée !'),
-                                  backgroundColor: kGreen,
-                                  behavior: SnackBarBehavior.floating));
-                        }
+                      onPressed: () async {
+                        if (titreCtrl.text.isEmpty) return;
+                        Navigator.pop(context);
+                        await ApiService.createTache({
+                          'titre': titreCtrl.text,
+                          'description': '[$batiment] ${descCtrl.text}',
+                          'type': type,
+                          'priorite': priorite,
+                          'statut': 'en_cours',
+                          'date_echeance': null,
+                        });
+                        await _load();
+                        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Tâche ajoutée !'),
+                                backgroundColor: kGreen,
+                                behavior: SnackBarBehavior.floating));
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: kOrange,

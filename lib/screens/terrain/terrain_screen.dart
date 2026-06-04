@@ -18,24 +18,7 @@ class _TerrainScreenState extends State<TerrainScreen>
   bool _loadingIA = false;
   String? _analyseIA;
 
-  // Données bâtiments simulées (à connecter à ton API)
-  final List<Map<String, dynamic>> _batimentsData = [
-    {
-      'nom': 'Bâtiment A', 'capacite': 1000, 'occupe': 850,
-      'temperature': 29.5, 'humidite': 68.0, 'statut': 'actif',
-      'dernierNettoyage': '2026-05-20',
-    },
-    {
-      'nom': 'Bâtiment B', 'capacite': 800, 'occupe': 0,
-      'temperature': 28.0, 'humidite': 65.0, 'statut': 'vide',
-      'dernierNettoyage': '2026-05-18',
-    },
-    {
-      'nom': 'Bâtiment C', 'capacite': 1200, 'occupe': 1200,
-      'temperature': 32.5, 'humidite': 75.0, 'statut': 'plein',
-      'dernierNettoyage': '2026-05-15',
-    },
-  ];
+  List<Map<String, dynamic>> _batimentsData = [];
 
   @override
   void initState() {
@@ -49,11 +32,15 @@ class _TerrainScreenState extends State<TerrainScreen>
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final cycles = await ApiService.getCycles();
-    final donnees = await ApiService.getDonnees();
+    final results = await Future.wait([
+      ApiService.getCycles(),
+      ApiService.getDonnees(),
+      ApiService.getBatiments(),
+    ]);
     setState(() {
-      _cycles = cycles is List ? cycles : [];
-      _donnees = donnees is List ? donnees : [];
+      _cycles = results[0];
+      _donnees = results[1];
+      _batimentsData = results[2].map((e) => Map<String, dynamic>.from(e)).toList();
       _loading = false;
     });
   }
@@ -62,20 +49,25 @@ class _TerrainScreenState extends State<TerrainScreen>
     setState(() { _loadingIA = true; _analyseIA = null; });
     try {
       final totalSujets = _cycles.fold<int>(0, (s, c) =>
-      s + ((c['nombre_sujets'] ?? 0) as num).toInt());
+          s + ((c['nombre_sujets'] ?? 0) as num).toInt());
       final totalMorts = _donnees.fold<int>(0, (s, d) =>
-      s + ((d['mortalite'] ?? 0) as num).toInt());
-      final avgTemp = _donnees.isEmpty ? 0.0 : _donnees.fold<double>(0, (s, d) =>
-      s + ((d['temperature'] ?? 0) as num).toDouble()) / _donnees.length;
+          s + ((d['mortalite'] ?? 0) as num).toInt());
+      final avgTemp = _donnees.isEmpty ? 0.0
+          : _donnees.fold<double>(0, (s, d) =>
+              s + ((d['temperature'] ?? 0) as num).toDouble()) / _donnees.length;
+
+      final batResume = _batimentsData.isEmpty
+          ? 'Aucun bâtiment enregistré'
+          : _batimentsData.map((b) =>
+              '${b['nom']}: ${b['occupants'] ?? b['occupe'] ?? 0}/${b['capacite'] ?? 0} sujets, statut: ${b['statut'] ?? 'inconnu'}')
+              .join('; ');
 
       final prompt = '''Tu es un expert en gestion de fermes avicoles au Sénégal.
-Analyse l'état du terrain et des bâtiments et donne des recommandations.
+Analyse l\'état du terrain et des bâtiments et donne des recommandations.
 
-DONNÉES TERRAIN:
+DONNÉES TERRAIN (temps réel):
 - Nombre de bâtiments: ${_batimentsData.length}
-- Bâtiment A: ${_batimentsData[0]['occupe']}/${_batimentsData[0]['capacite']} sujets, Temp: ${_batimentsData[0]['temperature']}°C, Humidité: ${_batimentsData[0]['humidite']}%
-- Bâtiment B: ${_batimentsData[1]['occupe']}/${_batimentsData[1]['capacite']} sujets (vide)
-- Bâtiment C: ${_batimentsData[2]['occupe']}/${_batimentsData[2]['capacite']} sujets, Temp: ${_batimentsData[2]['temperature']}°C
+- $batResume
 
 DONNÉES CYCLES:
 - Total sujets: $totalSujets
