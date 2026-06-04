@@ -150,12 +150,12 @@ class _SplashScreenState extends State<SplashScreen>
               child: Container(width: 300, height: 300,
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: kBlue.withOpacity(0.05)))),
+                      color: kBlue.withValues(alpha: 0.05)))),
           Positioned(bottom: -80, left: -80,
               child: Container(width: 250, height: 250,
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: kGreen.withOpacity(0.05)))),
+                      color: kGreen.withValues(alpha: 0.05)))),
 
           // Contenu principal
           SafeArea(child: FadeTransition(
@@ -163,34 +163,77 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(children: [
               const Spacer(flex: 2),
 
-              // Logo
+              // Logo KAS
               AnimatedBuilder(
                 animation: Listenable.merge([_scaleAnim, _pulseAnim]),
                 builder: (_, child) => Transform.scale(
                   scale: _scaleAnim.value * _pulseAnim.value,
                   child: child,
                 ),
-                child: Container(
-                  width: 110, height: 110,
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          colors: [
-                            kBlue.withOpacity(0.3),
-                            kBlueLight.withOpacity(0.2)
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight),
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
-                      boxShadow: [
-                        BoxShadow(color: kBlue.withOpacity(0.4),
-                            blurRadius: 30, offset: const Offset(0, 10)),
-                        BoxShadow(color: Colors.white.withOpacity(0.05),
-                            blurRadius: 10, offset: const Offset(-5, -5)),
+                child: Stack(alignment: Alignment.center, children: [
+                  // Anneau lumineux extérieur
+                  Container(
+                    width: 140, height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: kGreen.withValues(alpha: 0.3), width: 1.5),
+                      boxShadow: [BoxShadow(
+                          color: kGreen.withValues(alpha: 0.2),
+                          blurRadius: 24, spreadRadius: 4)],
+                    ),
+                  ),
+                  // Anneau intermédiaire
+                  Container(
+                    width: 118, height: 118,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: kGreen.withValues(alpha: 0.5), width: 1),
+                    ),
+                  ),
+                  // Icône principale
+                  Container(
+                    width: 100, height: 100,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: const Color(0xFF0F172A),
+                        boxShadow: [
+                          BoxShadow(color: kGreen.withValues(alpha: 0.35),
+                              blurRadius: 20, offset: const Offset(0, 6)),
+                        ]),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Column(children: [
+                        // Zone coq (haut, navy)
+                        Expanded(
+                          flex: 62,
+                          child: Container(
+                            color: const Color(0xFF0F172A),
+                            child: const Center(
+                              child: Text('🐔',
+                                  style: TextStyle(fontSize: 42))),
+                          ),
+                        ),
+                        // Bande verte KAS (bas)
+                        Expanded(
+                          flex: 38,
+                          child: Container(
+                            color: const Color(0xFF107A3A),
+                            child: const Center(
+                              child: Text('KAS',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 2)),
+                            ),
+                          ),
+                        ),
                       ]),
-                  child: const Center(
-                      child: Text('🐔', style: TextStyle(fontSize: 56))),
-                ),
+                    ),
+                  ),
+                ]),
               ),
               const SizedBox(height: 28),
 
@@ -209,10 +252,10 @@ class _SplashScreenState extends State<SplashScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 6),
                         decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                                color: Colors.white.withOpacity(0.2))),
+                                color: Colors.white.withValues(alpha: 0.2))),
                         child: const Row(mainAxisSize: MainAxisSize.min,
                             children: [
                               Text('🌍', style: TextStyle(fontSize: 14)),
@@ -271,7 +314,7 @@ class _SplashScreenState extends State<SplashScreen>
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                             value: _progressAnim.value,
-                            backgroundColor: Colors.white.withOpacity(0.1),
+                            backgroundColor: Colors.white.withValues(alpha: 0.1),
                             valueColor: AlwaysStoppedAnimation(
                                 Color.lerp(kBlue, kGreen,
                                     _progressAnim.value) ?? kBlue),
@@ -302,9 +345,9 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _featureChip(String emoji, String label) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.08),
+          color: Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.15))),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15))),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Text(emoji, style: const TextStyle(fontSize: 12)),
         const SizedBox(width: 4),
@@ -330,7 +373,7 @@ class _ParticlesPainter extends CustomPainter {
       final radius = random.nextDouble() * 2 + 0.5;
       final opacity = (sin(progress * 2 * pi + i * 0.5) * 0.5 + 0.5) * 0.3;
 
-      paint.color = Colors.white.withOpacity(opacity);
+      paint.color = Colors.white.withValues(alpha: opacity);
       canvas.drawCircle(Offset(x, y), radius, paint);
     }
   }
