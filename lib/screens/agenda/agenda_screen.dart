@@ -13,44 +13,11 @@ class _AgendaScreenState extends State<AgendaScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
   List _cycles = [];
+  List<Map<String, dynamic>> _taches = [];
   bool _loading = true;
   bool _loadingIA = false;
   String? _planningIA;
   DateTime _selectedDate = DateTime.now();
-
-  // Tâches locales
-  final List<Map<String, dynamic>> _taches = [
-    {
-      'titre': 'Pesée hebdomadaire',
-      'description': 'Peser un échantillon de 30 poulets',
-      'date': DateTime.now().add(const Duration(days: 1)),
-      'type': 'suivi', 'priorite': 'haute', 'done': false,
-    },
-    {
-      'titre': 'Vaccination Newcastle',
-      'description': 'Vacciner tout le troupeau du bâtiment A',
-      'date': DateTime.now().add(const Duration(days: 3)),
-      'type': 'sante', 'priorite': 'critique', 'done': false,
-    },
-    {
-      'titre': 'Nettoyage bâtiment B',
-      'description': 'Désinfection complète du bâtiment',
-      'date': DateTime.now().add(const Duration(days: 5)),
-      'type': 'hygiene', 'priorite': 'normale', 'done': false,
-    },
-    {
-      'titre': 'Commande aliment',
-      'description': 'Commander 50 sacs d\'aliment croissance',
-      'date': DateTime.now().add(const Duration(days: 2)),
-      'type': 'stock', 'priorite': 'haute', 'done': false,
-    },
-    {
-      'titre': 'Rapport mensuel',
-      'description': 'Générer et envoyer le rapport mensuel',
-      'date': DateTime.now().add(const Duration(days: 7)),
-      'type': 'admin', 'priorite': 'normale', 'done': true,
-    },
-  ];
 
   @override
   void initState() {
@@ -64,26 +31,61 @@ class _AgendaScreenState extends State<AgendaScreen>
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final cycles = await ApiService.getCycles();
+    final results = await Future.wait([
+      ApiService.getCycles(),
+      ApiService.getTaches(),
+    ]);
     setState(() {
-      _cycles = cycles is List ? cycles : [];
+      _cycles = results[0];
+      _taches = List<Map<String, dynamic>>.from(
+          (results[1] as List).map((t) => Map<String, dynamic>.from(t as Map)));
       _loading = false;
     });
     _genererPlanningIA();
+  }
+
+  // Normalise un enregistrement API → format UI
+  DateTime _parseDate(dynamic val) {
+    if (val == null) return DateTime.now().add(const Duration(days: 1));
+    try { return DateTime.parse(val.toString()); } catch (_) {
+      return DateTime.now().add(const Duration(days: 1));
+    }
+  }
+
+  bool _isDone(Map t) => (t['statut'] ?? '') == 'termine';
+
+  Future<void> _toggleDone(Map<String, dynamic> t) async {
+    final id = t['id']?.toString() ?? '';
+    if (id.isEmpty) return;
+    if (!_isDone(t)) {
+      await ApiService.terminerTache(id);
+    } else {
+      await ApiService.updateTache(id, {
+        'titre': t['titre'], 'description': t['description'],
+        'date_echeance': t['date_echeance'], 'type': t['type'] ?? 'autre',
+        'priorite': t['priorite'] ?? 'normale', 'statut': 'en_cours',
+      });
+    }
+    _load();
+  }
+
+  Future<void> _deleteTache(String id) async {
+    await ApiService.deleteTache(id);
+    _load();
   }
 
   Future<void> _genererPlanningIA() async {
     setState(() { _loadingIA = true; _planningIA = null; });
     try {
       final cyclesActifs = _cycles.where((c) =>
-      c['statut'] == 'actif' || c['statut'] == 'en_cours').toList();
-
+          c['statut'] == 'actif' || c['statut'] == 'en_cours').toList();
       final prompt = '''Tu es un expert en gestion avicole au Sénégal.
 Génère un planning hebdomadaire détaillé pour une ferme avicole.
 
 CONTEXTE:
 - Éleveur: ${SessionManager.nom}
 - Cycles actifs: ${cyclesActifs.length}
+- Tâches en cours: ${_taches.where((t) => !_isDone(t)).length}
 - Date: ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}
 
 Génère un planning pour les 7 prochains jours avec:
@@ -94,30 +96,29 @@ Génère un planning pour les 7 prochains jours avec:
 
 Format: Jour par jour avec heure et description courte.
 En français, pratique et concis.''';
-
       final reponse = await ApiService.callIA(prompt,
           contexte: 'Expert aviculture Sénégal, génère un planning hebdomadaire.');
       setState(() => _planningIA = reponse.isEmpty ? 'Planning indisponible.' : reponse);
-    } catch (e) {
+    } catch (_) {
       setState(() => _planningIA = 'Planning indisponible.');
     }
     setState(() => _loadingIA = false);
   }
 
   List<Map<String, dynamic>> get _tachesAujourdhui => _taches.where((t) {
-    final d = t['date'] as DateTime;
+    final d = _parseDate(t['date_echeance']);
     final now = DateTime.now();
     return d.year == now.year && d.month == now.month && d.day == now.day;
   }).toList();
 
   List<Map<String, dynamic>> get _tachesAVenir => _taches.where((t) {
-    final d = t['date'] as DateTime;
-    return d.isAfter(DateTime.now()) && !(t['done'] as bool);
+    final d = _parseDate(t['date_echeance']);
+    return d.isAfter(DateTime.now()) && !_isDone(t);
   }).toList()..sort((a, b) =>
-      (a['date'] as DateTime).compareTo(b['date'] as DateTime));
+      _parseDate(a['date_echeance']).compareTo(_parseDate(b['date_echeance'])));
 
-  List<Map<String, dynamic>> get _tachesTerminees => _taches.where((t) =>
-  t['done'] as bool).toList();
+  List<Map<String, dynamic>> get _tachesTerminees =>
+      _taches.where((t) => _isDone(t)).toList();
 
   Color _typeColor(String type) {
     switch (type) {
@@ -151,9 +152,9 @@ En français, pratique et concis.''';
 
   @override
   Widget build(BuildContext context) {
-    final tachesRestantes = _taches.where((t) => !(t['done'] as bool)).length;
+    final tachesRestantes = _taches.where((t) => !_isDone(t)).length;
     final tachesCritiques = _taches.where((t) =>
-    t['priorite'] == 'critique' && !(t['done'] as bool)).length;
+        (t['priorite'] ?? '') == 'critique' && !_isDone(t)).length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
@@ -164,7 +165,6 @@ En français, pratique et concis.''';
           label: const Text('Nouvelle Tâche',
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
       body: Column(children: [
-        // Header
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -190,15 +190,12 @@ En français, pratique et concis.''';
                   color: Colors.white54, size: 20), onPressed: _load),
             ]),
             const SizedBox(height: 12),
-            // Stats
             Row(children: [
               _headerStat('$tachesRestantes', 'À faire', Colors.white),
-              _headerStat('${_tachesAujourdhui.length}', 'Aujourd\'hui',
-                  Colors.greenAccent),
+              _headerStat('${_tachesAujourdhui.length}', 'Aujourd\'hui', Colors.greenAccent),
               _headerStat('$tachesCritiques', 'Critiques',
                   tachesCritiques > 0 ? Colors.redAccent : Colors.greenAccent),
-              _headerStat('${_tachesTerminees.length}', 'Terminées',
-                  Colors.blueAccent),
+              _headerStat('${_tachesTerminees.length}', 'Terminées', Colors.blueAccent),
             ]),
             const SizedBox(height: 12),
             TabBar(
@@ -208,7 +205,7 @@ En français, pratique et concis.''';
               indicatorColor: Colors.white,
               indicatorWeight: 2,
               labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
-              tabs: [
+              tabs: const [
                 Tab(text: '📅 Tâches'),
                 Tab(text: '🗓️ Calendrier'),
                 Tab(text: '🤖 Planning IA'),
@@ -216,7 +213,6 @@ En français, pratique et concis.''';
             ),
           ]),
         ),
-
         Expanded(child: _loading
             ? const Center(child: CircularProgressIndicator(color: kBlue))
             : TabBarView(controller: _tabCtrl, children: [
@@ -228,97 +224,100 @@ En français, pratique et concis.''';
     );
   }
 
-  // ── TÂCHES ──
   Widget _buildTaches() => ListView(
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
     children: [
-      // Aujourd'hui
       if (_tachesAujourdhui.isNotEmpty) ...[
         _sectionHeader('📅 Aujourd\'hui', '${_tachesAujourdhui.length}', kOrange),
         const SizedBox(height: 8),
-        ..._tachesAujourdhui.map((t) => _tacheCard(t)),
+        ..._tachesAujourdhui.map(_tacheCard),
         const SizedBox(height: 16),
       ],
-
-      // À venir
       if (_tachesAVenir.isNotEmpty) ...[
         _sectionHeader('⏰ À Venir', '${_tachesAVenir.length}', kBlue),
         const SizedBox(height: 8),
-        ..._tachesAVenir.map((t) => _tacheCard(t)),
+        ..._tachesAVenir.map(_tacheCard),
         const SizedBox(height: 16),
       ],
-
-      // Terminées
+      if (_taches.isEmpty) Center(child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(children: [
+          const Icon(Icons.task_alt_rounded, size: 48, color: Colors.grey),
+          const SizedBox(height: 8),
+          const Text('Aucune tâche', style: TextStyle(color: Colors.grey, fontSize: 16)),
+          TextButton(onPressed: _load, child: const Text('Actualiser')),
+        ]),
+      )),
       if (_tachesTerminees.isNotEmpty) ...[
         _sectionHeader('✅ Terminées', '${_tachesTerminees.length}', kGreen),
         const SizedBox(height: 8),
-        ..._tachesTerminees.map((t) => _tacheCard(t)),
+        ..._tachesTerminees.map(_tacheCard),
       ],
     ],
   );
 
   Widget _tacheCard(Map<String, dynamic> t) {
-    final type = t['type'] as String;
-    final priorite = t['priorite'] as String;
-    final done = t['done'] as bool;
-    final date = t['date'] as DateTime;
+    final type = (t['type'] as String? ?? 'autre');
+    final priorite = (t['priorite'] as String? ?? 'normale');
+    final done = _isDone(t);
+    final date = _parseDate(t['date_echeance']);
     final color = done ? Colors.grey : _typeColor(type);
     final prioriteColor = _prioriteColor(priorite);
+    final id = t['id']?.toString() ?? '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(14),
           border: priorite == 'critique' && !done
-              ? Border.all(color: kRed.withOpacity(0.3)) : null,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+              ? Border.all(color: kRed.withValues(alpha: 0.3)) : null,
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)]),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: GestureDetector(
-          onTap: () => setState(() => t['done'] = !done),
+          onTap: () => _toggleDone(t),
           child: Container(width: 36, height: 36,
               decoration: BoxDecoration(
-                  color: done ? Colors.grey.withOpacity(0.1) : color.withOpacity(0.1),
+                  color: done ? Colors.grey.withValues(alpha: 0.1)
+                      : color.withValues(alpha: 0.1),
                   shape: BoxShape.circle),
               child: done
                   ? const Icon(Icons.check_circle_rounded, color: Colors.grey, size: 20)
                   : Icon(_typeIcon(type), color: color, size: 18)),
         ),
-        title: Text(t['titre'] as String, style: TextStyle(
+        title: Text(t['titre'] as String? ?? '', style: TextStyle(
             fontWeight: FontWeight.w700, fontSize: 13,
             color: done ? Colors.grey : const Color(0xFF1E293B),
             decoration: done ? TextDecoration.lineThrough : null)),
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(t['description'] as String,
-              style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          if ((t['description'] ?? '').isNotEmpty)
+            Text(t['description'] as String,
+                style: const TextStyle(fontSize: 11, color: Colors.grey)),
           const SizedBox(height: 3),
           Row(children: [
             Icon(Icons.schedule_rounded, size: 11, color: color),
             const SizedBox(width: 3),
-            Text('${date.day}/${date.month} à ${date.hour}h',
+            Text('${date.day}/${date.month}/${date.year}',
                 style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
             const SizedBox(width: 8),
             Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
-                    color: prioriteColor.withOpacity(0.1),
+                    color: prioriteColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6)),
                 child: Text(priorite, style: TextStyle(
                     color: prioriteColor, fontSize: 9, fontWeight: FontWeight.w700))),
           ]),
         ]),
-        trailing: IconButton(
-            icon: const Icon(Icons.delete_outline_rounded,
-                color: Colors.grey, size: 18),
-            onPressed: () => setState(() => _taches.remove(t))),
+        trailing: id.isNotEmpty ? IconButton(
+            icon: const Icon(Icons.delete_outline_rounded, color: Colors.grey, size: 18),
+            onPressed: () => _deleteTache(id)) : null,
       ),
     );
   }
 
-  // ── CALENDRIER ──
   Widget _buildCalendrier() => ListView(
     padding: const EdgeInsets.all(16),
     children: [
-      // Mini calendrier
       _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           const Text('📅 Cette Semaine', style: TextStyle(
@@ -327,13 +326,12 @@ En français, pratique et concis.''';
               style: const TextStyle(color: Colors.grey, fontSize: 12)),
         ]),
         const SizedBox(height: 12),
-        // Jours de la semaine
         Row(children: List.generate(7, (i) {
           final day = DateTime.now().subtract(
               Duration(days: DateTime.now().weekday - 1 - i));
           final isToday = day.day == DateTime.now().day;
           final hasTache = _taches.any((t) {
-            final d = t['date'] as DateTime;
+            final d = _parseDate(t['date_echeance']);
             return d.day == day.day && d.month == day.month;
           });
           return Expanded(child: GestureDetector(
@@ -343,7 +341,7 @@ En français, pratique et concis.''';
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
                   color: isToday ? kBlue : _selectedDate.day == day.day
-                      ? kBlue.withOpacity(0.1) : Colors.transparent,
+                      ? kBlue.withValues(alpha: 0.1) : Colors.transparent,
                   borderRadius: BorderRadius.circular(10)),
               child: Column(children: [
                 Text(['L','M','M','J','V','S','D'][i],
@@ -364,8 +362,6 @@ En français, pratique et concis.''';
         })),
       ])),
       const SizedBox(height: 16),
-
-      // Tâches du jour sélectionné
       _card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Tâches du ${_selectedDate.day}/${_selectedDate.month}',
             style: const TextStyle(fontWeight: FontWeight.w800,
@@ -373,7 +369,7 @@ En français, pratique et concis.''';
         const SizedBox(height: 12),
         ...() {
           final tachesJour = _taches.where((t) {
-            final d = t['date'] as DateTime;
+            final d = _parseDate(t['date_echeance']);
             return d.day == _selectedDate.day && d.month == _selectedDate.month;
           }).toList();
           if (tachesJour.isEmpty) {
@@ -382,24 +378,22 @@ En français, pratique et concis.''';
               child: Text('Aucune tâche ce jour', style: TextStyle(color: Colors.grey)),
             ))];
           }
-          return tachesJour.map((t) => _tacheCard(t)).toList();
+          return tachesJour.map(_tacheCard).toList();
         }(),
       ])),
       const SizedBox(height: 16),
-
-      // Prochains événements cycles
       if (_cycles.isNotEmpty) _card(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('🔄 Cycles en cours', style: TextStyle(
             fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B))),
         const SizedBox(height: 12),
         ..._cycles.where((c) =>
-        c['statut'] == 'actif' || c['statut'] == 'en_cours')
+            c['statut'] == 'actif' || c['statut'] == 'en_cours')
             .take(3).map((c) => ListTile(
           dense: true,
           leading: Container(padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                  color: kGreen.withOpacity(0.1),
+                  color: kGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8)),
               child: const Icon(Icons.loop_rounded, color: kGreen, size: 16)),
           title: Text(c['nom'] ?? '', style: const TextStyle(
@@ -412,11 +406,9 @@ En français, pratique et concis.''';
     ],
   );
 
-  // ── PLANNING IA ──
   Widget _buildPlanningIA() => SingleChildScrollView(
     padding: const EdgeInsets.all(16),
     child: Column(children: [
-      // Bouton générer
       Container(
         width: double.infinity, padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -432,41 +424,33 @@ En français, pratique et concis.''';
           const Text('Planification optimisée par Claude AI',
               style: TextStyle(color: Colors.white54, fontSize: 11)),
           const SizedBox(height: 16),
-          SizedBox(width: double.infinity,
-              child: ElevatedButton.icon(
-                  onPressed: _loadingIA ? null : _genererPlanningIA,
-                  icon: _loadingIA
-                      ? const SizedBox(width: 16, height: 16,
-                      child: CircularProgressIndicator(
-                          color: kPurple, strokeWidth: 2))
-                      : const Icon(Icons.auto_awesome_rounded, size: 18),
-                  label: Text(_loadingIA
-                      ? 'Génération en cours...' : 'Générer le planning',
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: kPurple,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      elevation: 0))),
+          SizedBox(width: double.infinity, child: ElevatedButton.icon(
+              onPressed: _loadingIA ? null : _genererPlanningIA,
+              icon: _loadingIA
+                  ? const SizedBox(width: 16, height: 16,
+                  child: CircularProgressIndicator(color: kPurple, strokeWidth: 2))
+                  : const Icon(Icons.auto_awesome_rounded, size: 18),
+              label: Text(_loadingIA ? 'Génération en cours...' : 'Générer le planning',
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white, foregroundColor: kPurple,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0))),
         ]),
       ),
       const SizedBox(height: 16),
-
       if (_planningIA != null) Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
             color: Colors.white, borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(
-                color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Row(children: [
             Icon(Icons.auto_awesome_rounded, color: kPurple, size: 18),
             SizedBox(width: 8),
             Text('Planning de la Semaine', style: TextStyle(
-                fontWeight: FontWeight.w800, fontSize: 14,
-                color: Color(0xFF1E293B))),
+                fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B))),
           ]),
           const Divider(),
           const SizedBox(height: 8),
@@ -478,16 +462,13 @@ En français, pratique et concis.''';
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text('Regénérer'),
               style: OutlinedButton.styleFrom(
-                  foregroundColor: kPurple,
-                  side: const BorderSide(color: kPurple),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)))),
+                  foregroundColor: kPurple, side: const BorderSide(color: kPurple),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)))),
         ]),
       ),
     ]),
   );
 
-  // ── MODAL AJOUTER TÂCHE ──
   void _showAjouterTache() {
     final titreCtrl = TextEditingController();
     final descCtrl = TextEditingController();
@@ -505,86 +486,90 @@ En français, pratique et concis.''';
                     left: 20, right: 20, top: 24),
                 child: Column(mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      const Text('Nouvelle Tâche', style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E293B))),
-                      const SizedBox(height: 16),
-                      TextField(controller: titreCtrl,
-                          decoration: InputDecoration(labelText: 'Titre *',
-                              prefixIcon: const Icon(Icons.task_rounded,
-                                  color: kBlueLight, size: 18),
-                              border: OutlineInputBorder(
+                  const Text('Nouvelle Tâche', style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
+                  const SizedBox(height: 16),
+                  TextField(controller: titreCtrl,
+                      decoration: InputDecoration(labelText: 'Titre *',
+                          prefixIcon: const Icon(Icons.task_rounded, color: kBlueLight, size: 18),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          filled: true, fillColor: const Color(0xFFF8FAFC))),
+                  const SizedBox(height: 10),
+                  TextField(controller: descCtrl,
+                      decoration: InputDecoration(labelText: 'Description',
+                          prefixIcon: const Icon(Icons.notes_rounded, color: kBlueLight, size: 18),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          filled: true, fillColor: const Color(0xFFF8FAFC))),
+                  const SizedBox(height: 10),
+                  Row(children: [
+                    Expanded(child: DropdownButtonFormField<String>(
+                        value: typeSelected,
+                        decoration: InputDecoration(labelText: 'Type',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            filled: true, fillColor: const Color(0xFFF8FAFC),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                        items: ['suivi','sante','hygiene','stock','admin','autre']
+                            .map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                        onChanged: (v) => setModalState(() => typeSelected = v!))),
+                    const SizedBox(width: 10),
+                    Expanded(child: DropdownButtonFormField<String>(
+                        value: prioriteSelected,
+                        decoration: InputDecoration(labelText: 'Priorité',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            filled: true, fillColor: const Color(0xFFF8FAFC),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                        items: ['normale','haute','critique']
+                            .map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                        onChanged: (v) => setModalState(() => prioriteSelected = v!))),
+                  ]),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: dateSelected,
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (picked != null) setModalState(() => dateSelected = picked);
+                      },
+                      icon: const Icon(Icons.calendar_today_rounded, size: 16),
+                      label: Text('Échéance: ${dateSelected.day}/${dateSelected.month}/${dateSelected.year}'),
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: kBlue, side: const BorderSide(color: kBlue))),
+                  const SizedBox(height: 16),
+                  SizedBox(width: double.infinity, height: 48,
+                      child: ElevatedButton.icon(
+                          onPressed: () async {
+                            if (titreCtrl.text.isEmpty) return;
+                            final ok = await ApiService.createTache({
+                              'titre': titreCtrl.text,
+                              'description': descCtrl.text,
+                              'date_echeance': dateSelected.toIso8601String().substring(0, 10),
+                              'type': typeSelected,
+                              'priorite': prioriteSelected,
+                              'statut': 'en_cours',
+                            });
+                            Navigator.pop(context);
+                            if (ok) {
+                              _load();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                    content: Text('✅ Tâche ajoutée !'),
+                                    backgroundColor: kGreen,
+                                    behavior: SnackBarBehavior.floating));
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.add_rounded),
+                          label: const Text('Ajouter la tâche',
+                              style: TextStyle(fontWeight: FontWeight.w700)),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: kBlue, foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
-                              filled: true, fillColor: const Color(0xFFF8FAFC))),
-                      const SizedBox(height: 10),
-                      TextField(controller: descCtrl,
-                          decoration: InputDecoration(labelText: 'Description',
-                              prefixIcon: const Icon(Icons.notes_rounded,
-                                  color: kBlueLight, size: 18),
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              filled: true, fillColor: const Color(0xFFF8FAFC))),
-                      const SizedBox(height: 10),
-                      Row(children: [
-                        Expanded(child: DropdownButtonFormField<String>(
-                            value: typeSelected,
-                            decoration: InputDecoration(labelText: 'Type',
-                                border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                filled: true, fillColor: const Color(0xFFF8FAFC),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8)),
-                            items: ['suivi','sante','hygiene','stock','admin']
-                                .map((t) => DropdownMenuItem(
-                                value: t, child: Text(t))).toList(),
-                            onChanged: (v) => setModalState(
-                                    () => typeSelected = v!))),
-                        const SizedBox(width: 10),
-                        Expanded(child: DropdownButtonFormField<String>(
-                            value: prioriteSelected,
-                            decoration: InputDecoration(labelText: 'Priorité',
-                                border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                filled: true, fillColor: const Color(0xFFF8FAFC),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8)),
-                            items: ['normale','haute','critique']
-                                .map((p) => DropdownMenuItem(
-                                value: p, child: Text(p))).toList(),
-                            onChanged: (v) => setModalState(
-                                    () => prioriteSelected = v!))),
-                      ]),
-                      const SizedBox(height: 16),
-                      SizedBox(width: double.infinity, height: 48,
-                          child: ElevatedButton.icon(
-                              onPressed: () {
-                                if (titreCtrl.text.isNotEmpty) {
-                                  setState(() => _taches.add({
-                                    'titre': titreCtrl.text,
-                                    'description': descCtrl.text,
-                                    'date': dateSelected,
-                                    'type': typeSelected,
-                                    'priorite': prioriteSelected,
-                                    'done': false,
-                                  }));
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text('✅ Tâche ajoutée !'),
-                                          backgroundColor: kGreen,
-                                          behavior: SnackBarBehavior.floating));
-                                }
-                              },
-                              icon: const Icon(Icons.add_rounded),
-                              label: const Text('Ajouter la tâche',
-                                  style: TextStyle(fontWeight: FontWeight.w700)),
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: kBlue,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  elevation: 0))),
-                    ]))));
+                              elevation: 0))),
+                ]))));
   }
 
   Widget _sectionHeader(String title, String count, Color color) =>
@@ -593,15 +578,15 @@ En français, pratique et concis.''';
             fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
         Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-                color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20)),
             child: Text(count, style: TextStyle(
                 color: color, fontSize: 11, fontWeight: FontWeight.w700))),
       ]);
 
   Widget _headerStat(String value, String label, Color color) =>
       Expanded(child: Column(children: [
-        Text(value, style: TextStyle(
-            color: color, fontSize: 16, fontWeight: FontWeight.w900)),
+        Text(value, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900)),
         Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9)),
       ]));
 
@@ -610,6 +595,6 @@ En français, pratique et concis.''';
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(14),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+              color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)]),
       child: child);
 }

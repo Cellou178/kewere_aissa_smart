@@ -16,59 +16,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
   String? _planIA;
   List _taches = [];
 
-  // Équipements
-  final List<Map<String, dynamic>> _equipements = [
-    {
-      'nom': 'Ventilateur principal A1',
-      'batiment': 'Bâtiment A',
-      'etat': 'bon',
-      'derniereMaintenance': '01/04/2026',
-      'prochaineMaintenance': '01/07/2026',
-      'heuresUtilisation': 1240,
-      'icon': Icons.air_rounded,
-      'color': kBlue,
-    },
-    {
-      'nom': 'Système d\'abreuvement',
-      'batiment': 'Bâtiment B',
-      'etat': 'attention',
-      'derniereMaintenance': '15/03/2026',
-      'prochaineMaintenance': '15/06/2026',
-      'heuresUtilisation': 2100,
-      'icon': Icons.water_drop_rounded,
-      'color': kOrange,
-    },
-    {
-      'nom': 'Chauffage infrarouge',
-      'batiment': 'Bâtiment C',
-      'etat': 'critique',
-      'derniereMaintenance': '01/01/2026',
-      'prochaineMaintenance': '01/04/2026',
-      'heuresUtilisation': 3600,
-      'icon': Icons.whatshot_rounded,
-      'color': kRed,
-    },
-    {
-      'nom': 'Mangeoires automatiques',
-      'batiment': 'Tous',
-      'etat': 'bon',
-      'derniereMaintenance': '10/04/2026',
-      'prochaineMaintenance': '10/07/2026',
-      'heuresUtilisation': 890,
-      'icon': Icons.restaurant_rounded,
-      'color': kGreen,
-    },
-    {
-      'nom': 'Système d\'éclairage',
-      'batiment': 'Bâtiment A',
-      'etat': 'bon',
-      'derniereMaintenance': '20/04/2026',
-      'prochaineMaintenance': '20/07/2026',
-      'heuresUtilisation': 1560,
-      'icon': Icons.lightbulb_rounded,
-      'color': const Color(0xFFF59E0B),
-    },
-  ];
+  List _equipements = [];
 
   @override
   void initState() {
@@ -82,9 +30,13 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final data = await ApiService.getTaches();
+    final results = await Future.wait([
+      ApiService.getTaches(),
+      ApiService.getEquipements(),
+    ]);
     setState(() {
-      _taches = data;
+      _taches = results[0];
+      _equipements = results[1];
       _loading = false;
     });
   }
@@ -279,13 +231,13 @@ En français, pratique et structuré.''';
             borderRadius: BorderRadius.circular(14),
             border: Border(left: BorderSide(color: pColor, width: 4)),
             boxShadow: [BoxShadow(
-                color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+                color: Colors.black.withValues(alpha:0.04), blurRadius: 8)]),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(
               horizontal: 14, vertical: 6),
           leading: Container(padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                  color: pColor.withOpacity(0.1),
+                  color: pColor.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(10)),
               child: Icon(_typeIcon(t['type'] as String),
                   color: pColor, size: 20)),
@@ -297,8 +249,9 @@ En français, pratique et structuré.''';
                   ? Colors.grey : const Color(0xFF1E293B))),
           subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${t['batiment']} • ${t['date']}',
-                style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            Text('${t['description'] ?? ''} • ${t['date_echeance'] ?? ''}',
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                maxLines: 1, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 4),
             Row(children: [
               _chip2(priorite, pColor),
@@ -341,10 +294,23 @@ En français, pratique et structuré.''';
     ],
   );
 
+  IconData _equipementIcon(String? type) {
+    switch (type ?? '') {
+      case 'ventilation': return Icons.air_rounded;
+      case 'abreuvement': return Icons.water_drop_rounded;
+      case 'chauffage': return Icons.whatshot_rounded;
+      case 'alimentation': return Icons.restaurant_rounded;
+      case 'eclairage': return Icons.lightbulb_rounded;
+      case 'electricite': return Icons.electrical_services_rounded;
+      default: return Icons.settings_rounded;
+    }
+  }
+
   Widget _equipementCard(Map e) {
-    final etat = e['etat'] as String;
+    final etat = (e['etat'] as String? ?? 'bon');
     final color = _etatColor(etat);
-    final heures = e['heuresUtilisation'] as int;
+    final heures = (e['heures_utilisation'] as num? ?? 0).toInt();
+    final batiment = e['batiment_nom'] as String? ?? e['ferme_nom'] as String? ?? '-';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -352,28 +318,28 @@ En français, pratique et structuré.''';
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(14),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+              color: Colors.black.withValues(alpha:0.04), blurRadius: 8)]),
       child: Column(children: [
         Row(children: [
           Container(padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                  color: (e['color'] as Color).withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12)),
-              child: Icon(e['icon'] as IconData,
-                  color: e['color'] as Color, size: 22)),
+              child: Icon(_equipementIcon(e['type'] as String?),
+                  color: color, size: 22)),
           const SizedBox(width: 12),
           Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(e['nom'] as String, style: const TextStyle(
+            Text(e['nom'] as String? ?? '', style: const TextStyle(
                 fontWeight: FontWeight.w800, fontSize: 13,
                 color: Color(0xFF1E293B))),
-            Text(e['batiment'] as String, style: const TextStyle(
+            Text(batiment, style: const TextStyle(
                 color: Colors.grey, fontSize: 11)),
           ])),
           Container(padding: const EdgeInsets.symmetric(
               horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20)),
               child: Text(etat, style: TextStyle(
                   color: color, fontSize: 10,
@@ -407,9 +373,9 @@ En français, pratique et structuré.''';
         const SizedBox(height: 8),
 
         Row(children: [
-          _infoChip('📅 Dernière: ${e['derniereMaintenance']}'),
+          _infoChip('📅 Dernière: ${e['derniere_maintenance'] ?? '-'}'),
           const SizedBox(width: 8),
-          _infoChip('⏰ Prochaine: ${e['prochaineMaintenance']}'),
+          _infoChip('⏰ Prochaine: ${e['prochaine_maintenance'] ?? '-'}'),
         ]),
       ]),
     );
@@ -600,9 +566,9 @@ En français, pratique et structuré.''';
       Expanded(child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha:0.08),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color.withOpacity(0.2))),
+            border: Border.all(color: color.withValues(alpha:0.2))),
         child: Column(children: [
           Text('$count', style: TextStyle(
               fontWeight: FontWeight.w900, fontSize: 20, color: color)),
@@ -614,7 +580,7 @@ En français, pratique et structuré.''';
   Widget _chip2(String text, Color color) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha:0.1),
           borderRadius: BorderRadius.circular(6)),
       child: Text(text, style: TextStyle(
           color: color, fontSize: 9, fontWeight: FontWeight.w700)));
@@ -642,7 +608,7 @@ En français, pratique et structuré.''';
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(14),
           boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.04), blurRadius: 8)]),
+              color: Colors.black.withValues(alpha:0.04), blurRadius: 8)]),
       child: child);
 
   Widget _fieldInput(TextEditingController ctrl, String label,

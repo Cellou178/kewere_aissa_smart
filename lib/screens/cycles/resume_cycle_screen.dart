@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:excel/excel.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
@@ -423,13 +425,20 @@ class ResumeCycleScreen extends StatelessWidget {
       ));
 
       final bytes = await pdf.save();
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/rapport_${cycle['nom'] ?? 'cycle'}.pdf');
-      await file.writeAsBytes(bytes);
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'Rapport cycle ${cycle['nom'] ?? ''}',
-      );
+      if (kIsWeb) {
+        await Printing.sharePdf(
+          bytes: bytes,
+          filename: 'rapport_${cycle['nom'] ?? 'cycle'}.pdf',
+        );
+      } else {
+        final dir = await getTemporaryDirectory();
+        final file = File('${dir.path}/rapport_${cycle['nom'] ?? 'cycle'}.pdf');
+        await file.writeAsBytes(bytes);
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          text: 'Rapport cycle ${cycle['nom'] ?? ''}',
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Erreur PDF: $e'),

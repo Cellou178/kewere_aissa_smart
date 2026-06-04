@@ -182,6 +182,29 @@ class ApiService {
     return false;
   }
 
+  // ── PATCH ──
+  static Future<bool> _patch(String url, Map<String, dynamic> body,
+      {List<String>? invalidateCache}) async {
+    try {
+      _log('PATCH $url');
+      final r = await http.patch(Uri.parse(url),
+          headers: SessionManager.headers,
+          body: jsonEncode(body)).timeout(_timeout);
+      _log('PATCH ${r.statusCode} $url');
+      if (r.statusCode == 401) {
+        SessionManager.clear();
+        throw const ApiException(statusCode: 401, message: 'SESSION_EXPIRED');
+      }
+      final ok = r.statusCode == 200 || r.statusCode == 201;
+      if (ok && invalidateCache != null) {
+        for (final k in invalidateCache) clearCacheFor(k);
+      }
+      return ok;
+    } on ApiException { rethrow; }
+    catch (e) { _log('PATCH erreur: $url — $e'); }
+    return false;
+  }
+
   // ── DELETE ──
   static Future<bool> _delete(String url,
       {List<String>? invalidateCache}) async {
@@ -436,20 +459,20 @@ class ApiService {
 
   // ── TÂCHES ──
   static Future<List> getTaches() =>
-      _getList('$API_URL/taches/', useCache: false);
+      _getList('$API_URL/taches/', useCache: false, cacheKey: 'taches_all');
 
   static Future<bool> createTache(Map<String, dynamic> data) =>
-      _post('$API_URL/taches/', data, invalidateCache: ['$API_URL/taches/']);
+      _post('$API_URL/taches/', data, invalidateCache: ['taches_all']);
 
   static Future<bool> updateTache(String id, Map<String, dynamic> data) =>
-      _put('$API_URL/taches/$id', data, invalidateCache: ['$API_URL/taches/']);
+      _put('$API_URL/taches/$id', data, invalidateCache: ['taches_all']);
 
   static Future<bool> terminerTache(String id) =>
-      _post('$API_URL/taches/$id/terminer', {},
-          invalidateCache: ['$API_URL/taches/']);
+      _patch('$API_URL/taches/$id/terminer', {},
+          invalidateCache: ['taches_all']);
 
   static Future<bool> deleteTache(String id) =>
-      _delete('$API_URL/taches/$id', invalidateCache: ['$API_URL/taches/']);
+      _delete('$API_URL/taches/$id', invalidateCache: ['taches_all']);
 
   // ── VITRINE ──
   static Future<List> getProduitsVitrine() =>
@@ -469,6 +492,38 @@ class ApiService {
 
   static Future<List> getCommandesVitrine() =>
       _getList('$API_URL/vitrine/commandes', useCache: false);
+
+  // ── ÉQUIPEMENTS ──
+  static Future<List> getEquipements({String? fermeId}) =>
+      _getList(fermeId != null
+          ? '$API_URL/equipements/?ferme_id=$fermeId'
+          : '$API_URL/equipements/',
+          useCache: false, cacheKey: 'equipements_all');
+
+  static Future<bool> createEquipement(Map<String, dynamic> data) =>
+      _post('$API_URL/equipements/', data, invalidateCache: ['equipements_all']);
+
+  static Future<bool> updateEquipement(String id, Map<String, dynamic> data) =>
+      _put('$API_URL/equipements/$id', data, invalidateCache: ['equipements_all']);
+
+  static Future<bool> deleteEquipement(String id) =>
+      _delete('$API_URL/equipements/$id', invalidateCache: ['equipements_all']);
+
+  // ── VENDEUR ──
+  static Future<List> getPartenaires() =>
+      _getList('$API_URL/vendeur/partenaires', useCache: false);
+
+  static Future<List> getCommandesVendeur() =>
+      _getList('$API_URL/vendeur/commandes', useCache: false);
+
+  static Future<bool> createCommandeVendeur(Map<String, dynamic> data) =>
+      _post('$API_URL/vendeur/commandes', data);
+
+  static Future<List> getCommandesRecues() =>
+      _getList('$API_URL/vendeur/commandes/recues', useCache: false);
+
+  static Future<bool> updateStatutCommande(String id, String statut) =>
+      _put('$API_URL/vendeur/commandes/$id/statut', {'statut': statut});
 
   // ── TEST CONNEXION ──
   static Future<bool> testConnection() async {

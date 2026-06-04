@@ -15,6 +15,7 @@ import '../screens/rapports/rapports_screen.dart';
 import '../screens/agenda/agenda_screen.dart';
 import '../screens/marche/marche_screen.dart';
 import '../screens/vitrine/vitrine_screen.dart';
+import '../screens/vendeur/vendeur_screen.dart';
 import '../screens/investissement/investissement_screen.dart';
 import '../screens/maintenance/maintenance_screen.dart';
 import '../screens/acces/acces_screen.dart';
@@ -174,6 +175,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     _item(Icons.storefront_rounded, 'Ma Vitrine',
                         const Color(0xFF16A34A),
                         () => _navigate(const VitrineScreen())),
+                    _item(Icons.handshake_rounded, 'Espace Vendeur',
+                        const Color(0xFF059669),
+                        () => _navigate(const VendeurScreen())),
                   ],
                 ),
 
