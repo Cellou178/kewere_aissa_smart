@@ -58,20 +58,21 @@ CREATE TRIGGER trg_equipements_updated
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ── 3. Table commandes_vendeur ────────────────────────────────
+-- Schema exact correspondant à vendeur.py _ensure_table()
 CREATE TABLE IF NOT EXISTS commandes_vendeur (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    acheteur_id     UUID        NOT NULL REFERENCES utilisateurs(id),
+    vendeur_id      UUID        NOT NULL,
+    vendeur_nom     VARCHAR(150),
     partenaire_id   UUID,
-    partenaire_nom  VARCHAR(200) NOT NULL,
-    produit         VARCHAR(200) NOT NULL,
+    partenaire_nom  VARCHAR(150),
+    produit         VARCHAR(150) NOT NULL,
     quantite        INTEGER     NOT NULL DEFAULT 1,
-    notes           TEXT,
-    statut          VARCHAR(50)  DEFAULT 'en_attente',
-    created_at      TIMESTAMP    DEFAULT NOW(),
-    updated_at      TIMESTAMP    DEFAULT NOW()
+    notes           TEXT        DEFAULT '',
+    statut          VARCHAR(20)  NOT NULL DEFAULT 'en_attente',
+    created_at      TIMESTAMP    DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_commandes_vendeur_acheteur
-    ON commandes_vendeur (acheteur_id, statut);
+CREATE INDEX IF NOT EXISTS idx_commandes_vendeur_vendeur
+    ON commandes_vendeur (vendeur_id, statut);
 CREATE INDEX IF NOT EXISTS idx_commandes_vendeur_partenaire
     ON commandes_vendeur (partenaire_id, statut);
 
