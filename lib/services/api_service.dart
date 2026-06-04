@@ -525,6 +525,31 @@ class ApiService {
   static Future<bool> updateStatutCommande(String id, String statut) =>
       _put('$API_URL/vendeur/commandes/$id/statut', {'statut': statut});
 
+  // ── ADMIN ──
+  static Future<Map<String, dynamic>> getAdminStats() =>
+      _getMap('$API_URL/admin/stats', useCache: false);
+
+  static Future<List> getAdminEntreprises() =>
+      _getList('$API_URL/admin/entreprises', useCache: false);
+
+  static Future<Map<String, dynamic>> getAdminEntrepriseDetail(String id) =>
+      _getMap('$API_URL/admin/entreprises/$id', useCache: false);
+
+  static Future<bool> suspendreEntreprise(String id, String motif) =>
+      _post('$API_URL/admin/entreprises/$id/suspendre', {'motif': motif});
+
+  static Future<bool> resilierEntreprise(String id, String motif) =>
+      _post('$API_URL/admin/entreprises/$id/resilier', {'motif': motif});
+
+  static Future<bool> reactiversEntreprise(String id) =>
+      _post('$API_URL/admin/entreprises/$id/reactiver', {});
+
+  static Future<List> getAdminParametres() =>
+      _getList('$API_URL/admin/parametres', useCache: false);
+
+  static Future<bool> updateAdminParametre(String cle, String valeur) =>
+      _put('$API_URL/admin/parametres/$cle', {'valeur': valeur});
+
   // ── TEST CONNEXION ──
   static Future<bool> testConnection() async {
     try {

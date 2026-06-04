@@ -16,6 +16,7 @@ import '../screens/agenda/agenda_screen.dart';
 import '../screens/marche/marche_screen.dart';
 import '../screens/vitrine/vitrine_screen.dart';
 import '../screens/vendeur/vendeur_screen.dart';
+import '../screens/admin/admin_screen.dart';
 import '../screens/investissement/investissement_screen.dart';
 import '../screens/maintenance/maintenance_screen.dart';
 import '../screens/acces/acces_screen.dart';
@@ -35,6 +36,7 @@ class _AppDrawerState extends State<AppDrawer> {
     'planning': false,
     'marche': false,
     'finance': false,
+    'admin': false,
   };
 
   void _navigate(Widget screen) {
@@ -202,6 +204,21 @@ class _AppDrawerState extends State<AppDrawer> {
                         () => _navigate(const AbonnementScreen())),
                   ],
                 ),
+
+                // ADMINISTRATION — uniquement pour les admins
+                if (SessionManager.role.toLowerCase() == 'admin')
+                  _collapsibleSection(
+                    key: 'admin',
+                    title: 'ADMINISTRATION',
+                    icon: Icons.admin_panel_settings_rounded,
+                    color: const Color(0xFF7C3AED),
+                    items: [
+                      _item(Icons.admin_panel_settings_rounded,
+                          'Super Admin',
+                          const Color(0xFF7C3AED),
+                          () => _navigate(const AdminScreen())),
+                    ],
+                  ),
 
                 const SizedBox(height: 4),
               ])),
