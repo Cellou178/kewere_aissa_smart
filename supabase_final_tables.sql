@@ -35,23 +35,24 @@ CREATE INDEX IF NOT EXISTS idx_alertes_ferme_id
     ON alertes (ferme_id, niveau, date_creation DESC);
 
 -- ── plans (abonnements) ───────────────────────────────────────
-CREATE TABLE IF NOT EXISTS plans (
-    id             SERIAL       PRIMARY KEY,
-    nom            VARCHAR(50)  UNIQUE NOT NULL,
-    description    TEXT,
-    prix_mensuel   DECIMAL(10,2) DEFAULT 0,
-    prix_annuel    DECIMAL(10,2) DEFAULT 0,
-    nb_fermes_max  INTEGER      DEFAULT 1,
-    nb_users_max   INTEGER      DEFAULT 3,
-    fonctionnalites TEXT[],
-    actif          BOOLEAN      DEFAULT true,
-    created_at     TIMESTAMP    DEFAULT NOW()
-);
+-- La table existe déjà — on ajoute les colonnes manquantes et on met à jour
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS description    TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS prix_annuel    DECIMAL(10,2) DEFAULT 0;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS nb_fermes_max  INTEGER DEFAULT 1;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS nb_users_max   INTEGER DEFAULT 3;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS fonctionnalites TEXT[];
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS created_at     TIMESTAMP DEFAULT NOW();
+
 INSERT INTO plans (nom, description, prix_mensuel, prix_annuel, nb_fermes_max, nb_users_max, actif) VALUES
-  ('gratuit',    'Plan gratuit — 1 ferme, 3 utilisateurs',      0,      0,      1,  3,  true),
-  ('pro',        'Plan Pro — 5 fermes, 10 utilisateurs',        15000,  150000, 5,  10, true),
-  ('enterprise', 'Plan Entreprise — illimité',                  50000,  500000, 99, 99, true)
-ON CONFLICT (nom) DO NOTHING;
+  ('gratuit',    'Plan gratuit — 1 ferme, 3 utilisateurs', 0,      0,      1,  3,  true),
+  ('pro',        'Plan Pro — 5 fermes, 10 utilisateurs',   15000,  150000, 5,  10, true),
+  ('enterprise', 'Plan Entreprise — illimité',             50000,  500000, 99, 99, true)
+ON CONFLICT (nom) DO UPDATE SET
+    description   = EXCLUDED.description,
+    prix_mensuel  = EXCLUDED.prix_mensuel,
+    prix_annuel   = EXCLUDED.prix_annuel,
+    nb_fermes_max = EXCLUDED.nb_fermes_max,
+    nb_users_max  = EXCLUDED.nb_users_max;
 
 -- ── vaccinations (santé) ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS vaccinations (
