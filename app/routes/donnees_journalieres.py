@@ -66,8 +66,12 @@ def _calc(data: DonneeSchema):
         poids_moyen = sum(poids_list) / len(poids_list)
 
     homogeneite = data.homogeneite
-    if len(poids_list) >= 2 and not homogeneite:
-        homogeneite = max(poids_list) - min(poids_list)
+    if len(poids_list) >= 2 and not homogeneite and poids_moyen:
+        # % de groupes dont le poids est dans ±10% du poids moyen
+        seuil_bas  = poids_moyen * 0.90
+        seuil_haut = poids_moyen * 1.10
+        groupes_ok = sum(1 for p in poids_list if seuil_bas <= p <= seuil_haut)
+        homogeneite = round(groupes_ok / len(poids_list) * 100, 1)
 
     temp_moy = None
     if data.temperature_matin and data.temperature_soir:
